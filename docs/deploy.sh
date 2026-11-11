@@ -1,26 +1,32 @@
 #!/usr/bin/env bash
-# imgbed 一键部署脚本（Ubuntu 沙箱 / 云桌面 / 新服务器通用）
+# imgbed 一键部署脚本（Ubuntu 沙箱 / 云桌面 / 新服务器通用，自适应 PHP 版本）
 # 用法：curl -fsSL https://raw.githubusercontent.com/cd1005-art/imgbed/main/docs/deploy.sh | bash
 set -e
 
-# ---------- 权限处理：非 root 自动走 sudo ----------
+# ---------- 权限处理 ----------
 if [ "$(id -u)" -eq 0 ]; then
   SUDO=""
 elif sudo -v 2>/dev/null; then
   SUDO="sudo"
   echo "==> 使用 sudo 执行系统命令"
 else
-  echo "!! 需要 root 或 sudo 权限（且 sudo 免密），请以 root 重跑：curl -fsSL ... | sudo bash"
+  echo "!! 需要 root 或 sudo（免密）权限，请以 root 重跑"
   exit 1
 fi
 
-# ---------- 目录选择：优先 /workspace（沙箱），否则 /opt ----------
+# ---------- 目录选择：优先用户可写的 /workspace，其次 /opt（全程 sudo） ----------
 if [ -d /workspace ] && [ -w /workspace ]; then
   APP_DIR="/workspace/imgbed"
+  APP_SUDO=""
+elif [ -d /opt ] && [ -w /opt ]; then
+  APP_DIR="/opt/imgbed"
+  APP_SUDO=""
 else
   APP_DIR="/opt/imgbed"
+  APP_SUDO="$SUDO"
   $SUDO mkdir -p /opt
 fi
+echo "==> 代码目录：$APP_DIR"
 
 PORT=3000
 DB_NAME="imgbed"
@@ -28,35 +34,48 @@ DB_USER="imgbed"
 DB_PASS=$(head -c 16 /dev/urandom | md5sum | cut -c1-16)
 ADMIN_PASS="admin123"
 
-echo "==> [1/7] 安装系统依赖"
+echo "==> [1/7] 安装系统依赖（自适应系统自带 PHP 版本）"
 export DEBIAN_FRONTEND=noninteractive
 $SUDO apt-get update -qq
-$SUDO apt-get install -y -qq nginx mariadb-server unzip curl \
-  php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-fileinfo php8.2-gd php8.2-curl php8.2-xml php8.2-zip \
-  2>/dev/null || {
-  $SUDO add-apt-repository -y ppa:ondrej/php && $SUDO apt-get update -qq && \
-  $SUDO apt-get install -y -qq nginx mariadb-server unzip curl \
-    php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-fileinfo php8.2-gd php8.2-curl php8.2-xml php8.2-zip;
+$SUDO apt-get install -y -qq nginx mariadb-server unzip curl git php-fpm php-mysql php-mbstring php-fileinfo php-gd php-curl php-xml php-zip || {
+  echo "!! php-fpm 元包安装失败，尝试 php8.x 具名包"
+  $SUDO apt-get install -y -qq php8.3-fpm php8.3-mysql php8.3-mbstring php8.3-fileinfo php8.3-gd php8.3-curl php8.3-xml php8.3-zip || \
+  $SUDO apt-get install -y -qq php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-fileinfo php8.2-gd php8.2-curl php8.2-xml php8.2-zip
 }
+php -v | head -1
+
+# 探测实际 fpm sock
+PHP_SOCK=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -1)
+if [ -z "$PHP_SOCK" ]; then
+  $SUDO service php*-fpm start 2>/dev/null || $SUDO service php-fpm start || true
+  sleep 2
+  PHP_SOCK=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -1)
+fi
+if [ -z "$PHP_SOCK" ]; then
+  echo "!! 未找到 php-fpm.sock，改用 TCP 9000"
+  PHP_SOCK="127.0.0.1:9000"
+fi
+echo "==> PHP-FPM: $PHP_SOCK"
 
 echo "==> [2/7] 拉取代码"
 if [ -d "$APP_DIR/.git" ]; then
   git -C "$APP_DIR" pull --ff-only
 else
-  git clone --depth 1 https://github.com/cd1005-art/imgbed.git "$APP_DIR"
+  $APP_SUDO git clone --depth 1 https://github.com/cd1005-art/imgbed.git "$APP_DIR"
 fi
 
 echo "==> [3/7] Composer 依赖"
 if ! command -v composer >/dev/null; then
   curl -sS https://getcomposer.org/installer | php -- --install-dir=/tmp --filename=composer --quiet
-  $SUDO mv /tmp/composer /usr/local/bin/composer
+  [ "$APP_SUDO" = "$SUDO" ] && $SUDO mv /tmp/composer /usr/local/bin/composer || $SUDO mv /tmp/composer /usr/local/bin/composer
 fi
 cd "$APP_DIR"
+[ -w "$APP_DIR" ] || $SUDO chown -R "$(whoami)": "$APP_DIR"
 composer install --no-dev --no-interaction --quiet 2>/dev/null || \
   (composer config -g repos.packagist composer https://mirrors.aliyun.com/composer/ && composer install --no-dev --no-interaction --quiet)
 
 echo "==> [4/7] 数据库"
-$SUDO service mariadb start 2>/dev/null || $SUDO service mysql start 2>/dev/null || $SUDO mysqld_safe & sleep 4
+$SUDO service mariadb start 2>/dev/null || $SUDO service mysql start 2>/dev/null || ($SUDO mysqld_safe &) ; sleep 4
 $SUDO mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
 $SUDO mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';"
 $SUDO mysql -e "GRANT ALL ON $DB_NAME.* TO '$DB_USER'@'localhost'; FLUSH PRIVILEGES;"
@@ -88,7 +107,7 @@ DRIVER = file
 EOF
 chmod 600 "$APP_DIR/.env"
 
-echo "==> [6/7] Nginx 站点（端口 $PORT）"
+echo "==> [6/7] Nginx 站点（端口 $PORT，PHP: $PHP_SOCK）"
 $SUDO tee /etc/nginx/sites-available/imgbed > /dev/null <<EOF
 server {
     listen $PORT;
@@ -100,7 +119,7 @@ server {
     location / { try_files \$uri \$uri/ /index.php\$is_args\$args; }
 
     location ~ \.php\$ {
-        fastcgi_pass unix:/run/php/php8.2-fpm.sock;
+        fastcgi_pass $PHP_SOCK;
         fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
     }
@@ -113,9 +132,9 @@ EOF
 $SUDO ln -sf /etc/nginx/sites-available/imgbed /etc/nginx/sites-enabled/imgbed
 $SUDO rm -f /etc/nginx/sites-enabled/default
 $SUDO mkdir -p "$APP_DIR/public/storage/images" "$APP_DIR/runtime"
-$SUDO chown -R www-data:www-data "$APP_DIR/runtime" "$APP_DIR/public/storage"
+$SUDO chown -R www-data:www-data "$APP_DIR/runtime" "$APP_DIR/public/storage" 2>/dev/null || true
 $SUDO nginx -t && $SUDO service nginx reload 2>/dev/null || $SUDO service nginx restart
-$SUDO service php8.2-fpm start 2>/dev/null || $SUDO service php8.2-fpm restart
+$SUDO service php8.2-fpm start 2>/dev/null || $SUDO service php8.3-fpm start 2>/dev/null || $SUDO service php-fpm start 2>/dev/null || true
 
 echo "==> [7/7] 验证"
 sleep 1
