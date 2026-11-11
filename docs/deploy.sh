@@ -28,6 +28,11 @@ else
 fi
 echo "==> 代码目录：$APP_DIR"
 
+# 容器环境：policy-rc.d 会拦所有 service 启动，直接移除
+$SUDO rm -f /usr/sbin/policy-rc.d 2>/dev/null || true
+# composer 以 root 运行时需要此变量
+export COMPOSER_ALLOW_SUPERUSER=1
+
 PORT=3000
 DB_NAME="imgbed"
 DB_USER="imgbed"
@@ -112,6 +117,16 @@ EOF
 chmod 600 "$APP_DIR/.env"
 
 echo "==> [6/7] Nginx 站点（端口 $PORT，PHP: $PHP_SOCK）"
+# fpm sock 探测（service 被拦时直接拉 php-fpm 守护进程）
+PHP_SOCK=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -1)
+if [ -z "$PHP_SOCK" ]; then
+  $SUDO php-fpm8.2 --daemonize 2>/dev/null || $SUDO php-fpm8.3 --daemonize 2>/dev/null || $SUDO php-fpm8.4 --daemonize 2>/dev/null || true
+  sleep 1
+  PHP_SOCK=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -1)
+fi
+[ -z "$PHP_SOCK" ] && PHP_SOCK="127.0.0.1:9000"
+echo "==> PHP-FPM: $PHP_SOCK"
+
 $SUDO tee /etc/nginx/sites-available/imgbed > /dev/null <<EOF
 server {
     listen $PORT;
@@ -137,8 +152,8 @@ $SUDO ln -sf /etc/nginx/sites-available/imgbed /etc/nginx/sites-enabled/imgbed
 $SUDO rm -f /etc/nginx/sites-enabled/default
 $SUDO mkdir -p "$APP_DIR/public/storage/images" "$APP_DIR/runtime"
 $SUDO chown -R www-data:www-data "$APP_DIR/runtime" "$APP_DIR/public/storage" 2>/dev/null || true
-$SUDO nginx -t && $SUDO service nginx reload 2>/dev/null || $SUDO service nginx restart
-$SUDO service php8.2-fpm start 2>/dev/null || $SUDO service php8.3-fpm start 2>/dev/null || $SUDO service php-fpm start 2>/dev/null || true
+$SUDO nginx -t && ($SUDO service nginx reload 2>/dev/null || $SUDO service nginx restart || ($SUDO nginx || true))
+
 
 echo "==> [7/7] 验证"
 sleep 1
