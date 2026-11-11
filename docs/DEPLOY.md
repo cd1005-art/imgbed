@@ -3,7 +3,12 @@
 > 图床本体 = ThinkPHP 8.1.4 + PHP 8.2 + MySQL 5.7/8 + Nginx
 > 本文按「新机器从零到可跑」写，云桌面（Ubuntu 沙箱）与轻量云服务器均适用。
 
-## 0. 拿代码
+## 0. 两种安装方式
+
+- **一键脚本**（Debian/Ubuntu 沙箱与服务器）：`curl -fsSL https://raw.githubusercontent.com/cd1005-art/imgbed/main/docs/deploy.sh | bash`
+- **手动安装包**（宝塔/已有环境，推荐）：上传 `imgbed-full.tgz`（含 vendor，无需 composer），按下文「手动安装（宝塔）」操作
+
+## 0.1 拿代码
 
 ```bash
 # 方式一：git（推荐，后续更新一条 pull）
@@ -22,7 +27,21 @@ apt update && apt install -y nginx mysql-server php8.2-fpm php8.2-mysql php8.2-m
 # 沙箱若无 php8.2 源: add-apt-repository ppa:ondrej/php && apt update
 ```
 
-## 2. 数据库
+## 2. 手动安装（宝塔 / 已有环境，用 imgbed-full.tgz）
+
+1. 宝塔建站点（PHP 8.2），站点根目录 = `站点目录/imgbed/public`（**必须指向 public**）
+2. 上传 `imgbed-full.tgz` 到站点目录同级，解压得 `imgbed/`
+3. 宝塔建数据库 `imgbed`（utf8mb4），导入 `install.sql`
+4. 复制 `.env.example` 为 `.env`，填数据库连接（`PASS` 等四项）
+5. 权限：`runtime/` 与 `public/storage/` 给 www-data 可写（宝塔默认即可）
+6. 伪静态规则（Nginx）：
+   ```nginx
+   location / { try_files $uri $uri/ /index.php$is_args$args; }
+   location /storage/ { expires 30d; add_header Cache-Control "public, immutable"; }
+   ```
+7. 访问站点首页出 JSON = 装好；后台 `/admin`（admin/admin123，立即改密）
+
+## 3. 数据库（脚本方式）
 
 ```bash
 mysql < install.sql          # 建库 imgbed + 13 张表 + 初始数据（admin/admin123）
@@ -39,13 +58,13 @@ USER = root
 PASS = 你的密码
 ```
 
-## 3. Composer 依赖
+## 4. Composer 依赖
 
 ```bash
 composer install --no-dev    # 阿里镜像: composer config -g repos.packagist composer https://mirrors.aliyun.com/composer/
 ```
 
-## 4. Nginx 站点（/etc/nginx/sites-available/imgbed）
+## 5. Nginx 站点（/etc/nginx/sites-available/imgbed）
 
 ```nginx
 server {
@@ -72,21 +91,21 @@ ln -s /etc/nginx/sites-available/imgbed /etc/nginx/sites-enabled/
 nginx -t && systemctl reload nginx
 ```
 
-## 5. 验证
+## 6. 验证
 
 ```bash
 curl -s http://127.0.0.1:3000/ | head -3        # 返回站点 JSON = 跑通
 # 外网（沙箱）: https://${SPACE_KEY}--3000.${REGION}.${HOST}
 ```
 
-## 6. 支付回调联调（真实逍遥PAY）
+## 7. 支付回调联调（真实逍遥PAY）
 
 1. 后台 `/admin/payment` 填：api_url / pid / key / 网关类型 xpay / 支付通道 type（通道 ID 直接填数字）
 2. **回调地址必须是公网可达域名**——沙箱的 `notify_url` 用沙箱公网 URL；正式环境用备案域名
 3. 下单跳转 → 真实支付 → 逍遥PAY 异步回调 `/pay/notify` → 返回 success → VIP 自动生效
 4. 商户后台确认「通道 ID」绑定了在线收款账号（本机实测签名已通过，报「暂无收款账号在线」属商户侧配置）
 
-## 7. NSFW 推理服务（可选，tools/nsfw-service/）
+## 8. NSFW 推理服务（可选，tools/nsfw-service/）
 
 ```bash
 cd tools/nsfw-service && pip install -r requirements.txt && python app.py   # 0.0.0.0:8900
@@ -94,7 +113,7 @@ cd tools/nsfw-service && pip install -r requirements.txt && python app.py   # 0.
 
 后台审核驱动选 local_nsfw，并写入设置：`nsfw_endpoint = http://127.0.0.1:8900/`
 
-## 8. 安全清单（上线前）
+## 9. 安全清单（上线前）
 
 - [ ] `APP_DEBUG=false`
 - [ ] 修改 admin 默认密码（admin/admin123）
