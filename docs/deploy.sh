@@ -3,7 +3,25 @@
 # 用法：curl -fsSL https://raw.githubusercontent.com/cd1005-art/imgbed/main/docs/deploy.sh | bash
 set -e
 
-APP_DIR="/workspace/imgbed"
+# ---------- 权限处理：非 root 自动走 sudo ----------
+if [ "$(id -u)" -eq 0 ]; then
+  SUDO=""
+elif sudo -v 2>/dev/null; then
+  SUDO="sudo"
+  echo "==> 使用 sudo 执行系统命令"
+else
+  echo "!! 需要 root 或 sudo 权限（且 sudo 免密），请以 root 重跑：curl -fsSL ... | sudo bash"
+  exit 1
+fi
+
+# ---------- 目录选择：优先 /workspace（沙箱），否则 /opt ----------
+if [ -d /workspace ] && [ -w /workspace ]; then
+  APP_DIR="/workspace/imgbed"
+else
+  APP_DIR="/opt/imgbed"
+  $SUDO mkdir -p /opt
+fi
+
 PORT=3000
 DB_NAME="imgbed"
 DB_USER="imgbed"
@@ -12,12 +30,12 @@ ADMIN_PASS="admin123"
 
 echo "==> [1/7] 安装系统依赖"
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
-apt-get install -y -qq nginx mariadb-server unzip curl \
+$SUDO apt-get update -qq
+$SUDO apt-get install -y -qq nginx mariadb-server unzip curl \
   php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-fileinfo php8.2-gd php8.2-curl php8.2-xml php8.2-zip \
   2>/dev/null || {
-  add-apt-repository -y ppa:ondrej/php && apt-get update -qq && \
-  apt-get install -y -qq nginx mariadb-server unzip curl \
+  $SUDO add-apt-repository -y ppa:ondrej/php && $SUDO apt-get update -qq && \
+  $SUDO apt-get install -y -qq nginx mariadb-server unzip curl \
     php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-fileinfo php8.2-gd php8.2-curl php8.2-xml php8.2-zip;
 }
 
@@ -29,17 +47,20 @@ else
 fi
 
 echo "==> [3/7] Composer 依赖"
-curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --quiet
+if ! command -v composer >/dev/null; then
+  curl -sS https://getcomposer.org/installer | php -- --install-dir=/tmp --filename=composer --quiet
+  $SUDO mv /tmp/composer /usr/local/bin/composer
+fi
 cd "$APP_DIR"
 composer install --no-dev --no-interaction --quiet 2>/dev/null || \
-  composer config -g repos.packagist composer https://mirrors.aliyun.com/composer/ && composer install --no-dev --no-interaction --quiet
+  (composer config -g repos.packagist composer https://mirrors.aliyun.com/composer/ && composer install --no-dev --no-interaction --quiet)
 
 echo "==> [4/7] 数据库"
-(service mysql start || mysqld_safe --skip-grant-tables=0 &) ; sleep 3
-mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
-mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';"
-mysql -e "GRANT ALL ON $DB_NAME.* TO '$DB_USER'@'localhost'; FLUSH PRIVILEGES;"
-mysql "$DB_NAME" < "$APP_DIR/install.sql"
+$SUDO service mariadb start 2>/dev/null || $SUDO service mysql start 2>/dev/null || $SUDO mysqld_safe & sleep 4
+$SUDO mysql -e "CREATE DATABASE IF NOT EXISTS $DB_NAME DEFAULT CHARACTER SET utf8mb4;"
+$SUDO mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASS';"
+$SUDO mysql -e "GRANT ALL ON $DB_NAME.* TO '$DB_USER'@'localhost'; FLUSH PRIVILEGES;"
+$SUDO mysql "$DB_NAME" < "$APP_DIR/install.sql"
 
 echo "==> [5/7] 生成 .env"
 cat > "$APP_DIR/.env" <<EOF
@@ -68,7 +89,7 @@ EOF
 chmod 600 "$APP_DIR/.env"
 
 echo "==> [6/7] Nginx 站点（端口 $PORT）"
-cat > /etc/nginx/sites-available/imgbed <<EOF
+$SUDO tee /etc/nginx/sites-available/imgbed > /dev/null <<EOF
 server {
     listen $PORT;
     server_name _;
@@ -89,12 +110,12 @@ server {
     location ~ /\. { deny all; }
 }
 EOF
-ln -sf /etc/nginx/sites-available/imgbed /etc/nginx/sites-enabled/imgbed
-rm -f /etc/nginx/sites-enabled/default
-mkdir -p "$APP_DIR/public/storage/images" "$APP_DIR/runtime"
-chown -R www-data:www-data "$APP_DIR/runtime" "$APP_DIR/public/storage"
-nginx -t && (service nginx reload || service nginx restart)
-(service php8.2-fpm start || service php8.2-fpm restart)
+$SUDO ln -sf /etc/nginx/sites-available/imgbed /etc/nginx/sites-enabled/imgbed
+$SUDO rm -f /etc/nginx/sites-enabled/default
+$SUDO mkdir -p "$APP_DIR/public/storage/images" "$APP_DIR/runtime"
+$SUDO chown -R www-data:www-data "$APP_DIR/runtime" "$APP_DIR/public/storage"
+$SUDO nginx -t && $SUDO service nginx reload 2>/dev/null || $SUDO service nginx restart
+$SUDO service php8.2-fpm start 2>/dev/null || $SUDO service php8.2-fpm restart
 
 echo "==> [7/7] 验证"
 sleep 1
