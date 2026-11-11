@@ -119,13 +119,44 @@ EOF
 chmod 600 "$APP_DIR/.env"
 
 echo "==> [6/7] Nginx 站点（端口 $PORT，PHP: $PHP_SOCK）"
-# fpm sock 探测（service 被拦时直接拉 php-fpm 守护进程）
-PHP_SOCK=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -1)
+# PHP-FPM 启动（多层兜底，最终保证 9000 有进程）
+PHP_SOCK=""
+$SUDO service php8.2-fpm start 2>/dev/null || $SUDO service php8.3-fpm start 2>/dev/null || \
+$SUDO service php8.4-fpm start 2>/dev/null || $SUDO service php8.5-fpm start 2>/dev/null || \
+$SUDO service php-fpm start 2>/dev/null || true
+sleep 1
+PHP_SOCK=$(find /run/php -name "*fpm*.sock" 2>/dev/null | head -1)
+
 if [ -z "$PHP_SOCK" ]; then
-  $SUDO php-fpm8.2 --daemonize 2>/dev/null || $SUDO php-fpm8.3 --daemonize 2>/dev/null || $SUDO php-fpm8.4 --daemonize 2>/dev/null || true
+  $SUDO php-fpm8.2 --daemonize 2>/dev/null || $SUDO php-fpm8.3 --daemonize 2>/dev/null || \
+  $SUDO php-fpm8.4 --daemonize 2>/dev/null || $SUDO php-fpm8.5 --daemonize 2>/dev/null || true
   sleep 1
-  PHP_SOCK=$(ls /run/php/php*-fpm.sock 2>/dev/null | head -1)
+  PHP_SOCK=$(find /run/php -name "*fpm*.sock" 2>/dev/null | head -1)
 fi
+
+# 终极兜底：用系统 fpm 二进制 + 最小 TCP 配置强制起 9000（保证 nginx 有后端）
+if [ -z "$PHP_SOCK" ] && ! (ss -tln 2>/dev/null | grep -q ':9000'); then
+  FPM_BIN=$(ls /usr/sbin/php-fpm* 2>/dev/null | head -1)
+  if [ -n "$FPM_BIN" ]; then
+    echo "==> FPM 兜底：以 TCP 9000 强制拉起 $FPM_BIN"
+    $SUDO tee /tmp/fpm-tcp.conf > /dev/null <<FPMEOF
+[global]
+pid = /tmp/fpm-tcp.pid
+error_log = /tmp/fpm-tcp.log
+[www]
+listen = 127.0.0.1:9000
+pm = dynamic
+pm.max_children = 10
+pm.start_servers = 2
+pm.min_spare_servers = 2
+pm.max_spare_servers = 4
+FPMEOF
+    $SUDO "$FPM_BIN" -y /tmp/fpm-tcp.conf --daemonize 2>/dev/null || $SUDO "$FPM_BIN" --fpm-config /tmp/fpm-tcp.conf --daemonize
+    sleep 1
+  fi
+fi
+
+PHP_SOCK=$(find /run/php -name "*fpm*.sock" 2>/dev/null | head -1)
 [ -z "$PHP_SOCK" ] && PHP_SOCK="127.0.0.1:9000"
 echo "==> PHP-FPM: $PHP_SOCK"
 
@@ -154,7 +185,8 @@ $SUDO ln -sf /etc/nginx/sites-available/imgbed /etc/nginx/sites-enabled/imgbed
 $SUDO rm -f /etc/nginx/sites-enabled/default
 $SUDO mkdir -p "$APP_DIR/public/storage/images" "$APP_DIR/runtime"
 $SUDO chown -R www-data:www-data "$APP_DIR/runtime" "$APP_DIR/public/storage" 2>/dev/null || true
-$SUDO nginx -t && ($SUDO service nginx reload 2>/dev/null || $SUDO service nginx restart || ($SUDO nginx || true))
+if ! $SUDO nginx -t 2>&1 | tail -5; then echo "!! nginx 配置校验失败，见上方错误"; fi
+($SUDO service nginx reload 2>/dev/null || $SUDO service nginx restart || ($SUDO nginx || true))
 
 
 echo "==> [7/7] 验证"
