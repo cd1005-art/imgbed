@@ -1,0 +1,38 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<div class="page-toolbar">
+  <h1 class="page-title">上传日志 <span class="count">{$total} 条</span></h1>
+  <div class="search-bar">
+    <a class="btn-ghost-sm {if condition="$result eq -1"}active{/if}" href="?result=-1">全部</a>
+    <a class="btn-ghost-sm {if condition="$result eq 1"}active{/if}" href="?result=1">成功</a>
+    <a class="btn-ghost-sm {if condition="$result eq 0"}active{/if}" href="?result=0">失败</a>
+  </div>
+</div>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>结果</th><th>用户</th><th>图片ID</th><th>IP</th><th>UA</th><th>原因</th><th>时间</th></tr></thead>
+  <tbody>
+    {volist name="list" id="vo"}
+    <tr>
+      <td>{$vo.id}</td>
+      <td>{if condition="$vo.result eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
+      <td>{$vo.user_id}</td>
+      <td>{$vo.image_id ?: '-'}</td>
+      <td class="mono">{$vo.ip}</td>
+      <td class="td-clip" title="{$vo.ua}">{$vo.ua}</td>
+      <td class="td-clip" title="{$vo.reason}">{$vo.reason|default='-'}</td>
+      <td>{:date('m-d H:i', (int)$vo.create_time)}</td>
+    </tr>
+    {/volist}
+  </tbody>
+</table>
+
+{if condition="$pages gt 1"}
+<nav class="pager">
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&result={$result}">上一页</a>{/if}
+  <span class="pager-info">{$page_no} / {$pages}</span>
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&result={$result}">下一页</a>{/if}
+</nav>
+{/if}
+{/block}

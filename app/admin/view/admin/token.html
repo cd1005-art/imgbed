@@ -1,0 +1,35 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">API Token <span class="count">{$total} 个</span></h1>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>名称</th><th>属主</th><th>Token</th><th>调用</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead>
+  <tbody>
+    {volist name="list" id="vo"}
+    <tr>
+      <td>{$vo.id}</td>
+      <td>{$vo.name}</td>
+      <td>{$vo.user_nickname|default='-'} <span class="count">{$vo.user_email|default=''}</span></td>
+      <td class="mono td-clip" title="{$vo.token}">{$vo.token}</td>
+      <td>{$vo.request_count}</td>
+      <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
+      <td>{if condition="$vo.last_used_time gt 0"}{:date('m-d H:i', (int)$vo.last_used_time)}{else /}-{/if}</td>
+      <td class="td-actions"><button class="btn-ghost-sm" data-token-toggle="{$vo.id}">{if condition="$vo.status eq 1"}停用{else /}启用{/if}</button></td>
+    </tr>
+    {/volist}
+  </tbody>
+</table>
+
+{if condition="$pages gt 1"}
+<nav class="pager">
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}">上一页</a>{/if}
+  <span class="pager-info">{$page_no} / {$pages}</span>
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}">下一页</a>{/if}
+</nav>
+{/if}
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminToken');</script>
+{/block}

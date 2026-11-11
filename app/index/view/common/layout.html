@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{$site_name|default='逍遥图床'}{block name="title"}{/block}</title>
+<link rel="stylesheet" href="/static/imgbed.css">
+</head>
+<body>
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0l-4.5 4.5M12 4l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 20 19v-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 17.5l4.5-4 3.5 3 3-2.5 4 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M15 5.5V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2m-8 0l.8 12a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4L17 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 19.5c1.2-3 3.8-4.5 7-4.5s5.8 1.5 7 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="14" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 11L19 3m-3 3l2.5 2.5M14 8l2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 6L8.5 12l6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="/">{$site_name|default='逍遥图床'}</a>
+    <nav class="nav">
+      {if condition="$user ?? null"}
+        <a href="/gallery">我的图片</a>
+        <a href="/vip">VIP</a>
+        <a href="/console">个人中心</a>
+        <span class="nav-user"><svg class="ic"><use href="#i-user"/></svg>{$user.nickname}</span>
+        <a href="/logout" class="nav-logout">退出</a>
+      {else /}
+        <a href="/vip">VIP</a>
+        <a href="/login">登录</a>
+        <a href="/register" class="btn btn-sm">注册</a>
+      {/if}
+    </nav>
+  </div>
+</header>
+
+{if condition="isset($ads_home_header) && $ads_home_header"}
+<div class="wrap ad-slot">{$ads_home_header|raw}</div>
+{/if}
+
+<main class="wrap main">
+{block name="content"}{/block}
+</main>
+
+{if condition="isset($ads_home_footer) && $ads_home_footer"}
+<div class="wrap ad-slot">{$ads_home_footer|raw}</div>
+{/if}
+
+<footer class="footer">
+  <div class="wrap footer-in">
+    <span>{$site_name|default='逍遥图床'}</span>
+    <span class="footer-sep">·</span>
+    <a href="https://github.com/cd1005-art/imgbed" rel="noopener" target="_blank">开源</a>
+    <span class="footer-sep">·</span>
+    <a href="/docs/api" target="_blank">API</a>
+  </div>
+</footer>
+
+<div id="toast" class="toast" hidden></div>
+<script src="/static/imgbed.js"></script>
+{block name="script"}{/block}
+</body>
+</html>

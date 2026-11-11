@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{$page_title|default='后台'} · {$site_name}</title>
+<link rel="stylesheet" href="/static/imgbed.css">
+<link rel="stylesheet" href="/static/admin.css">
+</head>
+<body class="admin-body">
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10" r="1.8" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 17.5l4.5-4 3.5 3 3-2.5 4 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-dash" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2m-8 0l.8 12a1.5 1.5 0 0 0 1.5 1.4h6.4a1.5 1.5 0 0 0 1.5-1.4L17 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 19.5c1.2-3 3.8-4.5 7-4.5s5.8 1.5 7 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-storage" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="7" cy="7.5" r="1" fill="currentColor"/><circle cx="7" cy="16.5" r="1" fill="currentColor"/></symbol>
+  <symbol id="i-pay" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 9.5h17" stroke="currentColor" stroke-width="1.6"/><path d="M7 14.5h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-ad" viewBox="0 0 24 24"><rect x="4" y="10" width="4" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 12h9m-9 0V6.5a1.5 1.5 0 0 1 1.5-1.5h7A1.5 1.5 0 0 1 18 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 8 17.5V12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="14" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M11 11L19 3m-3 3l2.5 2.5M14 8l2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-log" viewBox="0 0 24 24"><path d="M5 4.5h14v15H5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 8.5h8M8 12h8M8 15.5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10.5h17" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M14.5 6L8.5 12l6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<aside class="sidebar">
+  <div class="side-brand">{$site_name} <span class="side-tag">后台</span></div>
+  <nav class="side-nav">
+    <a href="/admin" class="{if condition="$page eq 'dashboard'"}active{/if}"><svg class="ic"><use href="#i-dash"/></svg> 仪表盘</a>
+    <a href="/admin/image" class="{if condition="$page eq 'image'"}active{/if}"><svg class="ic"><use href="#i-image"/></svg> 图片管理</a>
+    <a href="/admin/user" class="{if condition="$page eq 'user'"}active{/if}"><svg class="ic"><use href="#i-user"/></svg> 用户管理</a>
+    <a href="/admin/group" class="{if condition="$page eq 'group'"}active{/if}"><svg class="ic"><use href="#i-group"/></svg> 策略组</a>
+    <a href="/admin/storage" class="{if condition="$page eq 'storage'"}active{/if}"><svg class="ic"><use href="#i-storage"/></svg> 存储管理</a>
+    <a href="/admin/payment" class="{if condition="$page eq 'payment'"}active{/if}"><svg class="ic"><use href="#i-pay"/></svg> 支付管理</a>
+    <a href="/admin/ad" class="{if condition="$page eq 'ad'"}active{/if}"><svg class="ic"><use href="#i-ad"/></svg> 广告与站点</a>
+    <a href="/admin/token" class="{if condition="$page eq 'token'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> API Token</a>
+    <a href="/admin/log" class="{if condition="$page eq 'log'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 上传日志</a>
+  </nav>
+  <div class="side-foot">
+    <a href="/" target="_blank">← 前台</a>
+    <a href="/admin/logout">退出</a>
+  </div>
+</aside>
+
+<main class="admin-main">
+{block name="content"}{/block}
+</main>
+
+<div id="toast" class="toast" hidden></div>
+<script src="/static/imgbed.js"></script>
+<script src="/static/admin.js"></script>
+{block name="script"}{/block}
+</body>
+</html>

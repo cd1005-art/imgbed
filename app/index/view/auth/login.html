@@ -1,0 +1,23 @@
+{extend name="common/layout"}
+
+{block name="title"} · 登录{/block}
+
+{block name="content"}
+<div class="auth-card">
+  <h1 class="page-title">登录</h1>
+  {if condition="!empty($error)"}<p class="form-error">{$error}</p>{/if}
+  <form method="post" action="/login" class="form">
+    <input type="hidden" name="redirect" value="{$redirect|default=''}">
+    <label class="field">
+      <span class="field-label">邮箱</span>
+      <input type="email" name="email" value="{$email|default=''}" required autofocus autocomplete="email" placeholder="you@example.com">
+    </label>
+    <label class="field">
+      <span class="field-label">密码</span>
+      <input type="password" name="password" required autocomplete="current-password" placeholder="登录密码">
+    </label>
+    <button type="submit" class="btn btn-block">登录</button>
+  </form>
+  <p class="auth-alt">没有账号？<a href="/register">注册一个</a>，免费 1GB</p>
+</div>
+{/block}

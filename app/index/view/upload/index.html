@@ -1,0 +1,47 @@
+{extend name="common/layout"}
+
+{block name="content"}
+<section class="upload-zone" id="dropZone" tabindex="0" aria-label="上传图片">
+  <svg class="ic ic-lg"><use href="#i-upload"/></svg>
+  <p class="upload-title">拖图到这里，或点击选择</p>
+  <p class="upload-hint">支持 JPG / PNG / GIF / WebP
+    {if condition="$guest_group"}· 单图上限 {$max_size_str}{/if}
+    {if condition="!($user ?? null)"}· 游客图片保留 30 天{/if}
+  </p>
+  <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.bmp" multiple hidden>
+</section>
+
+<section class="result" id="resultBox" hidden>
+  <div class="result-head">
+    <img id="resultThumb" class="result-thumb" alt="缩略图">
+    <div class="result-meta">
+      <p class="result-name" id="resultName"></p>
+      <p class="result-sub" id="resultSub"></p>
+    </div>
+  </div>
+  <div class="url-line">
+    <code class="url-text" id="resultUrl"></code>
+    <button class="btn btn-sm" type="button" data-copy="#resultUrl">复制</button>
+  </div>
+  <div class="fmt-row" role="group" aria-label="格式复制">
+    <button class="btn btn-ghost btn-sm" type="button" data-fmt="markdown">Markdown</button>
+    <button class="btn btn-ghost btn-sm" type="button" data-fmt="html">HTML</button>
+    <button class="btn btn-ghost btn-sm" type="button" data-fmt="bbcode">BBCode</button>
+    <button class="btn btn-ghost btn-sm" type="button" id="continueBtn">继续上传</button>
+  </div>
+  <div class="progress" id="progress" hidden><div class="progress-bar" id="progressBar"></div></div>
+</section>
+
+{if condition="$user ?? null"}
+<p class="quota-line">
+  已用 {$quota_used_str} / {$quota_total_str}
+  · <a href="/gallery">管理图片</a>
+</p>
+{else /}
+<p class="quota-line">游客上传图片 30 天后清理 · <a href="/register">注册</a> 免费得 1GB 永久空间</p>
+{/if}
+{/block}
+
+{block name="script"}
+<script>pageBoot('upload');</script>
+{/block}

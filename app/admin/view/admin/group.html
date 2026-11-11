@@ -1,0 +1,62 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">策略组</h1>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>组名</th><th>单图上限</th><th>日次数</th><th>总容量</th><th>保留天数</th><th>存储</th><th>免广告</th><th>状态</th><th>操作</th></tr></thead>
+  <tbody>
+    {volist name="list" id="vo"}
+    <tr>
+      <td>{$vo.id}</td>
+      <td>{$vo.name}</td>
+      <td>{:round($vo.max_size / 1048576, 1)} MB</td>
+      <td>{$vo.daily_count ?: '不限'}</td>
+      <td>{:round($vo.quota_total / 1073741824, 1)} GB</td>
+      <td>{$vo.keep_days ?: '永久'}</td>
+      <td>{$storages[$vo.storage_id]|default='-'}</td>
+      <td>{$vo.ad_exempt ? '是' : '否'}</td>
+      <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
+      <td class="td-actions"><button class="btn-ghost-sm" data-edit-group="{$vo.id}">编辑</button></td>
+    </tr>
+    {/volist}
+  </tbody>
+</table>
+
+<section class="panel">
+  <h2 class="panel-title">新增 / 编辑策略组</h2>
+  <form class="form form-grid" id="groupForm">
+    <input type="hidden" name="id" id="g_id" value="0">
+    <label class="field"><span class="field-label">组名</span><input type="text" name="name" id="g_name" required></label>
+    <label class="field"><span class="field-label">备注</span><input type="text" name="remark" id="g_remark"></label>
+    <label class="field"><span class="field-label">单图上限（MB）</span><input type="number" name="max_size_mb" id="g_max" value="5"></label>
+    <label class="field"><span class="field-label">日上传次数（0=不限）</span><input type="number" name="daily_count" id="g_daily" value="100"></label>
+    <label class="field"><span class="field-label">总容量（GB）</span><input type="number" name="quota_gb" id="g_quota" value="1"></label>
+    <label class="field"><span class="field-label">保留天数（0=永久）</span><input type="number" name="keep_days" id="g_keep" value="0"></label>
+    <label class="field"><span class="field-label">允许扩展名</span><input type="text" name="allow_ext" id="g_ext" value="jpg,jpeg,png,gif,webp"></label>
+    <label class="field"><span class="field-label">存储实例</span>
+      <select name="storage_id" id="g_storage">
+        {volist name="storages" id="s" key="k"}
+        <option value="{$k}">{$s}</option>
+        {/volist}
+      </select>
+    </label>
+    <label class="field"><span class="field-label">免广告</span>
+      <select name="ad_exempt" id="g_ad"><option value="0">否</option><option value="1">是</option></select>
+    </label>
+    <label class="field"><span class="field-label">状态</span>
+      <select name="status" id="g_status"><option value="1">启用</option><option value="2">停用</option></select>
+    </label>
+    <div class="field" style="justify-content:flex-end">
+      <button type="submit" class="btn">保存</button>
+    </div>
+  </form>
+</section>
+{/block}
+
+{block name="script"}
+<script>
+window.__groups = {:json_encode($list)};
+pageBoot('adminGroup');
+</script>
+{/block}

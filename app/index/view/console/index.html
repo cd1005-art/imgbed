@@ -1,0 +1,68 @@
+{extend name="common/layout"}
+
+{block name="title"} · 个人中心{/block}
+
+{block name="content"}
+<div class="page-head">
+  <h1 class="page-title">个人中心</h1>
+</div>
+
+<section class="panel">
+  <h2 class="panel-title">配额</h2>
+  <div class="quota-bar"><div class="quota-fill" style="width:{$quota_pct}%"></div></div>
+  <p class="quota-line">
+    已用 {:round($quota_used / 1048576, 1)} MB / {:round($quota_total / 1073741824, 1)} GB（{$quota_pct}%）
+    {if condition="$user.vip_expire_time gt 0"}· VIP 至 {:date('Y-m-d', $user.vip_expire_time)}{else /}· 免费版{/if}
+    · 当前策略：{$group.name|default='默认'}
+  </p>
+</section>
+
+<section class="panel">
+  <h2 class="panel-title">API Token</h2>
+  <p class="panel-sub">给 PicGo / ShareX / Typora 或自家程序用。请求头 <code class="inline-code">X-API-TOKEN</code>，上传地址 <code class="inline-code">/api/v1/upload</code>。</p>
+
+  <div class="token-create">
+    <input type="text" id="tokenName" maxlength="30" placeholder="Token 名称（可空）">
+    <button class="btn" type="button" id="tokenCreateBtn"><svg class="ic"><use href="#i-key"/></svg> 生成</button>
+  </div>
+  <p class="token-new" id="tokenNew" hidden>新 Token（只显示这一次，先存好）：<code class="url-text" id="tokenNewVal"></code></p>
+
+  {if condition="empty($tokens)"}
+  <p class="empty-line">还没有 Token。</p>
+  {else /}
+  <ul class="token-list" id="tokenList">
+    {volist name="tokens" id="t"}
+    <li class="token-item" data-id="{$t.id}">
+      <span class="token-name">{$t.name}</span>
+      <code class="token-val">{$t.token|substr=0,10}…</code>
+      <span class="token-meta">调用 {$t.request_count} 次</span>
+      <button class="icon-btn icon-danger" type="button" data-token-del="{$t.id}" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>
+    </li>
+    {/volist}
+  </ul>
+  {/if}
+</section>
+
+<section class="panel">
+  <h2 class="panel-title">账号</h2>
+  <form class="form form-inline" id="profileForm">
+    <label class="field">
+      <span class="field-label">昵称</span>
+      <input type="text" name="nickname" value="{$user.nickname}" maxlength="30">
+    </label>
+    <label class="field">
+      <span class="field-label">原密码（改密码时填）</span>
+      <input type="password" name="old_password" autocomplete="current-password">
+    </label>
+    <label class="field">
+      <span class="field-label">新密码（至少 8 位）</span>
+      <input type="password" name="new_password" minlength="8" autocomplete="new-password">
+    </label>
+    <button type="submit" class="btn">保存</button>
+  </form>
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('console');</script>
+{/block}

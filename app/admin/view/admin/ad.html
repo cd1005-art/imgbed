@@ -1,0 +1,82 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">广告与站点</h1>
+
+<section class="panel">
+  <h2 class="panel-title">站点设置</h2>
+  <form class="form form-grid" id="settingsForm">
+    <label class="field"><span class="field-label">站点名</span><input type="text" name="site_name" value="{$settings.site_name|default='逍遥图床'}"></label>
+    <label class="field"><span class="field-label">运营模式</span>
+      <select name="operation_mode">
+        <option value="free_ad" {if condition="($settings['operation_mode'] ?? '') eq 'free_ad'"}selected{/if}>纯免费+广告</option>
+        <option value="free_pay" {if condition="($settings['operation_mode'] ?? 'free_pay') eq 'free_pay'"}selected{/if}>免费+付费双层</option>
+        <option value="invite" {if condition="($settings['operation_mode'] ?? '') eq 'invite'"}selected{/if}>邀请制纯付费（禁游客上传）</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">开放注册</span>
+      <select name="allow_register">
+        <option value="1" {if condition="($settings['allow_register'] ?? '1') eq '1'"}selected{/if}>开放</option>
+        <option value="0" {if condition="($settings['allow_register'] ?? '') eq '0'"}selected{/if}>关闭</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">游客策略组</span>
+      <select name="guest_group_id">
+        {volist name="groups" id="g"}
+        <option value="{$g.id}" {if condition="($settings['guest_group_id'] ?? '1') eq $g.id"}selected{/if}>{$g.name}</option>
+        {/volist}
+      </select>
+    </label>
+    <label class="field"><span class="field-label">注册默认组</span>
+      <select name="register_group_id">
+        {volist name="groups" id="g"}
+        <option value="{$g.id}" {if condition="($settings['register_group_id'] ?? '2') eq $g.id"}selected{/if}>{$g.name}</option>
+        {/volist}
+      </select>
+    </label>
+    <label class="field"><span class="field-label">全局审核驱动</span>
+      <select name="default_audit_driver">
+        <option value="none" {if condition="($settings['default_audit_driver'] ?? 'none') eq 'none'"}selected{/if}>不审核</option>
+        <option value="local_nsfw" {if condition="($settings['default_audit_driver'] ?? '') eq 'local_nsfw'"}selected{/if}>本地 NSFW 模型</option>
+        <option value="aliyun" {if condition="($settings['default_audit_driver'] ?? '') eq 'aliyun'"}selected{/if}>阿里云内容安全</option>
+        <option value="tencent" {if condition="($settings['default_audit_driver'] ?? '') eq 'tencent'"}selected{/if}>腾讯云内容安全</option>
+        <option value="llm_vlm" {if condition="($settings['default_audit_driver'] ?? '') eq 'llm_vlm'"}selected{/if}>多模态大模型</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">LLM 审核端点（OpenAI 兼容）</span><input type="text" name="llm_audit_endpoint" value="{$settings.llm_audit_endpoint|default=''}" placeholder="https://api.example.com/v1/chat/completions"></label>
+    <label class="field"><span class="field-label">LLM 审核密钥</span><input type="text" name="llm_audit_key" value="{$settings.llm_audit_key|default=''}"></label>
+    <label class="field"><span class="field-label">LLM 审核模型</span><input type="text" name="llm_audit_model" value="{$settings.llm_audit_model|default=''}" placeholder="qwen-vl-plus / gpt-4o-mini"></label>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存设置</button></div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2 class="panel-title">广告位</h2>
+  <p class="panel-sub">内容支持 HTML / 图片 / JS。免费运营模式的流量变现入口；VIP 策略组自动免广告。</p>
+  {volist name="slots" id="vo"}
+  <form class="form form-grid ad-slot-form" data-slot-form="{$vo.id}" style="border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:16px">
+    <input type="hidden" name="id" value="{$vo.id}">
+    <label class="field"><span class="field-label">{$vo.slot_key} · 名称</span><input type="text" name="name" value="{$vo.name}"></label>
+    <label class="field"><span class="field-label">类型</span>
+      <select name="type">
+        <option value="html" {if condition="$vo.type eq 'html'"}selected{/if}>HTML</option>
+        <option value="image" {if condition="$vo.type eq 'image'"}selected{/if}>图片</option>
+        <option value="js" {if condition="$vo.type eq 'js'"}selected{/if}>JS</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">开关</span>
+      <select name="is_open">
+        <option value="0" {if condition="$vo.is_open eq 0"}selected{/if}>关闭</option>
+        <option value="1" {if condition="$vo.is_open eq 1"}selected{/if}>开启</option>
+      </select>
+    </label>
+    <label class="field field-wide"><span class="field-label">内容</span><textarea name="content" rows="3">{$vo.content}</textarea></label>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存</button></div>
+  </form>
+  {/volist}
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminAd');</script>
+{/block}

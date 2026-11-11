@@ -1,0 +1,26 @@
+{extend name="common/layout"}
+
+{block name="title"} · 注册{/block}
+
+{block name="content"}
+<div class="auth-card">
+  <h1 class="page-title">注册</h1>
+  {if condition="!empty($error)"}<p class="form-error">{$error}</p>{/if}
+  <form method="post" action="/register" class="form">
+    <label class="field">
+      <span class="field-label">邮箱</span>
+      <input type="email" name="email" value="{$email|default=''}" required autofocus autocomplete="email" placeholder="you@example.com">
+    </label>
+    <label class="field">
+      <span class="field-label">昵称（可不填）</span>
+      <input type="text" name="nickname" maxlength="30" placeholder="默认取邮箱前缀">
+    </label>
+    <label class="field">
+      <span class="field-label">密码（至少 8 位）</span>
+      <input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="至少 8 位">
+    </label>
+    <button type="submit" class="btn btn-block">注册并登录</button>
+  </form>
+  <p class="auth-alt">已有账号？<a href="/login">去登录</a></p>
+</div>
+{/block}

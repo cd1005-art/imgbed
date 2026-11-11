@@ -1,0 +1,23 @@
+{extend name="common/layout"}
+
+{block name="title"} · VIP 套餐{/block}
+
+{block name="content"}
+<h1 class="page-title">VIP 套餐</h1>
+
+{if condition="!empty($msg)"}<p class="form-error" style="background:var(--accent-soft);color:var(--accent)">{$msg}</p>{/if}
+{if condition="!empty($error)"}<p class="form-error">{$error}</p>{/if}
+
+<div class="plan-row">
+  {volist name="plans" id="vo"}
+  <div class="plan-card">
+    <p class="plan-name">{$vo.name}</p>
+    <p class="plan-price"><span class="plan-amount">{:round($vo.price / 100, 2)}</span> 元 / {$vo.days} 天</p>
+    <p class="plan-desc">{$vo.description}</p>
+    <a class="btn btn-block" href="/vip/buy/{$vo.id}">立即开通</a>
+  </div>
+  {/volist}
+</div>
+
+<p class="quota-line">支持支付宝 · 支付成功即时生效 · 到期自动降回免费组（已上传图片保留）</p>
+{/block}

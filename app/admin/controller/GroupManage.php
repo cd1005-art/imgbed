@@ -1,0 +1,63 @@
+<?php
+declare (strict_types = 1);
+
+namespace app\admin\controller;
+
+use app\admin\controller\Base;
+use app\common\model\StrategyGroup;
+use think\facade\Db;
+
+/**
+ * 策略组管理：列表 / 新增 / 编辑 / 删除（有用户引用禁止删）
+ */
+class GroupManage extends Base
+{
+    public function index()
+    {
+        return $this->adminView('admin/group', [
+            'page'   => 'group',
+            'list'   => StrategyGroup::order('id', 'asc')->select(),
+            'storages' => Db::name('storage_configs')->where('status', 1)->column('name', 'id'),
+        ]);
+    }
+
+    public function save()
+    {
+        $id = (int)$this->request->post('id', 0);
+        $data = [
+            'name'        => trim((string)$this->request->post('name', '')),
+            'remark'      => trim((string)$this->request->post('remark', '')),
+            'max_size'    => (int)$this->request->post('max_size_mb', 0) * 1048576,
+            'daily_count' => (int)$this->request->post('daily_count', 0),
+            'quota_total' => (int)$this->request->post('quota_gb', 0) * 1073741824,
+            'allow_ext'   => strtolower(trim((string)$this->request->post('allow_ext', 'jpg,jpeg,png,gif,webp'))),
+            'keep_days'   => (int)$this->request->post('keep_days', 0),
+            'storage_id'  => (int)$this->request->post('storage_id', 1),
+            'ad_exempt'   => (int)$this->request->post('ad_exempt', 0),
+            'status'      => (int)$this->request->post('status', 1),
+            'update_time' => time(),
+        ];
+
+        if ($data['name'] === '') {
+            return json(['status' => false, 'message' => '组名必填']);
+        }
+
+        if ($id > 0) {
+            Db::name('strategy_groups')->where('id', $id)->update($data);
+        } else {
+            $data['create_time'] = time();
+            Db::name('strategy_groups')->insert($data);
+        }
+        return json(['status' => true, 'message' => '已保存']);
+    }
+
+    public function delete(int $id)
+    {
+        $used = Db::name('users')->where('group_id', $id)->count();
+        if ($used > 0) {
+            return json(['status' => false, 'message' => "有 {$used} 个用户在该组，先转移再删"]);
+        }
+        Db::name('strategy_groups')->where('id', $id)->delete();
+        return json(['status' => true, 'message' => '已删除']);
+    }
+}

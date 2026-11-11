@@ -1,0 +1,32 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<div class="stat-row">
+  <div class="stat"><span class="stat-num">{$stats.image_total}</span><span class="stat-label">图片总数</span></div>
+  <div class="stat"><span class="stat-num">{$stats.user_total}</span><span class="stat-label">注册用户</span></div>
+  <div class="stat"><span class="stat-num">{$stats.today_upload}</span><span class="stat-label">今日上传</span></div>
+  <div class="stat"><span class="stat-num">{$stats.today_fail}</span><span class="stat-label">今日失败</span></div>
+  <div class="stat"><span class="stat-num">{:round($stats.storage_used / 1048576, 1)}<small>MB</small></span><span class="stat-label">存储用量</span></div>
+  <div class="stat {if condition="$stats.pending_audit gt 0"}stat-warn{/if}"><span class="stat-num">{$stats.pending_audit}</span><span class="stat-label">待审核</span></div>
+</div>
+
+<section class="panel">
+  <h2 class="panel-title">最近上传</h2>
+  <table class="table">
+    <thead><tr><th>ID</th><th>缩略</th><th>文件名</th><th>用户</th><th>大小</th><th>IP</th><th>时间</th></tr></thead>
+    <tbody>
+      {volist name="recent" id="vo"}
+      <tr>
+        <td>{$vo.id}</td>
+        <td><a href="/i/{$vo.path}" target="_blank"><img class="thumb" src="/i/{$vo.path}" alt=""></a></td>
+        <td class="td-clip" title="{$vo.name}">{$vo.name}</td>
+        <td>{$vo.user_id}</td>
+        <td>{:round($vo.size / 1024, 1)} KB</td>
+        <td class="mono">{$vo.ip}</td>
+        <td>{:date('m-d H:i', (int)$vo.create_time)}</td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+</section>
+{/block}

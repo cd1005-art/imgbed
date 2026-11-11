@@ -1,0 +1,43 @@
+{extend name="common/layout"}
+
+{block name="title"} · 我的图片{/block}
+
+{block name="content"}
+<div class="page-head">
+  <a class="icon-btn" href="/" aria-label="返回上传"><svg class="ic"><use href="#i-back"/></svg></a>
+  <h1 class="page-title">我的图片 <span class="count">{$total} 张</span></h1>
+</div>
+
+{if condition="empty($list)"}
+<div class="empty">
+  <svg class="ic ic-lg"><use href="#i-image"/></svg>
+  <p>还没有图片。回<a href="/">上传</a>几张试试。</p>
+</div>
+{else /}
+<div class="grid" id="grid">
+  {volist name="list" id="vo"}
+  <figure class="cell" data-id="{$vo.id}">
+    <a class="cell-img" href="/i/{$vo.path}" target="_blank" rel="noopener">
+      <img src="/i/{$vo.path}" loading="lazy" alt="{$vo.name}">
+    </a>
+    <figcaption class="cell-meta">
+      <span class="cell-name" title="{$vo.name}">{$vo.name}</span>
+      <span class="cell-size">{:round($vo.size / 1024, 1)} KB</span>
+    </figcaption>
+    <div class="cell-actions">
+      <button class="icon-btn" type="button" data-copy-url="/i/{$vo.path}" title="复制外链"><svg class="ic"><use href="#i-copy"/></svg></button>
+      <button class="icon-btn icon-danger" type="button" data-del="{$vo.id}" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>
+    </div>
+  </figure>
+  {/volist}
+</div>
+
+{if condition="$pages gt 1"}
+<nav class="pager">
+  {if condition="$page gt 1"}<a class="btn btn-ghost btn-sm" href="?page={$page-1}">上一页</a>{/if}
+  <span class="pager-info">{$page} / {$pages}</span>
+  {if condition="$page lt $pages"}<a class="btn btn-ghost btn-sm" href="?page={$page+1}">下一页</a>{/if}
+</nav>
+{/if}
+{/if}
+{/block}

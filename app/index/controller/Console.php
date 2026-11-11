@@ -1,0 +1,102 @@
+<?php
+declare (strict_types = 1);
+
+namespace app\index\controller;
+
+use app\index\controller\Base;
+use app\common\model\ApiToken;
+use app\common\model\StrategyGroup;
+use app\common\model\User;
+use think\facade\Db;
+
+/**
+ * 个人中心：配额总览 + API Token 管理
+ *
+ * @property \app\common\model\User $loginUser 由 CheckLogin 中间件挂载
+ */
+class Console extends Base
+{
+    public function index()
+    {
+        $user  = $this->request->loginUser;
+        $group = StrategyGroup::find((int)$user->group_id);
+
+        // 用户配额覆盖优先，其次策略组
+        $quotaTotal = (int)$user->quota_total > 0 ? (int)$user->quota_total : (int)($group->quota_total ?? 0);
+        $used       = (int)$user->quota_used;
+
+        $tokens = ApiToken::where('user_id', $user->id)->order('id', 'desc')->select();
+
+        return $this->siteView('console/index', [
+            'user'        => $user,
+            'group'       => $group,
+            'quota_total' => $quotaTotal,
+            'quota_used'  => $used,
+            'quota_pct'   => $quotaTotal > 0 ? min(100, (int)($used / $quotaTotal * 100)) : 0,
+            'tokens'      => $tokens,
+        ]);
+    }
+
+    /** 生成 Token */
+    public function tokenCreate()
+    {
+        $user = $this->request->loginUser;
+        $name = trim((string)$this->request->post('name', ''));
+
+        // 上限 10 个
+        $count = ApiToken::where('user_id', $user->id)->count();
+        if ($count >= 10) {
+            return json(['status' => false, 'message' => '最多 10 个 Token，先删掉不用的']);
+        }
+
+        $token = bin2hex(random_bytes(32));
+        ApiToken::create([
+            'user_id'     => $user->id,
+            'name'        => mb_substr($name !== '' ? $name : 'Token ' . ($count + 1), 0, 30),
+            'token'       => $token,
+            'status'      => 1,
+            'create_time' => time(),
+            'update_time' => time(),
+        ]);
+
+        return json(['status' => true, 'message' => '已生成', 'data' => ['token' => $token]]);
+    }
+
+    /** 删除 Token */
+    public function tokenDelete(int $id)
+    {
+        $user = $this->request->loginUser;
+        $ok = ApiToken::where('id', $id)->where('user_id', $user->id)->delete();
+        return json(['status' => (bool)$ok, 'message' => $ok ? '已删除' : 'Token 不存在']);
+    }
+
+    /** 修改昵称/密码 */
+    public function profile()
+    {
+        $user     = $this->request->loginUser;
+        $nickname = trim((string)$this->request->post('nickname', ''));
+        $old      = (string)$this->request->post('old_password', '');
+        $new      = (string)$this->request->post('new_password', '');
+
+        $update = [];
+        if ($nickname !== '') {
+            $update['nickname'] = mb_substr($nickname, 0, 30);
+        }
+        if ($new !== '') {
+            if (strlen($new) < 8) {
+                return json(['status' => false, 'message' => '新密码至少 8 位']);
+            }
+            if (!password_verify($old, (string)$user->password)) {
+                return json(['status' => false, 'message' => '原密码不对']);
+            }
+            $update['password'] = password_hash($new, PASSWORD_BCRYPT);
+        }
+
+        if ($update) {
+            $update['update_time'] = time();
+            Db::name('users')->where('id', $user->id)->update($update);
+        }
+
+        return json(['status' => true, 'message' => '已保存']);
+    }
+}

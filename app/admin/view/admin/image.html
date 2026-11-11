@@ -1,0 +1,47 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<div class="page-toolbar">
+  <h1 class="page-title">图片管理 <span class="count">{$total} 张</span></h1>
+  <form class="search-bar" method="get" action="/admin/image">
+    <input type="text" name="kw" value="{$kw}" placeholder="文件名">
+    <input type="number" name="uid" value="{$uid}" placeholder="用户ID" style="width:90px">
+    <button class="btn btn-sm" type="submit">筛选</button>
+  </form>
+</div>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>缩略</th><th>文件名</th><th>用户</th><th>大小</th><th>审核</th><th>状态</th><th>IP</th><th>上传时间</th><th>操作</th></tr></thead>
+  <tbody>
+    {volist name="list" id="vo"}
+    <tr data-row="{$vo.id}">
+      <td>{$vo.id}</td>
+      <td><a href="/i/{$vo.path}" target="_blank"><img class="thumb" src="/i/{$vo.path}" alt=""></a></td>
+      <td class="td-clip" title="{$vo.name}">{$vo.name}</td>
+      <td>{$vo.user_id}</td>
+      <td>{:round($vo.size / 1024, 1)} KB</td>
+      <td>{if condition="$vo.audit_status eq 0"}待审{elseif condition="$vo.audit_status eq 1"}通过{elseif condition="$vo.audit_status eq 2"}<span class="danger">拒绝</span>{else /}复审{/if}</td>
+      <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">冻结</span>{/if}</td>
+      <td class="mono">{$vo.ip}</td>
+      <td>{:date('m-d H:i', (int)$vo.create_time)}</td>
+      <td class="td-actions">
+        <button class="btn-ghost-sm" data-toggle-status="{$vo.id}">{if condition="$vo.status eq 1"}冻结{else /}解冻{/if}</button>
+        <button class="btn-ghost-sm btn-danger-sm" data-del="{$vo.id}">删除</button>
+      </td>
+    </tr>
+    {/volist}
+  </tbody>
+</table>
+
+{if condition="$pages gt 1"}
+<nav class="pager">
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}&uid={$uid}">上一页</a>{/if}
+  <span class="pager-info">{$page_no} / {$pages}</span>
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}&uid={$uid}">下一页</a>{/if}
+</nav>
+{/if}
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminImage');</script>
+{/block}

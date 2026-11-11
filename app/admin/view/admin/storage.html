@@ -1,0 +1,89 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">存储管理</h1>
+
+{volist name="list" id="vo" key="i"}
+<section class="panel" data-storage-panel="{$vo.id}">
+  <div class="panel-head">
+    <h2 class="panel-title">{$vo.name} <code class="inline-code">{$vo.driver}</code> <span class="count">外链{:($vo.url_mode eq 1) ? '代理' : '302直链'} · 引用图片 {:isset($usage[$vo.id]['c']) ? $usage[$vo.id]['c'] : 0} 张</span></h2>
+    <div class="td-actions">
+      <button class="btn-ghost-sm" data-probe="{$vo.id}">测试连通</button>
+      <button class="btn-ghost-sm" data-edit-storage="{$vo.id}">编辑</button>
+      {if condition="$vo.id gt 1"}<button class="btn-ghost-sm btn-danger-sm" data-storage-del="{$vo.id}">删除</button>{/if}
+    </div>
+  </div>
+  <p class="probe-result" id="probe-{$vo.id}"></p>
+  <form class="form form-grid storage-form" id="storage-form-{$vo.id}" hidden>
+    <input type="hidden" name="id" value="{$vo.id}">
+    <label class="field"><span class="field-label">实例名</span><input type="text" name="name" value="{$vo.name}"></label>
+    <label class="field"><span class="field-label">驱动</span>
+      <select name="driver" class="driver-select" data-panel="{$vo.id}">
+        <option value="local" {if condition="$vo.driver eq 'local'"}selected{/if}>本地磁盘</option>
+        <option value="webdav" {if condition="$vo.driver eq 'webdav'"}selected{/if}>WebDAV（坚果云/Alist）</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">外链模式</span>
+      <select name="url_mode">
+        <option value="1" {if condition="$vo.url_mode eq 1"}selected{/if}>代理中转（防盗链有效）</option>
+        <option value="2" {if condition="$vo.url_mode eq 2"}selected{/if}>302 直链（省服务器流量）</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">状态</span>
+      <select name="status">
+        <option value="1" {if condition="$vo.status eq 1"}selected{/if}>启用</option>
+        <option value="2" {if condition="$vo.status eq 2"}selected{/if}>停用</option>
+      </select>
+    </label>
+    <div class="cfg-fields" data-cfg="local" {if condition="$vo.driver neq 'local'"}hidden{/if}>
+      <label class="field field-wide"><span class="field-label">本地目录（相对 public/）</span><input type="text" name="root" value="{$vo.config.root|default='storage/images'}"></label>
+    </div>
+    <div class="cfg-fields" data-cfg="webdav" {if condition="$vo.driver neq 'webdav'"}hidden{/if}>
+      <label class="field field-wide"><span class="field-label">WebDAV 地址</span><input type="text" name="base_url" value="{$vo.config.base_url|default=''}" placeholder="http://alist:5244/dav"></label>
+      <label class="field"><span class="field-label">用户名</span><input type="text" name="username" value="{$vo.config.username|default=''}"></label>
+      <label class="field"><span class="field-label">密码</span><input type="text" name="password" value="{$vo.config.password|default=''}"></label>
+      <label class="field field-wide"><span class="field-label">直链模板（302 模式用，如 http://alist:5244/d/{path}）</span><input type="text" name="direct_url" value="{$vo.config.direct_url|default=''}"></label>
+    </div>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存</button></div>
+  </form>
+</section>
+{/volist}
+
+<section class="panel">
+  <h2 class="panel-title">新增存储实例</h2>
+  <button class="btn" type="button" id="storageNewBtn">+ 新增</button>
+  <form class="form form-grid storage-form" id="storage-form-0" hidden>
+    <input type="hidden" name="id" value="0">
+    <label class="field"><span class="field-label">实例名</span><input type="text" name="name" placeholder="例如：Alist 网盘"></label>
+    <label class="field"><span class="field-label">驱动</span>
+      <select name="driver" class="driver-select" data-panel="0">
+        <option value="local">本地磁盘</option>
+        <option value="webdav">WebDAV（坚果云/Alist）</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">外链模式</span>
+      <select name="url_mode">
+        <option value="1">代理中转（防盗链有效）</option>
+        <option value="2">302 直链（省服务器流量）</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">状态</span>
+      <select name="status"><option value="1">启用</option><option value="2">停用</option></select>
+    </label>
+    <div class="cfg-fields" data-cfg="local">
+      <label class="field field-wide"><span class="field-label">本地目录（相对 public/）</span><input type="text" name="root" value="storage/images"></label>
+    </div>
+    <div class="cfg-fields" data-cfg="webdav" hidden>
+      <label class="field field-wide"><span class="field-label">WebDAV 地址</span><input type="text" name="base_url" placeholder="http://alist:5244/dav"></label>
+      <label class="field"><span class="field-label">用户名</span><input type="text" name="username"></label>
+      <label class="field"><span class="field-label">密码</span><input type="text" name="password"></label>
+      <label class="field field-wide"><span class="field-label">直链模板</span><input type="text" name="direct_url" placeholder="http://alist:5244/d/{path}"></label>
+    </div>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存</button></div>
+  </form>
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminStorage');</script>
+{/block}
