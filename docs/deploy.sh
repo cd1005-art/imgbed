@@ -74,14 +74,16 @@ else
 fi
 
 echo "==> [3/7] Composer 依赖"
-if ! command -v composer >/dev/null; then
-  curl -sS https://getcomposer.org/installer | php -- --install-dir=/tmp --filename=composer --quiet
-  [ "$APP_SUDO" = "$SUDO" ] && $SUDO mv /tmp/composer /usr/local/bin/composer || $SUDO mv /tmp/composer /usr/local/bin/composer
-fi
 cd "$APP_DIR"
 [ -w "$APP_DIR" ] || $SUDO chown -R "$(whoami)": "$APP_DIR"
-composer install --no-dev --no-interaction --quiet 2>/dev/null || \
-  (composer config -g repos.packagist composer https://mirrors.aliyun.com/composer/ && composer install --no-dev --no-interaction --quiet)
+# vendor 随仓库分发（PHP 8.2 环境验证过的完整依赖），存在则跳过 composer
+if [ -d "$APP_DIR/vendor" ] && [ -f "$APP_DIR/vendor/autoload.php" ]; then
+  echo "==> vendor 已随仓库分发，跳过 composer install"
+else
+  command -v composer >/dev/null || { curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --quiet; }
+  composer install --no-dev --no-interaction --no-plugins 2>&1 | tail -25
+  [ -f "$APP_DIR/vendor/autoload.php" ] || { echo "!! composer install 失败（上方为完整报错）"; exit 1; }
+fi
 
 echo "==> [4/7] 数据库"
 $SUDO service mariadb start 2>/dev/null || $SUDO service mysql start 2>/dev/null || ($SUDO mysqld_safe &) ; sleep 4
