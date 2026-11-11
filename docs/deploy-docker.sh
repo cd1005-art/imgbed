@@ -30,6 +30,15 @@ cd "$APP_DIR"
 $SUDO chmod -R a+w "$APP_DIR" 2>/dev/null || true
 
 echo "==> [2/5] 生成 docker-compose 与配置"
+
+# compose 插件检测与安装（v2 插件 / v1 二进制）
+if ! docker compose version >/dev/null 2>&1 && ! command -v docker-compose >/dev/null; then
+  echo "    - 安装 docker compose 插件"
+  $SUDO apt-get install -y -qq docker-compose-plugin 2>/dev/null \
+    || $SUDO apt-get install -y -qq docker-compose 2>/dev/null \
+    || { echo "!! compose 插件安装失败，请手动安装后重跑"; exit 1; }
+fi
+DC="docker compose"; $DC version >/dev/null 2>&1 || DC="docker-compose"
 mkdir -p docker
 cat > docker/nginx.conf <<'EOF'
 server {
@@ -121,15 +130,20 @@ EOF
 chmod 600 .env
 
 echo "==> [4/5] 启动容器 + Composer 安装 + 导库"
-$SUDO docker compose up -d mysql nginx php 2>/dev/null || $SUDO docker-compose up -d mysql nginx php
-sleep 8
+$SUDO $DC up -d mysql nginx php
+sleep 3
+
+echo "    - 等待 MySQL 就绪（首次初始化约 15-30s）"
+for i in $(seq 1 30); do
+  $SUDO $DC exec -T mysql mysqladmin ping -uroot -p"$MYSQL_ROOT_PASS" --silent >/dev/null 2>&1 && break
+  sleep 2
+done
 
 echo "    - Composer 安装依赖（容器内 PHP 8.3，产物落到代码卷）"
-$SUDO docker run --rm -v "$(cd .. && pwd)":/app -w /app/think-8.1.3 composer:2 composer install --no-dev --no-interaction --quiet 2>/dev/null \
-  || $SUDO docker run --rm -v "$(dirname "$APP_DIR")":/app -w /app/think-8.1.3 composer:2 composer install --no-dev --no-interaction --quiet
+$SUDO docker run --rm -v "$(dirname "$APP_DIR")":/app -w /app/think-8.1.3 composer:2 composer install --no-dev --no-interaction --quiet
 
 echo "    - 导入 install.sql"
-$SUDO docker compose exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASS" "$DB_NAME" < install.sql
+$SUDO $DC exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASS" "$DB_NAME" < install.sql
 
 echo "    - 目录权限（fpm 容器 www-data=33）"
 $SUDO chmod -R 777 runtime public/storage 2>/dev/null || true
