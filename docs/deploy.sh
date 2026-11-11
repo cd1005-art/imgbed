@@ -36,12 +36,16 @@ ADMIN_PASS="admin123"
 
 echo "==> [1/7] 安装系统依赖（自适应系统自带 PHP 版本）"
 export DEBIAN_FRONTEND=noninteractive
-$SUDO apt-get update -qq
-$SUDO apt-get install -y -qq nginx mariadb-server unzip curl git php-fpm php-mysql php-mbstring php-fileinfo php-gd php-curl php-xml php-zip || {
-  echo "!! php-fpm 元包安装失败，尝试 php8.x 具名包"
-  $SUDO apt-get install -y -qq php8.3-fpm php8.3-mysql php8.3-mbstring php8.3-fileinfo php8.3-gd php8.3-curl php8.3-xml php8.3-zip || \
-  $SUDO apt-get install -y -qq php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-fileinfo php8.2-gd php8.2-curl php8.2-xml php8.2-zip
-}
+
+# 清理坏 PPA（ondrej/php 在 Ubuntu 26.04 无 Release，会导致 update 失败）
+$SUDO rm -f /etc/apt/sources.list.d/ondrej*.list* 2>/dev/null || true
+
+# update 失败（个别源抖动）不中断，用已缓存索引继续
+$SUDO apt-get update -qq || true
+$SUDO apt-get install -y -qq nginx mariadb-server unzip curl git php-fpm php-mysql php-mbstring php-fileinfo php-gd php-curl php-xml php-zip || \
+  $SUDO apt-get install -y -qq nginx mariadb-server unzip curl git php8.4-fpm php8.4-mysql php8.4-mbstring php8.4-fileinfo php8.4-gd php8.4-curl php8.4-xml php8.4-zip || \
+  $SUDO apt-get install -y -qq nginx mariadb-server unzip curl git php8.3-fpm php8.3-mysql php8.3-mbstring php8.3-fileinfo php8.3-gd php8.3-curl php8.3-xml php8.3-zip || \
+  $SUDO apt-get install -y -qq nginx mariadb-server unzip curl git php8.2-fpm php8.2-mysql php8.2-mbstring php8.2-fileinfo php8.2-gd php8.2-curl php8.2-xml php8.2-zip
 php -v | head -1
 
 # 探测实际 fpm sock
