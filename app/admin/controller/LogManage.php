@@ -39,26 +39,78 @@ class LogManage extends Base
         ]);
     }
 
-    /** Token 列表 */
+    /** Token 列表（筛选：关键词/状态） */
     public function tokens()
     {
-        $page = max(1, (int)$this->request->param('page', 1));
+        $page   = max(1, (int)$this->request->param('page', 1));
+        $kw     = trim((string)$this->request->param('kw', ''));
+        $status = (string)$this->request->param('status', '');
 
-        $q = Db::name('api_tokens')->alias('t')
-            ->leftJoin('users u', 'u.id = t.user_id')
-            ->field('t.*, u.email as user_email, u.nickname as user_nickname')
-            ->order('t.id', 'desc');
+        $build = function () use ($kw, $status) {
+            $q = Db::name('api_tokens')->alias('t')
+                ->leftJoin('img_users u', 'u.id = t.user_id')
+                ->field('t.*, u.email as user_email, u.nickname as user_nickname');
+            if ($kw !== '') {
+                $q->where(function ($qq) use ($kw) {
+                    $qq->where('t.name', 'like', '%' . $kw . '%')
+                       ->whereOr('u.email', 'like', '%' . $kw . '%')
+                       ->whereOr('u.nickname', 'like', '%' . $kw . '%');
+                });
+            }
+            if ($status !== '') { $q->where('t.status', (int)$status); }
+            return $q;
+        };
 
-        $list  = $q->page($page, 20)->select();
-        $total = Db::name('api_tokens')->count();
+        $list  = $build()->order('t.id', 'desc')->page($page, 20)->select();
+        $total = $build()->count();
 
         return $this->adminView('admin/token', [
             'page'    => 'token',
             'list'    => $list,
+            'kw'      => $kw,
+            'status'  => $status,
             'page_no' => $page,
             'total'   => $total,
             'pages'   => (int)ceil($total / 20) ?: 1,
         ]);
+    }
+
+    /** Token 编辑保存：名称/日调用上限/容量上限 */
+    public function saveToken(int $id)
+    {
+        $token = ApiToken::find($id);
+        if (!$token) {
+            return json(['status' => false, 'message' => 'Token 不存在']);
+        }
+        Db::name('api_tokens')->where('id', $id)->update([
+            'name'        => mb_substr(trim((string)$this->request->post('name', $token->name)), 0, 30) ?: $token->name,
+            'daily_limit' => max(0, (int)$this->request->post('daily_limit', 0)),
+            'quota_limit' => max(0, (int)$this->request->post('quota_limit_mb', 0)) * 1048576,
+            'update_time' => time(),
+        ]);
+        return json(['status' => true, 'message' => '已保存']);
+    }
+
+    /** Token 批量：action=enable/disable/delete */
+    public function batchToken()
+    {
+        $action = (string)$this->request->post('action', '');
+        $ids    = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择 Token']);
+        }
+        if ($action === 'delete') {
+            Db::name('api_tokens')->whereIn('id', $ids)->delete();
+            return json(['status' => true, 'message' => '已删除 ' . count($ids) . ' 个 Token']);
+        }
+        if (!in_array($action, ['enable', 'disable'], true)) {
+            return json(['status' => false, 'message' => '参数错误']);
+        }
+        Db::name('api_tokens')->whereIn('id', $ids)->update([
+            'status'      => $action === 'enable' ? 1 : 2,
+            'update_time' => time(),
+        ]);
+        return json(['status' => true, 'message' => ($action === 'enable' ? '已启用 ' : '已停用 ') . count($ids) . ' 个 Token']);
     }
 
     /** Token 停用/启用 */

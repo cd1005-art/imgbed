@@ -1,0 +1,27 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">审核设置</h1>
+
+<section class="panel">
+  <h2 class="panel-title">AI 图片审核</h2>
+  <p class="panel-sub">上传后同步机审：拒绝自动冻结外链，拿不准转人工复审（后台上传日志可查判定理由）。</p>
+  <form class="form form-grid" id="auditForm">
+    <label class="field"><span class="field-label">全局审核驱动</span>
+      <select name="default_audit_driver">
+        <option value="none" {if condition="($settings['default_audit_driver'] ?? 'none') eq 'none'"}selected{/if}>不审核</option>
+        <option value="local_nsfw" {if condition="($settings['default_audit_driver'] ?? '') eq 'local_nsfw'"}selected{/if}>本地 NSFW 模型</option>
+        <option value="llm_vlm" {if condition="($settings['default_audit_driver'] ?? '') eq 'llm_vlm'"}selected{/if}>多模态大模型</option>
+      </select>
+    </label>
+    <label class="field field-wide"><span class="field-label">LLM 审核端点（OpenAI 兼容，自动补 /chat/completions）</span><input type="text" name="llm_audit_endpoint" value="{$settings.llm_audit_endpoint|default=''}" placeholder="http://host:8788/v1"></label>
+    <label class="field"><span class="field-label">LLM 审核密钥</span><input type="text" name="llm_audit_key" value="{$settings.llm_audit_key|default=''}"></label>
+    <label class="field"><span class="field-label">LLM 审核模型（需支持图片输入）</span><input type="text" name="llm_audit_model" value="{$settings.llm_audit_model|default=''}" placeholder="deepseek-v4.1-flash"></label>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存审核设置</button></div>
+  </form>
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminAudit');</script>
+{/block}

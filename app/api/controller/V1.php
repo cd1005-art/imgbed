@@ -67,6 +67,11 @@ class V1 extends BaseController
 
         $this->token = $token;
         $this->user  = $user;
+
+        // 调用统计：鉴权通过的每次 API 请求计 1 次（upload/info/list/delete 统一口径）
+        Db::name('api_tokens')->where('id', $token->id)
+            ->inc('request_count')
+            ->update(['last_used_time' => time()]);
     }
 
     /**
@@ -109,10 +114,6 @@ class V1 extends BaseController
         if (str_starts_with($url, '/')) {
             $url = $this->request->domain() . $url;
         }
-
-        // 更新 Token 计数
-        Db::name('api_tokens')->where('id', $this->token->id)
-            ->inc('request_count')->update(['last_used_time' => time()]);
 
         // 统一返回：Lsky 兼容字段 + 原生扩展
         return json([

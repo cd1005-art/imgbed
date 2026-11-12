@@ -1,21 +1,46 @@
 {extend name="admin/layout"}
 
 {block name="content"}
-<h1 class="page-title">API Token <span class="count">{$total} 个</span></h1>
+<div class="page-toolbar">
+  <h1 class="page-title">API Token <span class="count">{$total} 个</span></h1>
+  <form class="search-bar" method="get" action="/admin/token">
+    <input type="text" name="kw" value="{$kw}" placeholder="Token名/属主邮箱/昵称" style="width:180px">
+    <select name="status" class="filter-select">
+      <option value="">全部状态</option>
+      <option value="1" {if condition="$status eq '1'"}selected{/if}>启用</option>
+      <option value="2" {if condition="$status eq '2'"}selected{/if}>停用</option>
+    </select>
+    <button class="btn btn-sm" type="submit">筛选</button>
+  </form>
+</div>
+
+<div class="batch-bar" id="tokenBatchBar" hidden>
+  <span id="tokenBatchCount">已选 0 个</span>
+  <button class="btn-ghost-sm" data-token-batch="enable">批量启用</button>
+  <button class="btn-ghost-sm" data-token-batch="disable">批量停用</button>
+  <button class="btn-ghost-sm btn-danger-sm" data-token-batch="delete">批量删除</button>
+  <button class="btn-ghost-sm" id="tokenBatchClear">取消选择</button>
+</div>
 
 <table class="table">
-  <thead><tr><th>ID</th><th>名称</th><th>属主</th><th>Token</th><th>调用</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="tokenCheckAll"></th><th>ID</th><th>名称</th><th>属主</th><th>Token</th><th>日上限</th><th>容量上限</th><th>调用</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
-    <tr>
+    <tr data-tid="{$vo.id}">
+      <td><input type="checkbox" class="token-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td>{$vo.name}</td>
-      <td>{$vo.user_nickname|default='-'} <span class="count">{$vo.user_email|default=''}</span></td>
+      <td class="td-clip" title="{$vo.user_email|default=''}">{$vo.user_nickname|default=$vo.user_email}</td>
       <td class="mono td-clip" title="{$vo.token}">{$vo.token}</td>
+      <td>{if condition="$vo.daily_limit gt 0"}{$vo.daily_limit}{else /}不限{/if}</td>
+      <td>{if condition="$vo.quota_limit gt 0"}{:round($vo.quota_limit / 1048576, 1)} MB{else /}不限{/if}</td>
       <td>{$vo.request_count}</td>
       <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
       <td>{if condition="$vo.last_used_time gt 0"}{:date('m-d H:i', ts($vo.last_used_time))}{else /}-{/if}</td>
-      <td class="td-actions"><button class="btn-ghost-sm" data-token-toggle="{$vo.id}">{if condition="$vo.status eq 1"}停用{else /}启用{/if}</button></td>
+      <td class="td-actions">
+        <button class="btn-ghost-sm" data-token-edit="{$vo.id}">编辑</button>
+        <button class="btn-ghost-sm" data-token-toggle="{$vo.id}">{if condition="$vo.status eq 1"}停用{else /}启用{/if}</button>
+      </td>
     </tr>
     {/volist}
   </tbody>
@@ -23,13 +48,13 @@
 
 {if condition="$pages gt 1"}
 <nav class="pager">
-  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}">上一页</a>{/if}
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}&status={$status}">上一页</a>{/if}
   <span class="pager-info">{$page_no} / {$pages}</span>
-  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}">下一页</a>{/if}
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}&status={$status}">下一页</a>{/if}
 </nav>
 {/if}
 {/block}
 
 {block name="script"}
-<script>pageBoot('adminToken');</script>
+<script>window.__tokens = {:json_encode($list)}; pageBoot('adminToken');</script>
 {/block}

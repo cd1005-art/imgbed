@@ -40,12 +40,17 @@ Route::group(function () {
     Route::post('payment/plan', 'PaymentManage/savePlan');
     Route::post('payment/plan/delete/:id', 'PaymentManage/deletePlan');
 
+    Route::get('site', 'AdManage/site');
+    Route::post('site/save', 'AdManage/siteSave');
     Route::get('ad', 'AdManage/index');
     Route::post('ad/slot', 'AdManage/saveSlot');
-    Route::post('ad/settings', 'AdManage/saveSettings');
+    Route::get('audit', 'AdManage/audit');
+    Route::post('audit/save', 'AdManage/auditSave');
 
     Route::get('log', 'LogManage/index');
     Route::get('token', 'LogManage/tokens');
+    Route::post('token/save/:id', 'LogManage/saveToken');
+    Route::post('token/batch', 'LogManage/batchToken');
     Route::post('token/toggle/:id', 'LogManage/toggleToken');
 
 })->middleware(\app\admin\middleware\CheckAdmin::class);

@@ -1,0 +1,44 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">站点设置</h1>
+
+<section class="panel">
+  <h2 class="panel-title">基础配置</h2>
+  <form class="form form-grid" id="siteForm">
+    <label class="field"><span class="field-label">站点名</span><input type="text" name="site_name" value="{$settings.site_name|default='逍遥图床'}"></label>
+    <label class="field"><span class="field-label">运营模式</span>
+      <select name="operation_mode">
+        <option value="free_ad" {if condition="($settings['operation_mode'] ?? '') eq 'free_ad'"}selected{/if}>纯免费+广告</option>
+        <option value="free_pay" {if condition="($settings['operation_mode'] ?? 'free_pay') eq 'free_pay'"}selected{/if}>免费+付费双层</option>
+        <option value="invite" {if condition="($settings['operation_mode'] ?? '') eq 'invite'"}selected{/if}>邀请制纯付费（禁游客上传）</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">开放注册</span>
+      <select name="allow_register">
+        <option value="1" {if condition="($settings['allow_register'] ?? '1') eq '1'"}selected{/if}>开放</option>
+        <option value="0" {if condition="($settings['allow_register'] ?? '') eq '0'"}selected{/if}>关闭</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">游客策略组</span>
+      <select name="guest_group_id">
+        {foreach $groups as $g}
+        <option value="{$g.id}" {if condition="($settings['guest_group_id'] ?? '1') eq $g.id"}selected{/if}>{$g.name}</option>
+        {/foreach}
+      </select>
+    </label>
+    <label class="field"><span class="field-label">注册默认组</span>
+      <select name="register_group_id">
+        {foreach $groups as $g}
+        <option value="{$g.id}" {if condition="($settings['register_group_id'] ?? '2') eq $g.id"}selected{/if}>{$g.name}</option>
+        {/foreach}
+      </select>
+    </label>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存设置</button></div>
+  </form>
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminSite');</script>
+{/block}

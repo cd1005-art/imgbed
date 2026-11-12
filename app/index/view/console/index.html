@@ -33,7 +33,13 @@
     <input type="text" id="tokenName" maxlength="30" placeholder="Token 名称（可空）">
     <button class="btn" type="button" id="tokenCreateBtn"><svg class="ic"><use href="#i-key"/></svg> 生成</button>
   </div>
-  <p class="token-new" id="tokenNew" hidden>新 Token（只显示这一次，先存好）：<code class="url-text" id="tokenNewVal"></code></p>
+  <div class="token-new" id="tokenNew" hidden>
+    <p style="margin:0 0 6px">已生成（刷新页面后此提示消失，Token 仍可在下方列表随时查看）：</p>
+    <div class="url-line">
+      <code class="url-text" id="tokenNewVal"></code>
+      <button class="btn btn-sm" type="button" id="tokenNewCopy">复制</button>
+    </div>
+  </div>
 
   {if condition="empty($tokens)"}
   <p class="empty-line">还没有 Token。</p>
@@ -41,9 +47,12 @@
   <ul class="token-list" id="tokenList">
     {volist name="tokens" id="t"}
     <li class="token-item" data-id="{$t.id}">
-      <span class="token-name">{$t.name}</span>
-      <code class="token-val">{$t.token|substr=0,10}…</code>
+      <div class="token-main">
+        <span class="token-name">{$t.name}</span>
+        <code class="token-full">{$t.token}</code>
+      </div>
       <span class="token-meta">调用 {$t.request_count} 次</span>
+      <button class="btn-ghost-sm" type="button" data-copy-token="{$t.token}">复制</button>
       <button class="icon-btn icon-danger" type="button" data-token-del="{$t.id}" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>
     </li>
     {/volist}

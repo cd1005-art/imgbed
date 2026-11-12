@@ -14,14 +14,62 @@ use think\facade\Db;
  */
 class AdManage extends Base
 {
+    /** 广告位管理 */
     public function index()
     {
         return $this->adminView('admin/ad', [
-            'page'   => 'ad',
-            'slots'  => AdSlot::order('sort', 'asc')->select(),
-            'settings' => Setting::allSettings(),
-            'groups' => StrategyGroup::where('status', 1)->select(),
+            'page'  => 'ad',
+            'slots' => AdSlot::order('sort', 'asc')->select(),
         ]);
+    }
+
+    /** 站点设置 */
+    public function site()
+    {
+        return $this->adminView('admin/site', [
+            'page'     => 'site',
+            'settings' => Setting::allSettings(),
+            'groups'   => StrategyGroup::where('status', 1)->select(),
+        ]);
+    }
+
+    /** 站点设置保存 */
+    public function siteSave()
+    {
+        $allowed = ['site_name', 'operation_mode', 'allow_register', 'guest_group_id', 'register_group_id'];
+        $all = $this->request->post();
+        $saved = 0;
+        foreach ($allowed as $key) {
+            if (array_key_exists($key, $all)) {
+                Setting::saveKey($key, (string)$all[$key]);
+                $saved++;
+            }
+        }
+        return json(['status' => true, 'message' => "已保存 {$saved} 项设置"]);
+    }
+
+    /** 审核设置 */
+    public function audit()
+    {
+        return $this->adminView('admin/audit', [
+            'page'     => 'audit',
+            'settings' => Setting::allSettings(),
+        ]);
+    }
+
+    /** 审核设置保存 */
+    public function auditSave()
+    {
+        $allowed = ['default_audit_driver', 'llm_audit_endpoint', 'llm_audit_key', 'llm_audit_model'];
+        $all = $this->request->post();
+        $saved = 0;
+        foreach ($allowed as $key) {
+            if (array_key_exists($key, $all)) {
+                Setting::saveKey($key, (string)$all[$key]);
+                $saved++;
+            }
+        }
+        return json(['status' => true, 'message' => "已保存 {$saved} 项审核设置"]);
     }
 
     /** 广告位保存 */
@@ -49,22 +97,4 @@ class AdManage extends Base
         return json(['status' => true, 'message' => '已保存']);
     }
 
-    /** 站点设置保存（运营模式/注册开关等，白名单键） */
-    public function saveSettings()
-    {
-        $allowed = [
-            'site_name', 'operation_mode', 'allow_register',
-            'guest_group_id', 'register_group_id',
-            'default_audit_driver', 'llm_audit_endpoint', 'llm_audit_key', 'llm_audit_model',
-        ];
-        $all = $this->request->post();
-        $saved = 0;
-        foreach ($allowed as $key) {
-            if (array_key_exists($key, $all)) {
-                Setting::saveKey($key, (string)$all[$key]);
-                $saved++;
-            }
-        }
-        return json(['status' => true, 'message' => "已保存 {$saved} 项设置"]);
-    }
 }
