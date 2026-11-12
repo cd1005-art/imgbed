@@ -39,7 +39,12 @@ class ImageManage extends Base
             return $q;
         };
 
-        $list  = $build()->order('i.id', 'desc')->page($page, $size)->select();
+        $list  = $build()->order('i.id', 'desc')->page($page, $size)->select()->each(function ($item) {
+            $item['user_display'] = (int)$item['user_id'] === 0
+                ? '游客'
+                : ($item['user_nickname'] ?: ($item['user_email'] ?: ('ID:' . $item['user_id'])));
+            return $item;
+        });
         $total = $build()->count();
 
         // 用户下拉（筛选用）

@@ -56,7 +56,7 @@
       <td>{$vo.id}</td>
       <td><a href="/i/{$vo.path}" target="_blank"><img class="thumb" src="/i/{$vo.path}" alt=""></a></td>
       <td class="td-clip" title="{$vo.name}">{$vo.name}</td>
-      <td class="td-clip" title="{$vo.user_email|default=''}">{if condition="$vo.user_id eq 0"}<span class="count">游客</span>{else /}{$vo.user_nickname|default=($vo.user_email ?: $vo.user_id)}{/if}</td>
+      <td class="td-clip">{$vo.user_display}</td>
       <td>{:round($vo.size / 1024, 1)} KB</td>
       <td class="td-clip" title="{$storages[$vo.storage_id]|default='-'}">{$storages[$vo.storage_id]|default='-'}</td>
       <td>{if condition="$vo.audit_status eq 0"}待审{elseif condition="$vo.audit_status eq 1"}通过{elseif condition="$vo.audit_status eq 2"}<span class="danger">拒绝</span>{else /}复审{/if}</td>
