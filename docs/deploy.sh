@@ -199,6 +199,20 @@ echo "==> [7/7] 验证"
 sleep 1
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$PORT/" || echo 000)
 
+# 端口没人监听（容器里 service reload 常见假成功）→ 直接拉起 nginx master 再测
+if [ "$HTTP_CODE" = "000" ] || [ "$HTTP_CODE" = "00000" ]; then
+  echo "==> $PORT 未监听，直接启动 nginx master"
+  $SUDO ss -tln 2>/dev/null | grep -q ":$PORT " || $SUDO nginx 2>&1 | head -3 || true
+  sleep 1
+  $SUDO ss -tlnp 2>/dev/null | grep ":$PORT " | head -2
+  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$PORT/" || echo 000)
+  # 仍不通：输出诊断信息
+  if [ "$HTTP_CODE" = "000" ]; then
+    echo "==> 诊断：nginx 进程 = $(pgrep -c nginx 2>/dev/null || echo 0)"
+    $SUDO tail -5 /var/log/nginx/error.log 2>/dev/null
+  fi
+fi
+
 cat <<EOF
 
 ============================================================
