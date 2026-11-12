@@ -36,9 +36,9 @@
     <label class="field"><span class="field-label">允许扩展名</span><input type="text" name="allow_ext" id="g_ext" value="jpg,jpeg,png,gif,webp"></label>
     <label class="field"><span class="field-label">存储实例</span>
       <select name="storage_id" id="g_storage">
-        {volist name="storages" id="s" key="k"}
-        <option value="{$k}">{$s}</option>
-        {/volist}
+        {foreach $storages as $sid => $sname}
+        <option value="{$sid}">{$sname}</option>
+        {/foreach}
       </select>
     </label>
     <label class="field"><span class="field-label">免广告</span>
