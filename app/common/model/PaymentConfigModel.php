@@ -6,7 +6,7 @@ namespace app\common\model;
 use think\Model;
 
 /**
- * 支付配置（平移 cx：config 字段 JSON 含 api_url/pid/key/gateway_type）
+ * 支付配置（易支付协议：config 字段 JSON 含 api_url/pid/key/gateway_type）
  */
 class PaymentConfigModel extends Model
 {

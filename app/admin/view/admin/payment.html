@@ -4,10 +4,13 @@
 <h1 class="page-title">支付管理</h1>
 
 <section class="panel">
-  <h2 class="panel-title">支付网关（易支付协议，平移自 cx）</h2>
-  <p class="panel-sub">逍遥PAY 填 <code class="inline-code">gateway_type=xpay</code>（下单接口 {网关域名}/submit.php）；标准易支付填 <code class="inline-code">gateway_type=yipay</code>（接口 {网关域名}/api/submit.php）。</p>
+  <h2 class="panel-title">支付网关</h2>
+  <div class="hint-bar">
+    <p class="panel-sub">对接易支付协议网关（支持支付宝、微信、QQ 钱包），先选择「网关类型」，再填写接口地址（只填域名即可，保存后自动拼接下单接口）。</p>
+    <p class="panel-sub">下单接口按网关类型自动拼接：逍遥PAY <code class="inline-code">/submit.php</code>，标准易支付 <code class="inline-code">/api/submit.php</code>，选错会导致跳转支付页 404。</p>
+  </div>
   <form class="form form-grid" id="gatewayForm">
-    <label class="field field-wide"><span class="field-label">网关地址</span><input type="text" name="api_url" value="{$gateway.api_url}" placeholder="https://pay.xiaoyao.net"></label>
+    <label class="field"><span class="field-label">网关地址</span><input type="text" name="api_url" value="{$gateway.api_url}" placeholder="如 https://pay.example.com"></label>
     <label class="field"><span class="field-label">商户 PID</span><input type="text" name="pid" value="{$gateway.pid}"></label>
     <label class="field"><span class="field-label">商户密钥</span><input type="text" name="key" value="{$gateway.key}"></label>
     <label class="field"><span class="field-label">网关类型</span>
@@ -16,12 +19,15 @@
         <option value="yipay" {if condition="$gateway.gateway_type eq 'yipay'"}selected{/if}>标准易支付 YPAY（/api/submit.php）</option>
       </select>
     </label>
-    <label class="field"><span class="field-label">支付通道 type（alipay/wxpay 或通道 ID）</span><input type="text" name="pay_type" value="{$gateway.pay_type}" placeholder="通道 ID 直接填数字，如 6"></label>
+    <label class="field"><span class="field-label">支付通道 type</span>
+      <input type="text" name="pay_type" value="{$gateway.pay_type}" placeholder="alipay / wxpay / 通道 ID">
+      <span class="field-hint">支付宝填 alipay、微信填 wxpay；逍遥PAY 商户后台的通道 ID 直接填数字（如 6）。</span>
+    </label>
     <label class="field"><span class="field-label">开关</span>
-      <select name="is_open">
-        <option value="1" {if condition="$is_open eq 1"}selected{/if}>开启</option>
-        <option value="0" {if condition="$is_open eq 0"}selected{/if}>关闭</option>
-      </select>
+      <div class="switch-group">
+        <input type="radio" name="is_open" value="1" id="gw_on" {if condition="$is_open eq 1"}checked{/if}><label for="gw_on">开启</label>
+        <input type="radio" name="is_open" value="0" id="gw_off" {if condition="$is_open eq 0"}checked{/if}><label for="gw_off">关闭</label>
+      </div>
     </label>
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存网关</button></div>
   </form>

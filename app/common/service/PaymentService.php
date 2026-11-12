@@ -12,7 +12,7 @@ use think\facade\Db;
 use think\facade\Log;
 
 /**
- * 支付服务（易支付协议，平移自 cx PaymentService）
+ * 支付服务（易支付协议）
  *
  * 网关：逍遥PAY {api_url}/submit.php / 标准易支付 {api_url}/api/submit.php
  * 签名：剔除 sign/sign_type → ksort → a=b&c=d（空值跳过）→ 拼 key → MD5
@@ -48,7 +48,7 @@ class PaymentService
         return $apiUrl . (($this->config['gateway_type'] ?? 'xpay') === 'yipay' ? '/api/submit.php' : '/submit.php');
     }
 
-    /** 签名（cx 同款实现） */
+    /** 签名（易支付协议标准 MD5 签名） */
     public function generateSign(array $params, string $key = ''): string
     {
         $key = $key !== '' ? $key : (string)($this->config['key'] ?? '');

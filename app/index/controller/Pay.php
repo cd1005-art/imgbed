@@ -9,7 +9,7 @@ use app\common\service\PaymentService;
 use think\facade\Log;
 
 /**
- * 支付回调（cx 同款双回调）
+ * 支付回调（易支付协议双回调）
  * notify：异步 POST，返回纯文本 success/fail（网关以文本判定）
  * return：同步 GET，验签后跳转
  */

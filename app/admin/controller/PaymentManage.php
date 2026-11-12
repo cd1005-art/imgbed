@@ -12,7 +12,7 @@ use app\common\model\Order;
 use think\facade\Db;
 
 /**
- * 支付管理：网关配置（平移 cx 易支付协议）+ 套餐 + 订单
+ * 支付管理：网关配置（易支付协议）+ 套餐 + 订单
  */
 class PaymentManage extends Base
 {
@@ -32,7 +32,7 @@ class PaymentManage extends Base
         ]);
     }
 
-    /** 网关配置保存（字段与 cx PaymentService 对齐，pay_type 支持通道 ID） */
+    /** 网关配置保存（pay_type 支持支付宝/wxpay 或通道 ID） */
     public function saveGateway()
     {
         $data = [
