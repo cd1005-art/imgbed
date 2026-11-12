@@ -1,5 +1,7 @@
 <div align="center">
 
+![XiaoYao ImageBed](docs/assets/banner.png)
+
 # XiaoYao ImageBed · 逍遥图床
 
 **自托管图床：上传即得稳定外链，带开放 API、多存储驱动、AI 审核、易支付变现**
@@ -20,6 +22,20 @@ PHP 8.2 · ThinkPHP 8.1 · MIT License
 - **AI 审核**：多模态大模型（OpenAI 兼容端点）或本地 NSFW 模型，拒绝自动冻结，误判转人工复审
 - **运营变现**：易支付协议支付（逍遥PAY / 标准易支付）、VIP 套餐、免费/付费/邀请制三种运营模式、广告位系统
 - **完整后台**：仪表盘、图片、用户、策略组、存储、支付、广告、Token、日志九大模块
+
+## 界面预览
+
+| 前台上传 | 我的图库 |
+|:---:|:---:|
+| ![上传](docs/screenshots/home-upload.png) | ![图库](docs/screenshots/gallery.png) |
+
+| VIP 套餐 | 后台仪表盘 |
+|:---:|:---:|
+| ![VIP](docs/screenshots/vip-plans.png) | ![仪表盘](docs/screenshots/admin-dashboard.png) |
+
+| 图片管理（多存储 · 模型名审计） | |
+|:---:|:---:|
+| ![图片管理](docs/screenshots/admin-images.png) | |
 
 ## 环境要求
 
@@ -88,3 +104,11 @@ docs/DEPLOY.md            # 部署文档
 ## License
 
 MIT © [cd1005-art](https://github.com/cd1005-art)
+
+---
+
+## 交流
+
+- **QQ 群：556269215** —— 使用答疑、功能建议、部署支持
+- Issue：https://github.com/cd1005-art/imgbed/issues
+- License：[MIT](LICENSE)
