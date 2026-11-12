@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$page_title|default='后台'} · {$site_name}</title>
-<link rel="stylesheet" href="/static/imgbed.css?v=8">
-<link rel="stylesheet" href="/static/admin.css?v=8">
+<link rel="stylesheet" href="/static/imgbed.css?v=9">
+<link rel="stylesheet" href="/static/admin.css?v=9">
 </head>
 <body class="admin-body">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -27,14 +27,14 @@
   <div class="side-brand">{$site_name} <span class="side-tag">后台</span></div>
   <nav class="side-nav">
     <a href="/admin" class="{if condition="$page eq 'dashboard'"}active{/if}"><svg class="ic"><use href="#i-dash"/></svg> 仪表盘</a>
+    <a href="/admin/site" class="{if condition="$page eq 'site'"}active{/if}"><svg class="ic"><use href="#i-group"/></svg> 站点设置</a>
     <a href="/admin/image" class="{if condition="$page eq 'image'"}active{/if}"><svg class="ic"><use href="#i-image"/></svg> 图片管理</a>
     <a href="/admin/user" class="{if condition="$page eq 'user'"}active{/if}"><svg class="ic"><use href="#i-user"/></svg> 用户管理</a>
     <a href="/admin/group" class="{if condition="$page eq 'group'"}active{/if}"><svg class="ic"><use href="#i-group"/></svg> 策略组</a>
     <a href="/admin/storage" class="{if condition="$page eq 'storage'"}active{/if}"><svg class="ic"><use href="#i-storage"/></svg> 存储管理</a>
     <a href="/admin/payment" class="{if condition="$page eq 'payment'"}active{/if}"><svg class="ic"><use href="#i-pay"/></svg> 支付管理</a>
-    <a href="/admin/site" class="{if condition="$page eq 'site'"}active{/if}"><svg class="ic"><use href="#i-group"/></svg> 站点设置</a>
     <a href="/admin/ad" class="{if condition="$page eq 'ad'"}active{/if}"><svg class="ic"><use href="#i-ad"/></svg> 广告管理</a>
-    <a href="/admin/audit" class="{if condition="$page eq 'audit'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 审核设置</a>
+    <a href="/admin/model" class="{if condition="$page eq 'model'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> 模型设置</a>
     <a href="/admin/token" class="{if condition="$page eq 'token'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> API Token</a>
     <a href="/admin/log" class="{if condition="$page eq 'log'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 上传日志</a>
   </nav>
@@ -49,8 +49,8 @@
 </main>
 
 <div id="toast" class="toast" hidden></div>
-<script src="/static/imgbed.js?v=8"></script>
-<script src="/static/admin.js?v=8"></script>
+<script src="/static/imgbed.js?v=9"></script>
+<script src="/static/admin.js?v=9"></script>
 {block name="script"}{/block}
 </body>
 </html>

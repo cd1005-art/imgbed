@@ -3,18 +3,33 @@
 {block name="content"}
 <div class="page-toolbar">
   <h1 class="page-title">上传日志 <span class="count">{$total} 条</span></h1>
-  <div class="search-bar">
-    <a class="btn-ghost-sm {if condition="$result eq -1"}active{/if}" href="?result=-1">全部</a>
-    <a class="btn-ghost-sm {if condition="$result eq 1"}active{/if}" href="?result=1">成功</a>
-    <a class="btn-ghost-sm {if condition="$result eq 0"}active{/if}" href="?result=0">失败</a>
-  </div>
+  <form class="search-bar" method="get" action="/admin/log">
+    <input type="text" name="ufilter" value="{$ufilter}" placeholder="用户ID/邮箱/昵称（游客填 0）" style="width:210px">
+    <input type="text" name="ip" value="{$ip}" placeholder="IP" style="width:110px">
+    <select name="result" class="filter-select">
+      <option value="-1" {if condition="$result eq -1"}selected{/if}>全部结果</option>
+      <option value="1" {if condition="$result eq 1"}selected{/if}>成功</option>
+      <option value="0" {if condition="$result eq 0"}selected{/if}>失败</option>
+    </select>
+    <input type="date" name="dfrom" value="{$dfrom}" class="filter-select">
+    <input type="date" name="dto" value="{$dto}" class="filter-select">
+    <button class="btn btn-sm" type="submit">筛选</button>
+  </form>
+</div>
+
+<div class="batch-bar" id="logBatchBar" hidden>
+  <span id="logBatchCount">已选 0 条</span>
+  <button class="btn-ghost-sm btn-danger-sm" data-log-batch="delete">批量删除</button>
+  <button class="btn-ghost-sm" id="logCleanBtn">清理 30 天前</button>
+  <button class="btn-ghost-sm" id="logBatchClear">取消选择</button>
 </div>
 
 <table class="table">
-  <thead><tr><th>ID</th><th>结果</th><th>用户</th><th>图片ID</th><th>IP</th><th>UA</th><th>原因</th><th>时间</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="logCheckAll"></th><th>ID</th><th>结果</th><th>用户</th><th>图片ID</th><th>IP</th><th>UA</th><th>原因</th><th>时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr>
+      <td><input type="checkbox" class="log-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td>{if condition="$vo.result eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
       <td>{$vo.user_id}</td>
@@ -23,6 +38,7 @@
       <td class="td-clip" title="{$vo.ua}">{$vo.ua}</td>
       <td class="td-clip" title="{$vo.reason}">{$vo.reason|default='-'}</td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+      <td class="td-actions"><button class="btn-ghost-sm btn-danger-sm" data-log-del="{$vo.id}">删除</button></td>
     </tr>
     {/volist}
   </tbody>
@@ -30,9 +46,13 @@
 
 {if condition="$pages gt 1"}
 <nav class="pager">
-  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&result={$result}">上一页</a>{/if}
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&result={$result}&ufilter={$ufilter}&ip={$ip}&dfrom={$dfrom}&dto={$dto}">上一页</a>{/if}
   <span class="pager-info">{$page_no} / {$pages}</span>
-  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&result={$result}">下一页</a>{/if}
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&result={$result}&ufilter={$ufilter}&ip={$ip}&dfrom={$dfrom}&dto={$dto}">下一页</a>{/if}
 </nav>
 {/if}
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminLog');</script>
 {/block}

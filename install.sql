@@ -64,6 +64,8 @@ CREATE TABLE `img_strategy_groups` (
   `allow_ext` varchar(255) NOT NULL DEFAULT 'jpg,jpeg,png,gif,webp,avif,bmp' COMMENT '允许扩展名',
   `keep_days` int NOT NULL DEFAULT '0' COMMENT '保留天数(0=永久)',
   `storage_id` int unsigned NOT NULL DEFAULT '1' COMMENT '默认存储实例ID',
+  `token_daily_limit` int NOT NULL DEFAULT '0' COMMENT 'Token日调用上限(0不限)',
+  `token_quota_mb` int NOT NULL DEFAULT '0' COMMENT 'Token容量上限MB(0不限)',
   `audit_driver` varchar(30) NOT NULL DEFAULT '' COMMENT '审核驱动(空=跟全局)',
   `ad_exempt` tinyint NOT NULL DEFAULT '0' COMMENT '1=该组免广告',
   `is_guest` tinyint NOT NULL DEFAULT '0' COMMENT '1=游客默认组',
@@ -138,7 +140,11 @@ CREATE TABLE `img_api_tokens` (
   `token` varchar(64) NOT NULL DEFAULT '' COMMENT 'Token值',
   `daily_limit` int NOT NULL DEFAULT '0' COMMENT '日调用上限(0=跟策略组)',
   `quota_limit` bigint NOT NULL DEFAULT '0' COMMENT '容量上限字节(0=跟策略组)',
-  `request_count` int unsigned NOT NULL DEFAULT '0' COMMENT '累计调用',
+  `request_count` int unsigned NOT NULL DEFAULT '0' COMMENT '累计调用（鉴权通过）',
+  `upload_count` int NOT NULL DEFAULT '0' COMMENT '上传成功次数',
+  `list_count` int NOT NULL DEFAULT '0' COMMENT '列表调用次数',
+  `info_count` int NOT NULL DEFAULT '0' COMMENT '信息调用次数',
+  `delete_count` int NOT NULL DEFAULT '0' COMMENT '删除调用次数',
   `last_used_time` int unsigned NOT NULL DEFAULT '0',
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '1启用 2停用',
   `create_time` int unsigned NOT NULL DEFAULT '0',
@@ -272,6 +278,42 @@ CREATE TABLE `img_settings` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_skey` (`skey`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='站点设置';
+
+-- ------------------------------------------------------------
+-- 14. API 调用日志
+-- ------------------------------------------------------------
+DROP TABLE IF EXISTS `img_api_call_logs`;
+CREATE TABLE `img_api_call_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `token_id` int unsigned NOT NULL DEFAULT '0',
+  `user_id` int unsigned NOT NULL DEFAULT '0',
+  `action` varchar(20) NOT NULL DEFAULT '' COMMENT 'upload/list/info/delete',
+  `success` tinyint NOT NULL DEFAULT '0',
+  `ip` varchar(45) NOT NULL DEFAULT '',
+  `create_time` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `idx_token_time` (`token_id`,`create_time`),
+  KEY `idx_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='API调用日志';
+
+-- ------------------------------------------------------------
+-- 15. 审核模型（多模型链）
+-- ------------------------------------------------------------
+DROP TABLE IF EXISTS `img_audit_models`;
+CREATE TABLE `img_audit_models` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL DEFAULT '',
+  `endpoint` varchar(255) NOT NULL DEFAULT '',
+  `api_key` varchar(255) NOT NULL DEFAULT '',
+  `model_name` varchar(80) NOT NULL DEFAULT '',
+  `status` tinyint NOT NULL DEFAULT '1',
+  `sort` int NOT NULL DEFAULT '0',
+  `fail_count` int NOT NULL DEFAULT '0',
+  `last_ok_time` int unsigned NOT NULL DEFAULT '0',
+  `create_time` int unsigned NOT NULL DEFAULT '0',
+  `update_time` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审核模型（多模型链）';
 
 -- ============================================================
 -- 初始数据

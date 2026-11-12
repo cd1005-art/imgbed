@@ -49,10 +49,12 @@
     <li class="token-item" data-id="{$t.id}">
       <div class="token-main">
         <span class="token-name">{$t.name}</span>
-        <code class="token-full">{$t.token}</code>
+        <code class="token-full">{$t.token_masked}</code>
       </div>
-      <span class="token-meta">调用 {$t.request_count} 次</span>
-      <button class="btn-ghost-sm" type="button" data-copy-token="{$t.token}">复制</button>
+      <span class="token-meta">
+        上传成功 {$t.upload_count} 次 · 日上限 {if condition="$t.daily_limit gt 0"}{$t.daily_limit}{else /}不限{/if}
+        · 容量上限 {if condition="$t.quota_limit gt 0"}{:round($t.quota_limit / 1048576, 1)} MB{else /}不限{/if}
+      </span>
       <button class="icon-btn icon-danger" type="button" data-token-del="{$t.id}" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>
     </li>
     {/volist}

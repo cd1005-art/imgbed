@@ -26,6 +26,13 @@ class Console extends Base
         $used       = (int)$user->quota_used;
 
         $tokens = ApiToken::where('user_id', $user->id)->order('id', 'desc')->select();
+        // Token 保护：列表只显示中间截断值（完整值仅生成时展示一次）
+        foreach ($tokens as $tk) {
+            $full = (string)$tk->token;
+            $tk['token_masked'] = mb_strlen($full) > 20
+                ? mb_substr($full, 0, 6) . str_repeat('•', 16) . mb_substr($full, -6)
+                : $full;
+        }
 
         return $this->siteView('console/index', [
             'user'        => $user,

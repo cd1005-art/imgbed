@@ -22,8 +22,17 @@
   <button class="btn-ghost-sm" id="tokenBatchClear">取消选择</button>
 </div>
 
+<div class="stat-row" style="margin-bottom:16px">
+  <div class="stat"><span class="stat-num">{$stats.today}</span><span class="stat-label">今日调用</span></div>
+  <div class="stat"><span class="stat-num">{$stats.today_up}</span><span class="stat-label">今日上传成功</span></div>
+  <div class="stat"><span class="stat-num">{$stats.week}</span><span class="stat-label">近 7 日调用</span></div>
+  <div class="stat"><span class="stat-num">{$stats.week_up}</span><span class="stat-label">近 7 日上传成功</span></div>
+  <div class="stat"><span class="stat-num">{$stats.total}</span><span class="stat-label">累计调用</span></div>
+  <div class="stat"><span class="stat-num">{$stats.total_up}</span><span class="stat-label">累计上传成功</span></div>
+</div>
+
 <table class="table">
-  <thead><tr><th style="width:28px"><input type="checkbox" id="tokenCheckAll"></th><th>ID</th><th>名称</th><th>属主</th><th>Token</th><th>日上限</th><th>容量上限</th><th>调用</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="tokenCheckAll"></th><th>ID</th><th>名称</th><th>属主</th><th>Token</th><th>日上限</th><th>容量上限</th><th>上传</th><th>列表</th><th>信息</th><th>删除</th><th>总调用</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr data-tid="{$vo.id}">
@@ -31,9 +40,13 @@
       <td>{$vo.id}</td>
       <td>{$vo.name}</td>
       <td class="td-clip" title="{$vo.user_email|default=''}">{$vo.user_nickname|default=$vo.user_email}</td>
-      <td class="mono td-clip" title="{$vo.token}">{$vo.token}</td>
+      <td class="mono" style="max-width:340px; word-break:break-all; font-size:11px">{$vo.token}</td>
       <td>{if condition="$vo.daily_limit gt 0"}{$vo.daily_limit}{else /}不限{/if}</td>
       <td>{if condition="$vo.quota_limit gt 0"}{:round($vo.quota_limit / 1048576, 1)} MB{else /}不限{/if}</td>
+      <td>{$vo.upload_count}</td>
+      <td>{$vo.list_count}</td>
+      <td>{$vo.info_count}</td>
+      <td>{$vo.delete_count}</td>
       <td>{$vo.request_count}</td>
       <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
       <td>{if condition="$vo.last_used_time gt 0"}{:date('m-d H:i', ts($vo.last_used_time))}{else /}-{/if}</td>

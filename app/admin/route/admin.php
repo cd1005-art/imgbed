@@ -44,9 +44,15 @@ Route::group(function () {
     Route::post('site/save', 'AdManage/siteSave');
     Route::get('ad', 'AdManage/index');
     Route::post('ad/slot', 'AdManage/saveSlot');
-    Route::get('audit', 'AdManage/audit');
-    Route::post('audit/save', 'AdManage/auditSave');
+    Route::post('model/save', 'ModelManage/save');
+    Route::post('model/delete/:id', 'ModelManage/delete');
+    Route::post('model/move/:id/:dir', 'ModelManage/move');
+    Route::post('model/toggle/:id', 'ModelManage/toggle');
+    Route::post('model/driver', 'ModelManage/driverSave');
+    Route::get('model', 'ModelManage/index');
 
+    Route::post('log/delete/:id', 'LogManage/delete');
+    Route::post('log/batch', 'LogManage/batch');
     Route::get('log', 'LogManage/index');
     Route::get('token', 'LogManage/tokens');
     Route::post('token/save/:id', 'LogManage/saveToken');

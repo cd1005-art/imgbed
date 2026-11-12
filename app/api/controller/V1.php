@@ -115,6 +115,8 @@ class V1 extends BaseController
             $url = $this->request->domain() . $url;
         }
 
+        $this->logCall('upload', true);
+
         // 统一返回：Lsky 兼容字段 + 原生扩展
         return json([
             'status'  => true,
@@ -153,6 +155,7 @@ class V1 extends BaseController
         if (!$image) {
             $this->fail(404, '图片不存在');
         }
+        $this->logCall('info');
         return json(['status' => true, 'code' => 200, 'message' => 'success', 'data' => $image->toArray()]);
     }
 
@@ -176,6 +179,7 @@ class V1 extends BaseController
                 return $item;
             });
 
+        $this->logCall('list');
         return json([
             'status'  => true,
             'code'    => 200,
@@ -197,7 +201,31 @@ class V1 extends BaseController
         }
 
         $image->save(['status' => Image::ST_DELETED, 'delete_time' => time()]);
+        $this->logCall('delete');
         return json(['status' => true, 'code' => 200, 'message' => 'success', 'data' => null]);
+    }
+
+    /** 分类计数 + 调用日志（每请求一条） */
+    protected function logCall(string $action, bool $success = true): void
+    {
+        try {
+            // 分类列
+            $fieldMap = ['upload' => 'upload_count', 'list' => 'list_count', 'info' => 'info_count', 'delete' => 'delete_count'];
+            if (isset($fieldMap[$action])) {
+                Db::name('api_tokens')->where('id', $this->token->id)->inc($fieldMap[$action])->update();
+            }
+            // 调用日志（统计卡片与周期分析用）
+            Db::name('api_call_logs')->insert([
+                'token_id'    => (int)$this->token->id,
+                'user_id'     => (int)$this->user->id,
+                'action'      => $action,
+                'success'     => $success ? 1 : 0,
+                'ip'          => $this->clientIp(),
+                'create_time' => time(),
+            ]);
+        } catch (\Throwable $e) {
+            // 统计失败不影响业务
+        }
     }
 
     /** 统一失败输出并终止 */
