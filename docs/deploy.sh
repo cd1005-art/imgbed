@@ -160,6 +160,12 @@ PHP_SOCK=$(find /run/php -name "*fpm*.sock" 2>/dev/null | head -1)
 [ -z "$PHP_SOCK" ] && PHP_SOCK="127.0.0.1:9000"
 echo "==> PHP-FPM: $PHP_SOCK"
 
+# fastcgi_pass 构造：unix sock 需加 unix: 前缀，TCP 直接用
+case "$PHP_SOCK" in
+  /*) FCGI_PASS="unix:$PHP_SOCK" ;;
+  *)  FCGI_PASS="$PHP_SOCK" ;;
+esac
+
 $SUDO tee /etc/nginx/sites-available/imgbed > /dev/null <<EOF
 server {
     listen $PORT;
@@ -171,7 +177,7 @@ server {
     location / { try_files \$uri \$uri/ /index.php\$is_args\$args; }
 
     location ~ \.php\$ {
-        fastcgi_pass $PHP_SOCK;
+        fastcgi_pass $FCGI_PASS;
         fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
         include fastcgi_params;
     }
