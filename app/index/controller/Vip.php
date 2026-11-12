@@ -29,6 +29,7 @@ class Vip extends Base
                 'keep_text'    => ($g && (int)$g->keep_days > 0) ? ((int)$g->keep_days . ' 天后清理') : '永久保留',
                 'ext_str'      => $g ? implode(' / ', array_map('strtoupper', $g->allowedExt())) : '-',
                 'ad_exempt'    => (bool)($g && (int)$g->ad_exempt === 1),
+                'max_tokens'   => ($g && (int)$g->max_tokens > 0) ? ((int)$g->max_tokens . ' 个') : '不限',
             ];
             $planList[] = $plan;
         }

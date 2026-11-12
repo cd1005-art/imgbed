@@ -8,10 +8,10 @@
   <p class="panel-sub">审核开启后使用下方模型卡片：按卡片顺序优先，失败自动切换；也可在协同模式选择并行投票。卡片全部失效时转人工复审（不冻结外链）。</p>
   <form class="form form-grid" id="driverForm">
     <label class="field"><span class="field-label">图片审核</span>
-      <div class="switch-group">
-        <input type="radio" name="audit_enabled" value="1" id="audit_on" {if condition="($settings['default_audit_driver'] ?? 'none') neq 'none'"}checked{/if}><label for="audit_on">开启</label>
-        <input type="radio" name="audit_enabled" value="0" id="audit_off" {if condition="($settings['default_audit_driver'] ?? 'none') eq 'none'"}checked{/if}><label for="audit_off">关闭</label>
-      </div>
+      <select name="audit_enabled">
+        <option value="1" {if condition="($settings['default_audit_driver'] ?? 'none') neq 'none'"}selected{/if}>开启</option>
+        <option value="0" {if condition="($settings['default_audit_driver'] ?? 'none') eq 'none'"}selected{/if}>关闭</option>
+      </select>
     </label>
     <label class="field"><span class="field-label">协同模式</span>
       <select name="audit_mode">

@@ -98,7 +98,8 @@ class ImageManage extends Base
             if ($action === 'delete') {
                 $image->save(['status' => Image::ST_DELETED, 'delete_time' => time()]);
                 if ((int)$image->user_id > 0) {
-                    Db::name('users')->where('id', $image->user_id)->dec('quota_used', (int)$image->size)->update();
+                    Db::name('users')->where('id', $image->user_id)
+                        ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
                 }
                 try {
                     \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
@@ -290,7 +291,8 @@ class ImageManage extends Base
         }
         $image->save(['status' => Image::ST_DELETED, 'delete_time' => time()]);
         if ((int)$image->user_id > 0) {
-            Db::name('users')->where('id', $image->user_id)->dec('quota_used', (int)$image->size)->update();
+            Db::name('users')->where('id', $image->user_id)
+                ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
         }
         // 同步删除存储文件（释放磁盘/网盘空间）
         try {

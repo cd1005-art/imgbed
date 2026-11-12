@@ -40,7 +40,10 @@ class UserManage extends Base
             return $q;
         };
 
-        $list  = $build()->page($page, 20)->select();
+        $list  = $build()->page($page, 20)->select()->each(function ($item) {
+            $item['token_count'] = (int)Db::name('api_tokens')->where('user_id', $item['id'])->count();
+            return $item;
+        });
         $total = $build()->count();
 
         return $this->adminView('admin/user', [

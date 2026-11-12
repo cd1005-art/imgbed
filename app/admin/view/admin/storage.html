@@ -9,7 +9,12 @@
     <span class="storage-name">{$vo.name}</span>
     <code class="inline-code">{$vo.driver}</code>
     <span class="storage-meta">外链：{if condition="$vo.url_mode eq 1"}代理中转{else /}302直链{/if}</span>
-    <span class="storage-meta">引用 {$usage[$vo.id]['c']|default=0} 张</span>
+    <span class="storage-meta">引用 {$usage[$vo.id]['c']|default=0} 张 · 图床已用 {$vo.used_str}</span>
+    {if condition="$vo.driver eq 'local'"}
+    <span class="storage-meta">磁盘剩余 <b>{$vo.disk_free_str}</b> / 总 {$vo.disk_total_str}（已用 {$vo.disk_pct}%）</span>
+    {else /}
+    <span class="storage-meta" title="网盘的剩余容量由云盘服务商控制，标准 WebDAV 协议不提供配额查询">网盘剩余：受服务商限制不可读</span>
+    {/if}
     <span class="storage-meta">{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</span>
     <div class="storage-ops">
       <button class="btn-ghost-sm" data-probe="{$vo.id}">测试连通</button>

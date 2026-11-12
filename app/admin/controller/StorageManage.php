@@ -15,10 +15,41 @@ class StorageManage extends Base
 {
     public function index()
     {
+        $usage = Db::name('images')->where('status', 1)
+            ->field('storage_id, count(*) as c, sum(size) as s')
+            ->group('storage_id')
+            ->select()->toArray();
+        $usageMap = [];
+        foreach ($usage as $u) {
+            $usageMap[(int)$u['storage_id']] = ['c' => (int)$u['c'], 's' => (int)$u['s']];
+        }
+
+        $list = StorageConfig::order('id', 'asc')->select();
+        foreach ($list as $item) {
+            $cfg = is_array($item->config) ? $item->config : [];
+            $usedBytes = $usageMap[(int)$item->id]['s'] ?? 0;
+            $item['used_str'] = \app\common\service\UploadService::formatSize($usedBytes);
+            $item['disk_free_str'] = '';
+            $item['disk_total_str'] = '';
+
+            if ($item->driver === 'local') {
+                // 本地磁盘：实时读取剩余/总量
+                $root = public_path() . ltrim((string)($cfg['root'] ?? 'storage/images'), '/\');
+                $probeDir = is_dir($root) ? $root : public_path();
+                $free = @disk_free_space($probeDir);
+                $total = @disk_total_space($probeDir);
+                if ($free !== false && $total !== false) {
+                    $item['disk_free_str'] = \app\common\service\UploadService::formatSize((int)$free);
+                    $item['disk_total_str'] = \app\common\service\UploadService::formatSize((int)$total);
+                    $item['disk_pct'] = $total > 0 ? (int)round(($total - $free) / $total * 100) : 0;
+                }
+            }
+        }
+
         return $this->adminView('admin/storage', [
             'page'  => 'storage',
-            'list'  => StorageConfig::order('id', 'asc')->select(),
-            'usage' => Db::name('images')->where('status', 1)->column('count(*) as c,sum(size) as s', 'storage_id'),
+            'list'  => $list,
+            'usage' => $usageMap,
         ]);
     }
 

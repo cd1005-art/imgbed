@@ -54,7 +54,8 @@ class Gallery extends Base
 
         $image->save(['status' => Image::ST_DELETED, 'delete_time' => time()]);
         // 配额回退
-        Db::name('users')->where('id', $user->id)->dec('quota_used', (int)$image->size)->update();
+        Db::name('users')->where('id', $user->id)
+            ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
         // 同步删除存储文件
         try {
             \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);

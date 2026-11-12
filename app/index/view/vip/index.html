@@ -30,6 +30,7 @@ document.querySelectorAll('.buy-btn').forEach(function (b) {
       <p>单图上限：<b>{$vo.rights.max_size_str}</b></p>
       <p>图片保留：<b>{$vo.rights.keep_text}</b></p>
       <p>允许格式：<b>{$vo.rights.ext_str}</b></p>
+      <p>可生成 Token：<b>{$vo.rights.max_tokens}</b></p>
       {if condition="$vo.rights.ad_exempt"}<p>免广告：<b>是</b></p>{/if}
     </div>
     {if condition="$vo.description neq ''"}<p class="plan-note">{$vo.description}</p>{/if}

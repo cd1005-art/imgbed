@@ -31,7 +31,7 @@
 </div>
 
 <table class="table">
-  <thead><tr><th style="width:28px"><input type="checkbox" id="userCheckAll"></th><th>ID</th><th>邮箱</th><th>昵称</th><th>策略组</th><th>已用容量</th><th>状态</th><th>注册IP</th><th>注册时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="userCheckAll"></th><th>ID</th><th>邮箱</th><th>昵称</th><th>策略组</th><th>已用容量</th><th>Token 数</th><th>状态</th><th>注册IP</th><th>注册时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr data-uid="{$vo.id}">
@@ -47,6 +47,7 @@
         </select>
       </td>
       <td>{:round($vo.quota_used / 1048576, 1)} MB</td>
+      <td>{$vo.token_count}</td>
       <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">禁用</span>{/if}</td>
       <td class="mono">{$vo.last_login_ip}</td>
       <td>{:date('Y-m-d', ts($vo.create_time))}</td>

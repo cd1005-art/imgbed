@@ -41,6 +41,8 @@ class Console extends Base
             'quota_used'  => $used,
             'quota_pct'   => $quotaTotal > 0 ? min(100, (int)($used / $quotaTotal * 100)) : 0,
             'tokens'      => $tokens,
+            'token_used'  => ApiToken::where('user_id', $user->id)->count(),
+            'token_limit' => ($group && (int)$group->max_tokens > 0) ? (int)$group->max_tokens : 0,
             // 权益面板（与后台策略组同步展示）
             'rights' => [
                 'group_name'   => $group->name ?? '默认',

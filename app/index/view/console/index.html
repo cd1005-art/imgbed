@@ -29,6 +29,7 @@
 <section class="panel">
   <h2 class="panel-title">API Token</h2>
   <p class="panel-sub">给 PicGo / ShareX / Typora 或自家程序用。请求头 <code class="inline-code">X-API-TOKEN</code>，上传地址 <code class="inline-code">/api/v1/upload</code>。</p>
+  <p class="panel-sub">Token 数量：<b>已用 {$token_used} 个</b> / {if condition="$token_limit gt 0"}上限 {$token_limit} 个{else /}不限{/if}</p>
 
   <div class="token-create">
     <input type="text" id="tokenName" maxlength="30" placeholder="Token 名称（可空）">
