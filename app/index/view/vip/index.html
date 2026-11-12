@@ -24,7 +24,15 @@ document.querySelectorAll('.buy-btn').forEach(function (b) {
   <div class="plan-card">
     <p class="plan-name">{$vo.name}</p>
     <p class="plan-price"><span class="plan-amount">{:round($vo.price / 100, 2)}</span> 元 / {$vo.days} 天</p>
-    <p class="plan-desc">{$vo.description}</p>
+    <div class="rights-list plan-rights">
+      <p>容量：<b>{$vo.rights.quota_str}</b></p>
+      <p>日传次数：<b>{$vo.rights.daily_count}</b></p>
+      <p>单图上限：<b>{$vo.rights.max_size_str}</b></p>
+      <p>图片保留：<b>{$vo.rights.keep_text}</b></p>
+      <p>允许格式：<b>{$vo.rights.ext_str}</b></p>
+      {if condition="$vo.rights.ad_exempt"}<p>免广告：<b>是</b></p>{/if}
+    </div>
+    {if condition="$vo.description neq ''"}<p class="plan-note">{$vo.description}</p>{/if}
     {if condition="empty($channels)"}
     <p class="field-hint">支付通道暂未开通，联系站长</p>
     {else /}

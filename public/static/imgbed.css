@@ -250,3 +250,12 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 .rights-list { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
 .rights-list p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
 .rights-list b { color: var(--ink); font-weight: 600; }
+
+/* ---------- VIP 套餐权益（同步生效策略组） ---------- */
+.plan-rights { margin: 10px 0 12px; gap: 4px; }
+.plan-rights p { font-size: 12.5px; }
+.plan-note {
+  margin: 0 0 12px; padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  color: var(--ink-2); font-size: 12.5px; line-height: 1.6;
+}

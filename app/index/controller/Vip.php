@@ -17,6 +17,22 @@ class Vip extends Base
         $plans = VipPlan::where('status', 1)->order('sort', 'asc')->select();
         $msg   = (string)($this->request->session('msg') ?? '');
 
+        // 套餐权益：实时读「生效策略组」，后台调整策略组后前台自动同步
+        $planList = [];
+        foreach ($plans as $plan) {
+            $g = \app\common\model\StrategyGroup::where('id', $plan->group_id)->where('status', 1)->find();
+            $plan['rights'] = [
+                'quota_str'    => ($g && (int)$g->quota_total > 0)
+                    ? round((int)$g->quota_total / 1073741824, 1) . ' GB 容量' : '容量不限',
+                'daily_count'  => ($g && (int)$g->daily_count > 0) ? (string)(int)$g->daily_count . ' 次' : '不限',
+                'max_size_str' => $g ? \app\common\service\UploadService::formatSize((int)$g->max_size) : '-',
+                'keep_text'    => ($g && (int)$g->keep_days > 0) ? ((int)$g->keep_days . ' 天后清理') : '永久保留',
+                'ext_str'      => $g ? implode(' / ', array_map('strtoupper', $g->allowedExt())) : '-',
+                'ad_exempt'    => (bool)($g && (int)$g->ad_exempt === 1),
+            ];
+            $planList[] = $plan;
+        }
+
         // 只展示后台已配置通道的支付方式
         $channels = [];
         $conf = \app\common\model\PaymentConfigModel::openYipay();
@@ -31,7 +47,7 @@ class Vip extends Base
 
         return $this->siteView('vip/index', [
             'page_title'    => 'VIP 套餐',
-            'plans'         => $plans,
+            'plans'         => $planList,
             'channels'      => $channels,
             'first_channel' => $channels ? array_key_first($channels) : '',
             'msg'           => $msg,
