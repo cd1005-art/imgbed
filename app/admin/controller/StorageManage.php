@@ -36,6 +36,14 @@ class StorageManage extends Base
             return json(['status' => false, 'message' => '暂只支持 local / webdav（s3、imagehost 二期）']);
         }
 
+        // 新增时防重复：同名同驱动的实例已存在则转为更新（连点/误点保护）
+        if ($id === 0) {
+            $dupId = Db::name('storage_configs')->where('name', $name)->where('driver', $driver)->value('id');
+            if ($dupId) {
+                $id = (int)$dupId;
+            }
+        }
+
         if ($driver === 'local') {
             $cfg = ['root' => trim((string)$this->request->post('root', 'storage/images'), '/\\')];
         } else {

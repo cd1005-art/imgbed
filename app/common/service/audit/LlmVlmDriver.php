@@ -21,6 +21,10 @@ class LlmVlmDriver implements AuditDriverInterface
     public function __construct(array $config)
     {
         $this->endpoint = trim((string)($config['endpoint'] ?? ''));
+        // 兼容只填 /v1 的写法：自动补全 chat completions 路径
+        if ($this->endpoint !== '' && !str_contains($this->endpoint, '/chat/completions')) {
+            $this->endpoint = rtrim($this->endpoint, '/') . '/chat/completions';
+        }
         $this->apiKey   = trim((string)($config['key'] ?? ''));
         $this->model    = trim((string)($config['model'] ?? ''));
     }
