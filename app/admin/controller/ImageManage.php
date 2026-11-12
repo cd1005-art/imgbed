@@ -73,7 +73,6 @@ class ImageManage extends Base
             'dfrom'    => $dfrom,
             'dto'      => $dto,
             'storages' => $storages,
-            'users'    => $users,
             'page_no'  => $page,
             'total'    => $total,
             'pages'    => (int)ceil($total / $size) ?: 1,
