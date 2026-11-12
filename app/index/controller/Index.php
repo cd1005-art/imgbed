@@ -11,15 +11,6 @@ use app\index\controller\Base;
  */
 class Index extends Base
 {
-    /** API 文档页 */
-    public function apiDoc()
-    {
-        return $this->siteView('index/api', [
-            'site_name' => \app\common\model\Setting::get('site_name', '逍遥图床'),
-            'domain'    => request()->domain(),
-        ]);
-    }
-
     public function index()
     {
         return json([
