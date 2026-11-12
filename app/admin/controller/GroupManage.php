@@ -20,9 +20,15 @@ class GroupManage extends Base
             $storages[(int)$r['id']] = $r['name'];
         }
 
+        // 列表注入 storage_name（模板动态键 + default 编译不可靠，改静态键访问）
+        $list = StrategyGroup::order('id', 'asc')->select()->each(function ($item) use ($storages) {
+            $item['storage_name'] = $storages[(int)$item['storage_id']] ?? '-';
+            return $item;
+        });
+
         return $this->adminView('admin/group', [
             'page'     => 'group',
-            'list'     => StrategyGroup::order('id', 'asc')->select(),
+            'list'     => $list,
             'storages' => $storages,
         ]);
     }

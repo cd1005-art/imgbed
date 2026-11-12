@@ -14,7 +14,7 @@
       <td>{$vo.daily_count ?: '不限'}</td>
       <td>{:round($vo.quota_total / 1073741824, 1)} GB</td>
       <td>{$vo.keep_days ?: '永久'}</td>
-      <td>{$storages[$vo.storage_id]|default='-'}</td>
+      <td>{$vo.storage_name|default='-'}</td>
       <td>{$vo.ad_exempt ? '是' : '否'}</td>
       <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
       <td class="td-actions"><button class="btn-ghost-sm" data-edit-group="{$vo.id}">编辑</button></td>
