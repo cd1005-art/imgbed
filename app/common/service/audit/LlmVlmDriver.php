@@ -16,7 +16,7 @@ class LlmVlmDriver implements AuditDriverInterface
     protected string $endpoint;
     protected string $apiKey;
     protected string $model;
-    protected int $timeout = 8;
+    protected int $timeout = 20;
 
     public function __construct(array $config)
     {
@@ -41,7 +41,7 @@ class LlmVlmDriver implements AuditDriverInterface
             return ['result' => 'review', 'score' => 0, 'detail' => '图片读取失败，转人工'];
         }
 
-        $payload = [
+        $basePayload = [
             'model'    => $this->model,
             'messages' => [
                 [
@@ -53,9 +53,27 @@ class LlmVlmDriver implements AuditDriverInterface
                 ],
             ],
             'temperature' => 0,
-            'max_tokens'  => 120,
+            'max_tokens'  => 1024,   // 思考模式会消耗大量 token，120 会导致 content 为空
         ];
 
+        // 优先关闭思考模式（deepseek-v4.1 支持 thinking.type=disabled，返回更快更稳）
+        $payload = $basePayload + ['thinking' => ['type' => 'disabled']];
+        $res = $this->post($payload);
+
+        // 部分模型不认识 thinking 参数会返回 400 → 回退不带该参数的请求
+        if ($res === false) {
+            $res = $this->post($basePayload);
+        }
+        if ($res === false) {
+            return ['result' => 'review', 'score' => 0, 'detail' => 'LLM 调用失败（网络或接口错误）'];
+        }
+
+        return $this->parseResponse((string)$res);
+    }
+
+    /** 发送请求，失败返回 false */
+    protected function post(array $payload)
+    {
         $ch = curl_init($this->endpoint);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -67,25 +85,29 @@ class LlmVlmDriver implements AuditDriverInterface
             ],
             CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
         ]);
-        $res = curl_exec($ch);
-        $err = curl_error($ch);
+        $res  = curl_exec($ch);
+        $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $err  = curl_error($ch);
         curl_close($ch);
 
-        if ($res === false || $err !== '') {
-            return ['result' => 'review', 'score' => 0, 'detail' => 'LLM 调用失败：' . $err];
-        }
-
-        return $this->parseResponse((string)$res);
+        return ($res === false || $err !== '' || $code >= 400) ? false : $res;
     }
 
     /** 解析 OpenAI 格式响应，提取 verdict JSON（容错截取第一个 {...}） */
     protected function parseResponse(string $raw): array
     {
         $data = json_decode($raw, true);
-        $text = (string)($data['choices'][0]['message']['content'] ?? '');
+        $msg  = $data['choices'][0]['message'] ?? [];
+        $text = (string)($msg['content'] ?? '');
+        // 思考模式下结论可能出现在 reasoning_content 尾部，content 为空时回退
+        if (trim($text) === '' && !empty($msg['reasoning_content'])) {
+            $text = (string)$msg['reasoning_content'];
+        }
+        // 剥离 ```json 代码块包裹
+        $text = preg_replace('/```(?:json)?\s*|```/', '', $text);
 
         if (!preg_match('/\{[^{}]*\}/s', $text, $m)) {
-            return ['result' => 'review', 'score' => 0, 'detail' => 'LLM 输出无法解析：' . mb_substr($text, 0, 100)];
+            return ['result' => 'review', 'score' => 0, 'detail' => 'LLM 输出无法解析：' . mb_substr(trim($text), 0, 100)];
         }
 
         $verdict = json_decode($m[0], true);

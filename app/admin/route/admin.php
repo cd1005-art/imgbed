@@ -13,6 +13,7 @@ Route::group(function () {
     Route::get('/', 'Index/dashboard');
     Route::get('logout', 'Index/logout');
 
+    Route::get('image/export', 'ImageManage/export');
     Route::get('image', 'ImageManage/index');
     Route::post('image/toggle/:id', 'ImageManage/toggle');
     Route::post('image/delete/:id', 'ImageManage/delete');

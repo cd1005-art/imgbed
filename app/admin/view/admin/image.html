@@ -24,6 +24,8 @@
       <option value="1" {if condition="$status eq '1'"}selected{/if}>正常</option>
       <option value="2" {if condition="$status eq '2'"}selected{/if}>冻结</option>
     </select>
+    <input type="date" name="dfrom" value="{$dfrom}" class="filter-select">
+    <input type="date" name="dto" value="{$dto}" class="filter-select">
     <button class="btn btn-sm" type="submit">筛选</button>
   </form>
 </div>
@@ -34,6 +36,9 @@
   <button class="btn-ghost-sm" data-batch="unfreeze">批量解冻</button>
   <button class="btn-ghost-sm btn-danger-sm" data-batch="delete">批量删除</button>
   <button class="btn-ghost-sm" id="batchClear">取消选择</button>
+</div>
+<div class="page-toolbar" style="justify-content:flex-end; margin-top:-8px">
+  <a class="btn btn-sm" id="exportBtn" href="/admin/image/export">导出 CSV</a>
 </div>
 
 <table class="table">

@@ -22,6 +22,8 @@ class ImageManage extends Base
         $sid    = (int)$this->request->param('sid', 0);       // 存储实例
         $audit  = (string)$this->request->param('audit', ''); // 审核状态 0/1/2/3
         $status = (string)$this->request->param('status', '');// 状态 1正常/2冻结
+        $dfrom  = (string)$this->request->param('dfrom', '');  // 起始日期 Y-m-d
+        $dto    = (string)$this->request->param('dto', '');    // 结束日期 Y-m-d
 
         $q = Image::where('status', '>', 0);
         if ($kw !== '')     { $q->where('name', 'like', '%' . $kw . '%'); }
@@ -29,6 +31,8 @@ class ImageManage extends Base
         if ($sid > 0)       { $q->where('storage_id', $sid); }
         if ($audit !== '')  { $q->where('audit_status', (int)$audit); }
         if ($status !== '') { $q->where('status', (int)$status); }
+        if ($dfrom !== '') { $q->where('create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
+        if ($dto !== '')   { $q->where('create_time', '<=', strtotime($dto . ' 23:59:59')); }
 
         $list  = $q->order('id', 'desc')->page($page, $size)->select();
         $total = (clone $q)->count();
@@ -47,6 +51,8 @@ class ImageManage extends Base
             'sid'      => $sid,
             'audit'    => $audit,
             'status'   => $status,
+            'dfrom'    => $dfrom,
+            'dto'      => $dto,
             'storages' => $storages,
             'page_no'  => $page,
             'total'    => $total,
@@ -81,6 +87,63 @@ class ImageManage extends Base
 
         $label = ['freeze' => '冻结', 'unfreeze' => '解冻', 'delete' => '删除'][$action];
         return json(['status' => true, 'message' => "已{$label} {$count} 张"]);
+    }
+
+    /** 按当前筛选导出 CSV */
+    public function export()
+    {
+        $kw     = trim((string)$this->request->param('kw', ''));
+        $uid    = (int)$this->request->param('uid', 0);
+        $sid    = (int)$this->request->param('sid', 0);
+        $audit  = (string)$this->request->param('audit', '');
+        $status = (string)$this->request->param('status', '');
+        $dfrom  = (string)$this->request->param('dfrom', '');
+        $dto    = (string)$this->request->param('dto', '');
+
+        $q = Image::where('status', '>', 0);
+        if ($kw !== '')     { $q->where('name', 'like', '%' . $kw . '%'); }
+        if ($uid > 0)       { $q->where('user_id', $uid); }
+        if ($sid > 0)       { $q->where('storage_id', $sid); }
+        if ($audit !== '')  { $q->where('audit_status', (int)$audit); }
+        if ($status !== '') { $q->where('status', (int)$status); }
+        if ($dfrom !== '')  { $q->where('create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
+        if ($dto !== '')    { $q->where('create_time', '<=', strtotime($dto . ' 23:59:59')); }
+
+        $storages = [];
+        foreach (Db::name('storage_configs')->field('id,name,driver')->select()->toArray() as $r) {
+            $storages[(int)$r['id']] = $r['name'] . '（' . $r['driver'] . '）';
+        }
+
+        $rows = $q->order('id', 'desc')->limit(5000)->select();
+        $domain = request()->domain();
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="images_' . date('Ymd_His') . '.csv"');
+        header('Cache-Control: no-store');
+        // BOM 保证 Excel 中文不乱码
+        echo "\xEF\xBB\xBF";
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['ID', '文件名', '外链URL', '存储路径', '用户ID', '大小(字节)', '存储实例', '审核状态', '状态', 'IP', '上传时间']);
+        $auditMap  = [0 => '待审', 1 => '通过', 2 => '拒绝', 3 => '人工复审'];
+        $statusMap = [1 => '正常', 2 => '冻结'];
+
+        foreach ($rows as $img) {
+            fputcsv($out, [
+                (int)$img->id,
+                (string)$img->name,
+                $domain . '/i/' . $img->path,
+                (string)$img->path,
+                (int)$img->user_id,
+                (int)$img->size,
+                $storages[(int)$img->storage_id] ?? '-',
+                $auditMap[(int)$img->audit_status] ?? '-',
+                $statusMap[(int)$img->status] ?? '-',
+                (string)$img->ip,
+                date('Y-m-d H:i:s', (int)$img->create_time),
+            ]);
+        }
+        fclose($out);
+        exit;
     }
 
     /** 冻结 / 解冻（外链即断） */
