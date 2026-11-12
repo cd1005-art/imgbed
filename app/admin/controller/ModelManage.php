@@ -31,6 +31,7 @@ class ModelManage extends Base
             'name'        => trim((string)$this->request->post('name', '')),
             'endpoint'    => trim((string)$this->request->post('endpoint', '')),
             'api_key'     => trim((string)$this->request->post('api_key', '')),
+            'type'        => in_array($this->request->post('type'), ['llm', 'local_nsfw'], true) ? (string)$this->request->post('type') : 'llm',
             'model_name'  => trim((string)$this->request->post('model_name', '')),
             'status'      => (int)$this->request->post('status', 1) === 1 ? 1 : 2,
             'update_time' => time(),

@@ -308,6 +308,7 @@ CREATE TABLE `img_audit_models` (
   `endpoint` varchar(255) NOT NULL DEFAULT '',
   `api_key` varchar(255) NOT NULL DEFAULT '',
   `model_name` varchar(80) NOT NULL DEFAULT '',
+  `type` varchar(20) NOT NULL DEFAULT 'llm' COMMENT 'llm/local_nsfw',
   `status` tinyint NOT NULL DEFAULT '1',
   `sort` int NOT NULL DEFAULT '0',
   `fail_count` int NOT NULL DEFAULT '0',

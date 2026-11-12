@@ -4,7 +4,7 @@
 <h1 class="page-title">策略组</h1>
 
 <table class="table">
-  <thead><tr><th>ID</th><th>组名</th><th>单图上限</th><th>日次数</th><th>总容量</th><th>保留天数</th><th>存储</th><th>免广告</th><th>状态</th><th>操作</th></tr></thead>
+  <thead><tr><th>ID</th><th>组名</th><th>单图上限</th><th>日次数</th><th>总容量</th><th>保留天数</th><th>Token 数量</th><th>存储</th><th>免广告</th><th>状态</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr>
@@ -14,6 +14,7 @@
       <td>{$vo.daily_count ?: '不限'}</td>
       <td>{:round($vo.quota_total / 1073741824, 1)} GB</td>
       <td>{$vo.keep_days ?: '永久'}</td>
+      <td>{if condition="$vo.max_tokens gt 0"}{$vo.max_tokens} 个{else /}不限{/if}</td>
       <td>{$vo.storage_name|default='-'}</td>
       <td>{$vo.ad_exempt ? '是' : '否'}</td>
       <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>

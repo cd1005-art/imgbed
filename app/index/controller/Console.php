@@ -49,7 +49,7 @@ class Console extends Base
                 'keep_text'    => ($group && (int)$group->keep_days > 0) ? ((int)$group->keep_days . ' 天后清理') : '永久保留',
                 'ext_str'      => $group ? implode(' / ', array_map('strtoupper', $group->allowedExt())) : '-',
                 'ad_exempt'    => ($group && (int)$group->ad_exempt === 1),
-                'max_tokens'   => ($group && (int)$group->max_tokens > 0) ? ('最多 ' . (int)$group->max_tokens . ' 个') : '最多 10 个',
+                'max_tokens'   => ($group && (int)$group->max_tokens > 0) ? ('最多 ' . (int)$group->max_tokens . ' 个') : '不限（系统上限 10 个）',
             ],
         ]);
     }

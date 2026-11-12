@@ -47,11 +47,14 @@ class MultiModelAuditDriver implements AuditDriverInterface
     {
         $errors = [];
         foreach ($models as $m) {
-            $result = (new LlmVlmDriver([
-                'endpoint' => (string)$m['endpoint'],
-                'key'      => (string)$m['api_key'],
-                'model'    => (string)$m['model_name'],
-            ]))->audit($localPath, $mime);
+            $driver = (($m['type'] ?? 'llm') === 'local_nsfw')
+                ? new LocalNsfwDriver(['endpoint' => (string)$m['endpoint']])
+                : new LlmVlmDriver([
+                    'endpoint' => (string)$m['endpoint'],
+                    'key'      => (string)$m['api_key'],
+                    'model'    => (string)$m['model_name'],
+                ]);
+            $result = $driver->audit($localPath, $mime);
 
             $failed = isset($result['detail']) && str_starts_with((string)$result['detail'], 'LLM 调用失败');
             if (!$failed) {
@@ -77,6 +80,9 @@ class MultiModelAuditDriver implements AuditDriverInterface
         $mh = curl_multi_init();
         $handles = [];
         foreach ($models as $m) {
+            if (($m['type'] ?? 'llm') === 'local_nsfw') {
+                continue; // 并行投票暂只聚合 LLM 模型；NSFW 服务请用顺序模式或独立卡片
+            }
             $url = rtrim((string)$m['endpoint'], '/');
             if (!str_contains($url, '/chat/completions')) {
                 $url .= '/chat/completions';

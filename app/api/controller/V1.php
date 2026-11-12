@@ -209,6 +209,9 @@ class V1 extends BaseController
         }
 
         $image->save(['status' => Image::ST_DELETED, 'delete_time' => time()]);
+        try {
+            \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
+        } catch (\Throwable $e) {}
         $this->logCall('delete');
         return json(['status' => true, 'code' => 200, 'message' => 'success', 'data' => null]);
     }

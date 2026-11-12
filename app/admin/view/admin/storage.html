@@ -4,10 +4,14 @@
 <h1 class="page-title">存储管理</h1>
 
 {volist name="list" id="vo" key="i"}
-<section class="panel" data-storage-panel="{$vo.id}">
-  <div class="panel-head">
-    <h2 class="panel-title">{$vo.name} <code class="inline-code">{$vo.driver}</code> <span class="count">外链{:($vo.url_mode eq 1) ? '代理' : '302直链'} · 引用图片 {:isset($usage[$vo.id]['c']) ? $usage[$vo.id]['c'] : 0} 张</span></h2>
-    <div class="td-actions">
+<section class="storage-row" data-storage-panel="{$vo.id}">
+  <div class="storage-line">
+    <span class="storage-name">{$vo.name}</span>
+    <code class="inline-code">{$vo.driver}</code>
+    <span class="storage-meta">外链：{if condition="$vo.url_mode eq 1"}代理中转{else /}302直链{/if}</span>
+    <span class="storage-meta">引用 {$usage[$vo.id]['c']|default=0} 张</span>
+    <span class="storage-meta">{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</span>
+    <div class="storage-ops">
       <button class="btn-ghost-sm" data-probe="{$vo.id}">测试连通</button>
       <button class="btn-ghost-sm" data-edit-storage="{$vo.id}">编辑</button>
       {if condition="$vo.id gt 1"}<button class="btn-ghost-sm btn-danger-sm" data-storage-del="{$vo.id}">删除</button>{/if}
@@ -39,10 +43,10 @@
       <label class="field field-wide"><span class="field-label">本地目录（相对 public/）</span><input type="text" name="root" value="{$vo.config.root|default='storage/images'}"></label>
     </div>
     <div class="cfg-fields" data-cfg="webdav" {if condition="$vo.driver neq 'webdav'"}hidden{/if}>
-      <label class="field field-wide"><span class="field-label">WebDAV 地址</span><input type="text" name="base_url" value="{$vo.config.base_url|default=''}" placeholder="http://alist:5244/dav"></label>
+      <label class="field field-wide"><span class="field-label">WebDAV 地址</span><input type="text" name="base_url" value="{$vo.config.base_url|default=''}" placeholder="http://host:5244/dav/目录"></label>
       <label class="field"><span class="field-label">用户名</span><input type="text" name="username" value="{$vo.config.username|default=''}"></label>
       <label class="field"><span class="field-label">密码</span><input type="text" name="password" value="{$vo.config.password|default=''}"></label>
-      <label class="field field-wide"><span class="field-label">直链模板（302 模式用，如 http://alist:5244/d/{path}）</span><input type="text" name="direct_url" value="{$vo.config.direct_url|default=''}"></label>
+      <label class="field field-wide"><span class="field-label">直链模板（302 模式，如 http://host:5244/d/目录/{path}）</span><input type="text" name="direct_url" value="{$vo.config.direct_url|default=''}"></label>
     </div>
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存</button></div>
   </form>
@@ -51,8 +55,7 @@
 
 <section class="panel">
   <h2 class="panel-title">新增存储实例</h2>
-  <button class="btn" type="button" id="storageNewBtn">+ 新增</button>
-  <form class="form form-grid storage-form" id="storage-form-0" hidden>
+  <form class="form form-grid storage-form" id="storage-form-0">
     <input type="hidden" name="id" value="0">
     <label class="field"><span class="field-label">实例名</span><input type="text" name="name" placeholder="例如：Alist 网盘"></label>
     <label class="field"><span class="field-label">驱动</span>
@@ -74,12 +77,12 @@
       <label class="field field-wide"><span class="field-label">本地目录（相对 public/）</span><input type="text" name="root" value="storage/images"></label>
     </div>
     <div class="cfg-fields" data-cfg="webdav" hidden>
-      <label class="field field-wide"><span class="field-label">WebDAV 地址</span><input type="text" name="base_url" placeholder="http://alist:5244/dav"></label>
+      <label class="field field-wide"><span class="field-label">WebDAV 地址</span><input type="text" name="base_url" placeholder="http://host:5244/dav/目录"></label>
       <label class="field"><span class="field-label">用户名</span><input type="text" name="username"></label>
       <label class="field"><span class="field-label">密码</span><input type="text" name="password"></label>
-      <label class="field field-wide"><span class="field-label">直链模板</span><input type="text" name="direct_url" placeholder="Alist 直链：http://IP:5244/d/挂载目录/{path}"></label>
+      <label class="field field-wide"><span class="field-label">直链模板</span><input type="text" name="direct_url" placeholder="http://host:5244/d/目录/{path}"></label>
     </div>
-    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存</button></div>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存新实例</button></div>
   </form>
 </section>
 {/block}

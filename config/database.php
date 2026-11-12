@@ -1,6 +1,8 @@
 <?php
 
 return [
+    // 关闭表结构字段缓存（新增列后 Model 立即识别）
+    'schema_cache' => false,
     // 默认使用的数据库连接配置
     'default'         => env('DB_DRIVER', 'mysql'),
 

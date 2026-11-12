@@ -100,6 +100,9 @@ class ImageManage extends Base
                 if ((int)$image->user_id > 0) {
                     Db::name('users')->where('id', $image->user_id)->dec('quota_used', (int)$image->size)->update();
                 }
+                try {
+                    \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
+                } catch (\Throwable $e) {}
             } else {
                 $image->save(['status' => $action === 'freeze' ? Image::ST_FROZEN : Image::ST_NORMAL, 'update_time' => time()]);
             }
@@ -202,6 +205,10 @@ class ImageManage extends Base
         if ((int)$image->user_id > 0) {
             Db::name('users')->where('id', $image->user_id)->dec('quota_used', (int)$image->size)->update();
         }
-        return json(['status' => true, 'message' => '已删除']);
+        // 同步删除存储文件（释放磁盘/网盘空间）
+        try {
+            \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
+        } catch (\Throwable $e) {}
+        return json(['status' => true, 'message' => '已删除（含存储文件）']);
     }
 }
