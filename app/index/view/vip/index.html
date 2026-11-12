@@ -25,11 +25,15 @@ document.querySelectorAll('.buy-btn').forEach(function (b) {
     <p class="plan-name">{$vo.name}</p>
     <p class="plan-price"><span class="plan-amount">{:round($vo.price / 100, 2)}</span> 元 / {$vo.days} 天</p>
     <p class="plan-desc">{$vo.description}</p>
+    {if condition="empty($channels)"}
+    <p class="field-hint">支付通道暂未开通，联系站长</p>
+    {else /}
     <div class="pay-channel-row" data-plan="{$vo.id}">
-      <label class="pay-ch"><input type="radio" name="channel_{$vo.id}" value="alipay" checked><span>支付宝</span></label>
-      <label class="pay-ch"><input type="radio" name="channel_{$vo.id}" value="wxpay"><span>微信</span></label>
-      <label class="pay-ch"><input type="radio" name="channel_{$vo.id}" value="qqpay"><span>QQ 钱包</span></label>
+      {foreach $channels as $ck => $cname}
+      <label class="pay-ch"><input type="radio" name="channel_{$vo.id}" value="{$ck}" {if condition="$ck eq $first_channel"}checked{/if}><span>{$cname}</span></label>
+      {/foreach}
     </div>
+    {/if}
     <button class="btn btn-block buy-btn" type="button" data-plan="{$vo.id}" data-base="/vip/buy/{$vo.id}">立即开通</button>
   </div>
   {/volist}

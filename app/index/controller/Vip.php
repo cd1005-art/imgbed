@@ -17,10 +17,24 @@ class Vip extends Base
         $plans = VipPlan::where('status', 1)->order('sort', 'asc')->select();
         $msg   = (string)($this->request->session('msg') ?? '');
 
+        // 只展示后台已配置通道的支付方式
+        $channels = [];
+        $conf = \app\common\model\PaymentConfigModel::openYipay();
+        if ($conf && is_array($conf->config) && !empty($conf->config['pay_channels'])) {
+            $names = ['alipay' => '支付宝', 'wxpay' => '微信', 'qqpay' => 'QQ 钱包'];
+            foreach ($conf->config['pay_channels'] as $k => $v) {
+                if (trim((string)$v) !== '' && isset($names[$k])) {
+                    $channels[$k] = $names[$k];
+                }
+            }
+        }
+
         return $this->siteView('vip/index', [
-            'page_title' => 'VIP 套餐',
-            'plans'      => $plans,
-            'msg'        => $msg,
+            'page_title'    => 'VIP 套餐',
+            'plans'         => $plans,
+            'channels'      => $channels,
+            'first_channel' => $channels ? array_key_first($channels) : '',
+            'msg'           => $msg,
         ]);
     }
 

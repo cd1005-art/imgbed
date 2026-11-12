@@ -4,10 +4,7 @@
 <section class="upload-zone" id="dropZone" tabindex="0" aria-label="上传图片">
   <svg class="ic ic-lg"><use href="#i-upload"/></svg>
   <p class="upload-title">拖图到这里，或点击选择</p>
-  <p class="upload-hint">支持 JPG / PNG / GIF / WebP
-    {if condition="$guest_group"}· 单图上限 {$max_size_str}{/if}
-    {if condition="!($user ?? null)"}· 游客图片保留 30 天{/if}
-  </p>
+  <p class="upload-hint">支持 {$allow_ext_str} · 单图上限 {$max_size_str} · {$keep_days_text} · {$daily_count_text}</p>
   <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.bmp" multiple hidden>
 </section>
 
@@ -35,7 +32,7 @@
 {if condition="$user ?? null"}
 <p class="quota-line">
   已用 {$quota_used_str} / {$quota_total_str}
-  · <a href="/gallery">管理图片</a>
+  · 当前策略：{$group.name|default='默认'} · <a href="/gallery">管理图片</a>
 </p>
 {else /}
 <p class="quota-line">游客上传图片 30 天后清理 · <a href="/register">注册</a> 免费得 1GB 永久空间</p>

@@ -34,6 +34,15 @@ class Console extends Base
             'quota_used'  => $used,
             'quota_pct'   => $quotaTotal > 0 ? min(100, (int)($used / $quotaTotal * 100)) : 0,
             'tokens'      => $tokens,
+            // 权益面板（与后台策略组同步展示）
+            'rights' => [
+                'group_name'   => $group->name ?? '默认',
+                'max_size_str' => $group ? \app\common\service\UploadService::formatSize((int)$group->max_size) : '-',
+                'daily_count'  => ($group && (int)$group->daily_count > 0) ? (string)(int)$group->daily_count : '不限',
+                'keep_text'    => ($group && (int)$group->keep_days > 0) ? ((int)$group->keep_days . ' 天后清理') : '永久保留',
+                'ext_str'      => $group ? implode(' / ', array_map('strtoupper', $group->allowedExt())) : '-',
+                'ad_exempt'    => ($group && (int)$group->ad_exempt === 1),
+            ],
         ]);
     }
 

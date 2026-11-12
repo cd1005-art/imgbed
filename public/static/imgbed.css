@@ -245,3 +245,12 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
   .form-inline { flex-direction: column; align-items: stretch; }
   .url-line { flex-direction: column; }
 }
+
+/* ---------- 权益面板（个人中心，与后台策略组同步） ---------- */
+.rights-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.rights-item {
+  font-size: 12px; color: var(--ink-2);
+  background: var(--code-bg); border-radius: var(--r-sm);
+  padding: 4px 10px;
+}
+.rights-item b { color: var(--ink); font-weight: 600; }

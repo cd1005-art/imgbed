@@ -12,9 +12,17 @@
   <div class="quota-bar"><div class="quota-fill" style="width:{$quota_pct}%"></div></div>
   <p class="quota-line">
     已用 {:round($quota_used / 1048576, 1)} MB / {:round($quota_total / 1073741824, 1)} GB（{$quota_pct}%）
-    {if condition="$user.vip_expire_time gt 0"}· VIP 至 {:date('Y-m-d', $user.vip_expire_time)}{else /}· 免费版{/if}
-    · 当前策略：{$group.name|default='默认'}
+    {if condition="$user.vip_expire_time gt 0"}· VIP 至 {:date('Y-m-d', (int)$user.vip_expire_time)}{else /}· 免费版{/if}
   </p>
+
+  <div class="rights-grid">
+    <span class="rights-item">当前策略：<b>{$rights.group_name}</b></span>
+    <span class="rights-item">日传次数：<b>{$rights.daily_count}</b></span>
+    <span class="rights-item">单图上限：<b>{$rights.max_size_str}</b></span>
+    <span class="rights-item">图片保留：<b>{$rights.keep_text}</b></span>
+    <span class="rights-item">允许格式：<b>{$rights.ext_str}</b></span>
+    {if condition="$rights.ad_exempt"}<span class="rights-item">免广告：<b>是</b></span>{/if}
+  </div>
 </section>
 
 <section class="panel">

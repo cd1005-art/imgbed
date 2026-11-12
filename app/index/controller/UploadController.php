@@ -31,11 +31,25 @@ class UploadController extends Base
             $quotaUsed  = (int)$user->quota_used;
         }
 
+        // 生效策略组：登录用户 → 所属组；游客 → 游客组
+        $group = $user
+            ? StrategyGroup::where('id', $user->group_id)->where('status', 1)->find()
+            : $guestGroup;
+        $allowExt = $group ? $group->allowedExt() : ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
         return $this->siteView('upload/index', [
             'user'             => $user,
             'site_name'        => Setting::get('site_name', '逍遥图床'),
             'guest_group'      => $guestGroup,
-            'max_size_str'     => $guestGroup ? UploadService::formatSize((int)$guestGroup->max_size) : '5 MB',
+            'group'            => $group,
+            'max_size_str'     => $group ? UploadService::formatSize((int)$group->max_size) : '5 MB',
+            'allow_ext_str'    => implode(' / ', array_map('strtoupper', $allowExt)),
+            'keep_days_text'   => ($group && (int)$group->keep_days > 0)
+                ? '图片保留 ' . (int)$group->keep_days . ' 天'
+                : '图片永久保留',
+            'daily_count_text' => ($group && (int)$group->daily_count > 0)
+                ? '每日可传 ' . (int)$group->daily_count . ' 次'
+                : '每日上传不限',
             'quota_used_str'   => UploadService::formatSize($quotaUsed),
             'quota_total_str'  => UploadService::formatSize($quotaTotal ?: 1073741824),
         ]);
