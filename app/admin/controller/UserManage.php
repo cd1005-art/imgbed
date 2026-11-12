@@ -40,8 +40,15 @@ class UserManage extends Base
             return $q;
         };
 
-        $list  = $build()->page($page, 20)->select()->each(function ($item) {
-            $item['token_count'] = (int)Db::name('api_tokens')->where('user_id', $item['id'])->count();
+        $groupMax = [];
+        foreach (StrategyGroup::field('id,max_tokens')->select()->toArray() as $g) {
+            $groupMax[(int)$g['id']] = (int)$g['max_tokens'];
+        }
+
+        $list  = $build()->page($page, 20)->select()->each(function ($item) use ($groupMax) {
+            $count = (int)Db::name('api_tokens')->where('user_id', $item['id'])->count();
+            $limit = $groupMax[(int)$item['group_id']] ?? 0;
+            $item['token_display'] = $count . '/' . ($limit > 0 ? $limit : '不限');
             return $item;
         });
         $total = $build()->count();

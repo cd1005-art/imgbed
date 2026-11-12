@@ -54,7 +54,7 @@
       <td class="td-clip">{$vo.user_display}</td>
       <td>{:round($vo.size / 1024, 1)} KB</td>
       <td class="td-clip" title="{$storages[$vo.storage_id]|default='-'}">{$storages[$vo.storage_id]|default='-'}</td>
-      <td>{if condition="$vo.audit_status eq 0"}待审{elseif condition="$vo.audit_status eq 1"}通过{elseif condition="$vo.audit_status eq 2"}<span class="danger">拒绝</span>{else /}复审{/if}</td>
+      <td title="{$vo.audit_hint}">{if condition="$vo.audit_status eq 0"}待审{elseif condition="$vo.audit_status eq 1"}通过{elseif condition="$vo.audit_status eq 2"}<span class="danger">拒绝</span>{else /}复审{/if}</td>
       <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">冻结</span>{/if}</td>
       <td class="mono">{$vo.ip}</td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>

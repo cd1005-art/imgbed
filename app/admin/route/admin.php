@@ -50,6 +50,7 @@ Route::group(function () {
     Route::post('model/save', 'ModelManage/save');
     Route::post('model/delete/:id', 'ModelManage/delete');
     Route::post('model/move/:id/:dir', 'ModelManage/move');
+    Route::post('model/test/:id', 'ModelManage/test');
     Route::post('model/toggle/:id', 'ModelManage/toggle');
     Route::post('model/driver', 'ModelManage/driverSave');
     Route::get('model', 'ModelManage/index');

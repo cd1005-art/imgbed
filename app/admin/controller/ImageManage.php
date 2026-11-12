@@ -54,6 +54,9 @@ class ImageManage extends Base
             $item['user_display'] = (int)$item['user_id'] === 0
                 ? '游客'
                 : ($item['user_nickname'] ?: ($item['user_email'] ?: ('ID:' . $item['user_id'])));
+            // 审核结论摘要（复审/拒绝原因可见）
+            $log = Db::name('audit_logs')->where('image_id', $item['id'])->order('id', 'desc')->find();
+            $item['audit_hint'] = $log ? ('[' . $log['driver'] . '] ' . mb_substr((string)$log['detail'], 0, 120)) : '';
             return $item;
         });
         $total = $build()->count();

@@ -81,6 +81,45 @@ class ModelManage extends Base
         return json(['status' => true, 'message' => '已调整顺序']);
     }
 
+    /** 测试模型连接（真实发一张内置小图做审核） */
+    public function test(int $id)
+    {
+        $m = Db::name('audit_models')->where('id', $id)->find();
+        if (!$m) {
+            return json(['status' => false, 'message' => '模型不存在']);
+        }
+
+        // 1x1 PNG 内置测试图
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        $tmp = tempnam(sys_get_temp_dir(), 'mt_');
+        file_put_contents($tmp, $png);
+
+        $start = microtime(true);
+        try {
+            $driver = ($m['type'] ?? 'llm') === 'local_nsfw'
+                ? new \app\common\service\audit\LocalNsfwDriver(['endpoint' => (string)$m['endpoint']])
+                : new \app\common\service\audit\LlmVlmDriver([
+                    'endpoint' => (string)$m['endpoint'],
+                    'key'      => (string)$m['api_key'],
+                    'model'    => (string)$m['model_name'],
+                ]);
+            $result = $driver->audit($tmp, 'image/png');
+        } finally {
+            @unlink($tmp);
+        }
+        $ms = (int)round((microtime(true) - $start) * 1000);
+
+        $ok = !str_starts_with((string)($result['detail'] ?? ''), 'LLM 调用失败');
+        $detail = mb_substr((string)($result['detail'] ?? ''), 0, 120);
+        return json([
+            'status'  => true,
+            'data'    => ['ok' => $ok, 'result' => $result['result'], 'score' => $result['score'], 'ms' => $ms, 'detail' => $detail],
+            'message' => $ok
+                ? "连接正常（{$ms}ms）· 判定 {$result['result']} · {$detail}"
+                : "连接失败：{$detail}",
+        ]);
+    }
+
     public function toggle(int $id)
     {
         $m = Db::name('audit_models')->where('id', $id)->find();

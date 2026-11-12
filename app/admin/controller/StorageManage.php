@@ -32,6 +32,16 @@ class StorageManage extends Base
             $item['disk_free_str'] = '';
             $item['disk_total_str'] = '';
 
+            // 网盘手工配额：按图床已用 / 手工上限 计算
+            $quotaGb = (int)($cfg['quota_gb'] ?? 0);
+            if ($item->driver !== 'local' && $quotaGb > 0) {
+                $totalB = $quotaGb * 1073741824;
+                $freeB  = max(0, $totalB - $usedBytes);
+                $item['disk_free_str'] = \app\common\service\UploadService::formatSize($freeB);
+                $item['disk_total_str'] = \app\common\service\UploadService::formatSize($totalB);
+                $item['disk_pct'] = $totalB > 0 ? (int)round($usedBytes / $totalB * 100) : 0;
+            }
+
             if ($item->driver === 'local') {
                 // 本地磁盘：实时读取剩余/总量
                 $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
@@ -84,6 +94,8 @@ class StorageManage extends Base
                 'username'   => trim((string)$this->request->post('username', '')),
                 'password'   => trim((string)$this->request->post('password', '')),
                 'direct_url' => trim((string)$this->request->post('direct_url', '')),
+                // 手工配额上限（GB），0 = 不限；网盘无法自动读取剩余，按图床已用/上限估算
+                'quota_gb'   => max(0, (int)$this->request->post('quota_gb', 0)),
             ];
         }
 
