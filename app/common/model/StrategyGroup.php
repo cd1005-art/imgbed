@@ -7,6 +7,9 @@ use think\Model;
 
 class StrategyGroup extends Model
 {
+    // 强制 int 时间戳：TP8 默认 datetime 转换会把 int 字段读成日期字符串
+    protected $autoWriteTimestamp = 'int';
+
     protected $table = 'img_strategy_groups';
 
     // allow_ext 存储为逗号分隔字符串，不用 array cast（json_decode 对逗号串会变 null 导致回填丢失）
