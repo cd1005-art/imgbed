@@ -34,7 +34,8 @@ class StorageManage extends Base
 
             if ($item->driver === 'local') {
                 // 本地磁盘：实时读取剩余/总量
-                $root = public_path() . ltrim((string)($cfg['root'] ?? 'storage/images'), '/\');
+                $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
+                $root = rtrim(public_path(), '/\\') . '/' . $rootRel;
                 $probeDir = is_dir($root) ? $root : public_path();
                 $free = @disk_free_space($probeDir);
                 $total = @disk_total_space($probeDir);
