@@ -51,7 +51,8 @@ class Console extends Base
                 'keep_text'    => ($group && (int)$group->keep_days > 0) ? ((int)$group->keep_days . ' 天后清理') : '永久保留',
                 'ext_str'      => $group ? implode(' / ', array_map('strtoupper', $group->allowedExt())) : '-',
                 'ad_exempt'    => ($group && (int)$group->ad_exempt === 1),
-                'max_tokens'   => ($group && (int)$group->max_tokens > 0) ? ('最多 ' . (int)$group->max_tokens . ' 个') : '不限',
+                'max_tokens'   => ($group && (int)$group->max_tokens < 0) ? '未开放'
+                    : (($group && (int)$group->max_tokens > 0) ? ('最多 ' . (int)$group->max_tokens . ' 个') : '不限'),
             ],
         ]);
     }
@@ -62,9 +63,12 @@ class Console extends Base
         $user = $this->request->loginUser;
         $name = trim((string)$this->request->post('name', ''));
 
-        // 数量上限：策略组 max_tokens，0 = 不限（无系统硬上限）
+        // Token 生成权限：-1=未开放（禁止生成）；0=不限；>0=数量上限
         $group = StrategyGroup::find((int)$user->group_id);
-        $limit = $group ? (int)$group->max_tokens : 0;
+        $limit = $group ? (int)$group->max_tokens : -1;
+        if ($limit < 0) {
+            return json(['status' => false, 'message' => '当前策略未开放 Token 生成']);
+        }
         if ($limit > 0) {
             $count = ApiToken::where('user_id', $user->id)->count();
             if ($count >= $limit) {

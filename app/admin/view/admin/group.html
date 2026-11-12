@@ -14,7 +14,7 @@
       <td>{$vo.daily_count ?: '不限'}</td>
       <td>{:round($vo.quota_total / 1073741824, 1)} GB</td>
       <td>{$vo.keep_days ?: '永久'}</td>
-      <td>{if condition="$vo.max_tokens gt 0"}{$vo.max_tokens} 个{else /}不限{/if}</td>
+      <td>{if condition="$vo.max_tokens lt 0"}<span class="count">未开放</span>{elseif condition="$vo.max_tokens gt 0"}{$vo.max_tokens} 个{else /}不限{/if}</td>
       <td>{$vo.storage_name|default='-'}</td>
       <td>{$vo.ad_exempt ? '是' : '否'}</td>
       <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
@@ -38,7 +38,7 @@
     <label class="field"><span class="field-label">日上传次数（0=不限）</span><input type="number" name="daily_count" id="g_daily" value="100"></label>
     <label class="field"><span class="field-label">总容量（GB）</span><input type="number" name="quota_gb" id="g_quota" value="1"></label>
     <label class="field"><span class="field-label">保留天数（0=永久）</span><input type="number" name="keep_days" id="g_keep" value="0"></label>
-    <label class="field"><span class="field-label">可生成 Token 数量（0=不限）</span><input type="number" name="max_tokens" id="g_max_tokens" value="0"></label>
+    <label class="field"><span class="field-label">可生成 Token 数量（-1=禁止，0=不限）</span><input type="number" name="max_tokens" id="g_max_tokens" value="-1"></label>
     <label class="field"><span class="field-label">允许扩展名</span><input type="text" name="allow_ext" id="g_ext" value="jpg,jpeg,png,gif,webp"></label>
     <label class="field"><span class="field-label">存储实例</span>
       <select name="storage_id" id="g_storage">

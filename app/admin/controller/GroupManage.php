@@ -46,7 +46,7 @@ class GroupManage extends Base
             'keep_days'   => (int)$this->request->post('keep_days', 0),
             'storage_id'  => 0,  // 占位，下方校验后回填
             'ad_exempt'   => (int)$this->request->post('ad_exempt', 0),
-            'max_tokens'  => max(0, (int)$this->request->post('max_tokens', 0)),
+            'max_tokens'  => max(-1, (int)$this->request->post('max_tokens', -1)),
             'status'      => (int)$this->request->post('status', 1),
             'update_time' => time(),
         ];

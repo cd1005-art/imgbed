@@ -54,9 +54,13 @@ class ImageManage extends Base
             $item['user_display'] = (int)$item['user_id'] === 0
                 ? '游客'
                 : ($item['user_nickname'] ?: ($item['user_email'] ?: ('ID:' . $item['user_id'])));
-            // 审核结论摘要（复审/拒绝原因可见）
+            // 审核结论摘要 + 模型名（多模型下标注哪张图由哪个模型判定）
             $log = Db::name('audit_logs')->where('image_id', $item['id'])->order('id', 'desc')->find();
             $item['audit_hint'] = $log ? ('[' . $log['driver'] . '] ' . mb_substr((string)$log['detail'], 0, 120)) : '';
+            $item['audit_model'] = '';
+            if ($log && preg_match('/^\[([^\]]+)\]/u', (string)$log['detail'], $mm)) {
+                $item['audit_model'] = trim($mm[1]);
+            }
             return $item;
         });
         $total = $build()->count();

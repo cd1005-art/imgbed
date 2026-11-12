@@ -51,7 +51,7 @@ class UploadController extends Base
                 ? '每日可传 ' . (int)$group->daily_count . ' 次'
                 : '每日上传不限',
             'quota_used_str'   => UploadService::formatSize($quotaUsed),
-            'quota_total_str'  => UploadService::formatSize($quotaTotal ?: 1073741824),
+            'quota_total_str'  => UploadService::formatSize($group ? (int)$group->quota_total : 1073741824),
         ]);
     }
 

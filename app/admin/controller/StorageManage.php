@@ -32,16 +32,17 @@ class StorageManage extends Base
             $item['disk_free_str'] = '';
             $item['disk_total_str'] = '';
 
-            // 网盘手工配额：按图床已用 / 手工上限 计算
+            // 配额阈值（local/webdav 通用）：用于停止上传与「配额剩余」展示
             $quotaGb = (int)($cfg['quota_gb'] ?? 0);
-            if ($item->driver !== 'local' && $quotaGb > 0) {
-                $totalB = $quotaGb * 1073741824;
-                $freeB  = max(0, $totalB - $usedBytes);
-                $item['disk_free_str'] = \app\common\service\UploadService::formatSize($freeB);
-                $item['disk_total_str'] = \app\common\service\UploadService::formatSize($totalB);
-                $item['disk_pct'] = $totalB > 0 ? (int)round($usedBytes / $totalB * 100) : 0;
+            $item['quota_set'] = $quotaGb > 0;
+            if ($quotaGb > 0) {
+                $qTotalB = $quotaGb * 1073741824;
+                $item['quota_total_str'] = \app\common\service\UploadService::formatSize($qTotalB);
+                $item['quota_free_str']  = \app\common\service\UploadService::formatSize(max(0, $qTotalB - $usedBytes));
+                $item['quota_pct'] = $qTotalB > 0 ? (int)round($usedBytes / $qTotalB * 100) : 0;
             }
 
+            $item['space_unlimited'] = false;
             if ($item->driver === 'local') {
                 // 本地磁盘：实时读取剩余/总量
                 $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
@@ -53,6 +54,17 @@ class StorageManage extends Base
                     $item['disk_free_str'] = \app\common\service\UploadService::formatSize((int)$free);
                     $item['disk_total_str'] = \app\common\service\UploadService::formatSize((int)$total);
                     $item['disk_pct'] = $total > 0 ? (int)round(($total - $free) / $total * 100) : 0;
+                }
+            } else {
+                // 网盘：按手工「网盘空间」（GB）展示剩余；0 = 不限
+                $spaceGb = (int)($cfg['space_gb'] ?? 0);
+                if ($spaceGb > 0) {
+                    $sTotalB = $spaceGb * 1073741824;
+                    $item['disk_free_str'] = \app\common\service\UploadService::formatSize(max(0, $sTotalB - $usedBytes));
+                    $item['disk_total_str'] = \app\common\service\UploadService::formatSize($sTotalB);
+                    $item['disk_pct'] = $sTotalB > 0 ? (int)round($usedBytes / $sTotalB * 100) : 0;
+                } else {
+                    $item['space_unlimited'] = true;
                 }
             }
         }

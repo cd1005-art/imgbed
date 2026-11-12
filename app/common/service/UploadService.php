@@ -99,18 +99,34 @@ class UploadService
         $relativePath = date('Y/m/d/', $now) . $this->randomName() . '.' . $ext;
 
         try {
-            // 存储实例级配额：达到手工上限则停止上传（0=不限，本地/网盘均适用）
+            // 存储停止条件：
+            //  1) 配额阈值（quota_gb>0 且 图床已用 >= 阈值）→ 停
+            //  2) 网盘空间（space_gb>0 且 已用 >= 空间）→ 停
+            //  3) 本地磁盘真实剩余不足 → 停
             $storageRow = Db::name('storage_configs')->where('id', (int)$group->storage_id)->find();
             if ($storageRow) {
                 $storageCfg = json_decode((string)$storageRow['config'], true) ?: [];
+                $usedB = (int)Db::name('images')
+                    ->where('storage_id', (int)$group->storage_id)
+                    ->where('status', 1)
+                    ->sum('size');
+
                 $quotaGb = (int)($storageCfg['quota_gb'] ?? 0);
-                if ($quotaGb > 0) {
-                    $usedB = (int)Db::name('images')
-                        ->where('storage_id', (int)$group->storage_id)
-                        ->where('status', 1)
-                        ->sum('size');
-                    if ($usedB >= $quotaGb * 1073741824) {
-                        throw new UploadException('存储空间已满，暂停上传（管理员可调整存储配额）');
+                if ($quotaGb > 0 && $usedB >= $quotaGb * 1073741824) {
+                    throw new UploadException('存储配额已满，暂停上传（管理员可调整配额上限）');
+                }
+
+                $spaceGb = (int)($storageCfg['space_gb'] ?? 0);
+                if ($spaceGb > 0 && $usedB >= $spaceGb * 1073741824) {
+                    throw new UploadException('网盘空间已满，暂停上传（管理员可调整网盘空间）');
+                }
+
+                if ($storageRow['driver'] === 'local') {
+                    $rootRel = trim(str_replace('\\', '/', (string)($storageCfg['root'] ?? 'storage/images')), '/');
+                    $localRoot = rtrim(public_path(), '/\\') . '/' . $rootRel;
+                    $free = @disk_free_space(is_dir($localRoot) ? $localRoot : public_path());
+                    if ($free !== false && $free < (int)$file->getSize() * 2) {
+                        throw new UploadException('服务器磁盘空间不足，暂停上传');
                     }
                 }
             }

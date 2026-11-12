@@ -13,11 +13,16 @@
     {if condition="$vo.driver eq 'local'"}
     <span class="storage-meta">磁盘剩余：<b>{$vo.disk_free_str}</b> / 总 {$vo.disk_total_str}（已用 {$vo.disk_pct}%）</span>
     {else /}
-      {if condition="$vo.disk_total_str neq ''"}
-      <span class="storage-meta">网盘剩余：<b>{$vo.disk_free_str}</b> / 总 {$vo.disk_total_str}（已用 {$vo.disk_pct}%）</span>
+      {if condition="$vo.space_unlimited"}
+      <span class="storage-meta" title="未设置网盘空间时按图床已用统计；网盘真实剩余由服务商控制">网盘剩余：<b>不限</b></span>
       {else /}
-      <span class="storage-meta" title="未设置配额上限时按图床已用统计；网盘真实剩余由服务商控制">网盘剩余：不限</span>
+      <span class="storage-meta">网盘剩余：<b>{$vo.disk_free_str}</b> / 总 {$vo.disk_total_str}（已用 {$vo.disk_pct}%）</span>
       {/if}
+    {/if}
+    {if condition="$vo.quota_set"}
+    <span class="storage-meta">配额剩余：<b>{$vo.quota_free_str}</b> / 总 {$vo.quota_total_str}（已用 {$vo.quota_pct}%）· 达阈值停止上传</span>
+    {else /}
+    <span class="storage-meta">配额上限：不限（按空间实际剩余停止上传）</span>
     {/if}
     <span class="storage-meta">{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</span>
     <div class="storage-ops">
@@ -57,7 +62,8 @@
       <label class="field"><span class="field-label">用户名</span><input type="text" name="username" value="{$vo.config.username|default=''}"></label>
       <label class="field"><span class="field-label">密码</span><input type="text" name="password" value="{$vo.config.password|default=''}"></label>
       <label class="field field-wide"><span class="field-label">直链模板（302 模式，如 http://host:5244/d/目录/{path}）</span><input type="text" name="direct_url" value="{$vo.config.direct_url|default=''}"></label>
-      <label class="field"><span class="field-label">配额上限（GB，0=不限）</span><input type="number" name="quota_gb" value="{$vo.config.quota_gb|default=0}"></label>
+      <label class="field"><span class="field-label">网盘空间（GB，0=不限，用于显示剩余）</span><input type="number" name="space_gb" value="{$vo.config.space_gb|default=0}"></label>
+      <label class="field"><span class="field-label">配额上限（GB，0=不限，达阈值停止上传）</span><input type="number" name="quota_gb" value="{$vo.config.quota_gb|default=0}"></label>
     </div>
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存</button></div>
   </form>
@@ -93,7 +99,8 @@
       <label class="field"><span class="field-label">用户名</span><input type="text" name="username"></label>
       <label class="field"><span class="field-label">密码</span><input type="text" name="password"></label>
       <label class="field field-wide"><span class="field-label">直链模板</span><input type="text" name="direct_url" placeholder="http://host:5244/d/目录/{path}"></label>
-      <label class="field"><span class="field-label">配额上限（GB，0=不限）</span><input type="number" name="quota_gb" value="0"></label>
+      <label class="field"><span class="field-label">网盘空间（GB，0=不限，用于显示剩余）</span><input type="number" name="space_gb" value="0"></label>
+      <label class="field"><span class="field-label">配额上限（GB，0=不限，达阈值停止上传）</span><input type="number" name="quota_gb" value="0"></label>
     </div>
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存新实例</button></div>
   </form>

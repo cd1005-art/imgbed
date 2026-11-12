@@ -37,7 +37,7 @@
 
 {if condition="$user ?? null"}
 <p class="quota-line">
-  已用 {$quota_used_str} / {$quota_total_str}
+  存储容量：已用 {$quota_used_str} / {$quota_total_str}
   · 当前策略：{$group.name|default='默认'} · <a href="/gallery">管理图片</a>
 </p>
 {else /}
