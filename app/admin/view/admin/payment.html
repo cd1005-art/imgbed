@@ -25,10 +25,12 @@
         <input type="radio" name="is_open" value="0" id="gw_off" {if condition="$is_open eq 0"}checked{/if}><label for="gw_off">关闭</label>
       </div>
     </label>
-    <div class="field field-wide"><span class="field-label">支付通道（对应网关 type：alipay/wxpay/qqpay 或逍遥PAY 通道 ID）</span></div>
-    <label class="field"><span class="field-label">支付宝通道</span><input type="text" name="channel_alipay" value="{$gateway.pay_channels.alipay}" placeholder="如 alipay 或通道 ID"></label>
-    <label class="field"><span class="field-label">微信通道</span><input type="text" name="channel_wxpay" value="{$gateway.pay_channels.wxpay}" placeholder="如 wxpay 或通道 ID"></label>
-    <label class="field"><span class="field-label">QQ 钱包通道</span><input type="text" name="channel_qqpay" value="{$gateway.pay_channels.qqpay}" placeholder="留空则前台不显示该方式"></label>
+    <div class="field field-wide"><span class="field-label">支付通道（原样作为网关下单的 type 参数提交）</span>
+      <span class="field-hint">逍遥PAY 网关：填商户后台的通道 ID（数字）；标准易支付网关：填 alipay/wxpay/qqpay。填完保存后到前台 VIP 下单验证——收银台出收款码即有效。</span>
+    </div>
+    <label class="field"><span class="field-label">支付宝通道</span><input type="text" name="channel_alipay" value="{$gateway.pay_channels.alipay}" placeholder="逍遥PAY 通道 ID 或 alipay"></label>
+    <label class="field"><span class="field-label">微信通道</span><input type="text" name="channel_wxpay" value="{$gateway.pay_channels.wxpay}" placeholder="逍遥PAY 通道 ID 或 wxpay"></label>
+    <label class="field"><span class="field-label">QQ 钱包通道</span><input type="text" name="channel_qqpay" value="{$gateway.pay_channels.qqpay}" placeholder="留空则前台不显示 QQ 钱包"></label>
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存网关</button></div>
   </form>
 </section>
