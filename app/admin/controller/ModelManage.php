@@ -16,10 +16,15 @@ class ModelManage extends Base
     {
         $models = Db::name('audit_models')->order('sort', 'asc')->order('id', 'asc')->select()->toArray();
 
+        // 按用途分组：审核模型 / 生成模型（文生图）
+        $auditModels = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? 'audit') === 'audit'));
+        $genModels   = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? '') === 'image_gen'));
+
         return $this->adminView('admin/model', [
-            'page'      => 'model',
-            'models'    => $models,
-            'settings'  => Setting::allSettings(),
+            'page'        => 'model',
+            'models'      => $auditModels,
+            'gen_models'  => $genModels,
+            'settings'    => Setting::allSettings(),
         ]);
     }
 
@@ -32,6 +37,7 @@ class ModelManage extends Base
             'endpoint'    => trim((string)$this->request->post('endpoint', '')),
             'api_key'     => trim((string)$this->request->post('api_key', '')),
             'type'        => in_array($this->request->post('type'), ['llm', 'local_nsfw'], true) ? (string)$this->request->post('type') : 'llm',
+            'purpose'     => in_array($this->request->post('purpose'), ['audit', 'image_gen'], true) ? (string)$this->request->post('purpose') : 'audit',
             'model_name'  => trim((string)$this->request->post('model_name', '')),
             'status'      => (int)$this->request->post('status', 1) === 1 ? 1 : 2,
             'update_time' => time(),
@@ -95,6 +101,43 @@ class ModelManage extends Base
         file_put_contents($tmp, $png);
 
         $start = microtime(true);
+
+        // 生成模型（文生图）：走 OpenAI 兼容 /images/generations
+        if (($m['purpose'] ?? 'audit') === 'image_gen') {
+            @unlink($tmp); // 生图不需要测试图
+            $url = rtrim((string)$m['endpoint'], '/');
+            if (!str_contains($url, '/images/generations')) {
+                $url .= '/images/generations';
+            }
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_TIMEOUT        => 60,
+                CURLOPT_HTTPHEADER     => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . (string)$m['api_key'],
+                ],
+                CURLOPT_POSTFIELDS => json_encode([
+                    'model' => (string)$m['model_name'], 'prompt' => 'a simple red circle on white background',
+                    'n' => 1, 'size' => '512x512',
+                ], JSON_UNESCAPED_UNICODE),
+            ]);
+            $raw = curl_exec($ch);
+            $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $err = curl_error($ch);
+            curl_close($ch);
+            $ms = (int)round((microtime(true) - $start) * 1000);
+
+            $data = json_decode((string)$raw, true);
+            $hasImg = !empty($data['data'][0]['url']) || !empty($data['data'][0]['b64_json']);
+            if ($raw !== false && $err === '' && $code < 400 && $hasImg) {
+                return json(['status' => true, 'message' => "生图接口正常（{$ms}ms）· 已返回图片", 'data' => ['ok' => true, 'ms' => $ms]]);
+            }
+            $detail = mb_substr((string)($data['error']['message'] ?? ($err !== '' ? $err : ('HTTP ' . $code . ' ' . substr((string)$raw, 0, 100)))), 0, 120);
+            return json(['status' => true, 'message' => "生图接口失败：{$detail}", 'data' => ['ok' => false, 'ms' => $ms]]);
+        }
+
         try {
             $driver = ($m['type'] ?? 'llm') === 'local_nsfw'
                 ? new \app\common\service\audit\LocalNsfwDriver(['endpoint' => (string)$m['endpoint']])

@@ -23,7 +23,7 @@ class Vip extends Base
             $g = \app\common\model\StrategyGroup::where('id', $plan->group_id)->where('status', 1)->find();
             $plan['rights'] = [
                 'quota_str'    => ($g && (int)$g->quota_total > 0)
-                    ? round((int)$g->quota_total / 1073741824, 1) . ' GB 容量' : '容量不限',
+                    ? round((int)$g->quota_total / 1073741824, 1) . ' GB' : '不限',
                 'daily_count'  => ($g && (int)$g->daily_count > 0) ? (string)(int)$g->daily_count . ' 次' : '不限',
                 'max_size_str' => $g ? \app\common\service\UploadService::formatSize((int)$g->max_size) : '-',
                 'keep_text'    => ($g && (int)$g->keep_days > 0) ? ((int)$g->keep_days . ' 天后清理') : '永久保留',

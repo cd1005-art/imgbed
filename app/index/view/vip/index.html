@@ -25,7 +25,7 @@ document.querySelectorAll('.buy-btn').forEach(function (b) {
     <p class="plan-name">{$vo.name}</p>
     <p class="plan-price"><span class="plan-amount">{:round($vo.price / 100, 2)}</span> 元 / {$vo.days} 天</p>
     <div class="rights-list plan-rights">
-      <p>容量：<b>{$vo.rights.quota_str}</b></p>
+      <p>存储容量：<b>{$vo.rights.quota_str}</b></p>
       <p>日传次数：<b>{$vo.rights.daily_count}</b></p>
       <p>单图上限：<b>{$vo.rights.max_size_str}</b></p>
       <p>图片保留：<b>{$vo.rights.keep_text}</b></p>

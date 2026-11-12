@@ -23,6 +23,7 @@ class MultiModelAuditDriver implements AuditDriverInterface
     {
         $models = Db::name('audit_models')
             ->where('status', 1)
+            ->where('purpose', 'audit')   // 只取审核模型（生成模型不参与审核）
             ->order('sort', 'asc')
             ->order('id', 'asc')
             ->select()
