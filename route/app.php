@@ -16,5 +16,3 @@ Route::get('think', function () {
 
 Route::get('hello/:name', 'index/hello');
 
-// API 文档页（页脚 API 链接）
-Route::get('api-doc', 'index/apiDoc');

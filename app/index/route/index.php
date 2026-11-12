@@ -8,6 +8,9 @@ Route::get('/', 'UploadController/index');
 Route::post('upload/save', 'UploadController/save');
 
 // ---- 认证 ----
+// API 文档页（页脚 API 链接）
+Route::get('api-doc', 'Index/apiDoc');
+
 Route::get('login', 'Auth/loginPage');
 Route::post('login', 'Auth/login');
 Route::get('register', 'Auth/registerPage');
