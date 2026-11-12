@@ -3,14 +3,23 @@ declare (strict_types = 1);
 
 namespace app\index\controller;
 
-use app\BaseController;
+use app\index\controller\Base;
 
 /**
  * 首页（一期占位版：接口说明 + 上传测试）
  * 正式版式按「非 AI 化前端 SKILL」另行美化
  */
-class Index extends BaseController
+class Index extends Base
 {
+    /** API 文档页 */
+    public function apiDoc()
+    {
+        return $this->siteView('index/api', [
+            'site_name' => \app\common\model\Setting::get('site_name', '逍遥图床'),
+            'domain'    => request()->domain(),
+        ]);
+    }
+
     public function index()
     {
         return json([
