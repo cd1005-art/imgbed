@@ -17,9 +17,9 @@ class ImageManage extends Base
     {
         $page   = max(1, (int)$this->request->param('page', 1));
         $size   = 20;
-        $kw     = trim((string)$this->request->param('kw', ''));
-        $uid    = (int)$this->request->param('uid', 0);
-        $sid    = (int)$this->request->param('sid', 0);       // 存储实例
+        $kw      = trim((string)$this->request->param('kw', ''));
+        $ufilter = trim((string)$this->request->param('ufilter', ''));
+        $sid     = (int)$this->request->param('sid', 0);       // 存储实例
         $audit  = (string)$this->request->param('audit', ''); // 审核状态 0/1/2/3
         $status = (string)$this->request->param('status', '');// 状态 1正常/2冻结
         $dfrom  = (string)$this->request->param('dfrom', '');  // 起始日期 Y-m-d
@@ -106,9 +106,9 @@ class ImageManage extends Base
     /** 按当前筛选导出 CSV */
     public function export()
     {
-        $kw     = trim((string)$this->request->param('kw', ''));
-        $uid    = (int)$this->request->param('uid', 0);
-        $sid    = (int)$this->request->param('sid', 0);
+        $kw      = trim((string)$this->request->param('kw', ''));
+        $ufilter = trim((string)$this->request->param('ufilter', ''));
+        $sid     = (int)$this->request->param('sid', 0);
         $audit  = (string)$this->request->param('audit', '');
         $status = (string)$this->request->param('status', '');
         $dfrom  = (string)$this->request->param('dfrom', '');
@@ -116,7 +116,18 @@ class ImageManage extends Base
 
         $q = Image::where('status', '>', 0);
         if ($kw !== '')     { $q->where('name', 'like', '%' . $kw . '%'); }
-        if ($uid > 0)       { $q->where('user_id', $uid); }
+        if ($ufilter !== '') {
+            $uid = (int)$ufilter;
+            if (ctype_digit($ufilter)) {
+                $q->where('user_id', $uid);
+            } else {
+                $uids = \think\facade\Db::name('users')
+                    ->where('email', 'like', '%' . $ufilter . '%')
+                    ->whereOr('nickname', 'like', '%' . $ufilter . '%')
+                    ->column('id');
+                $q->whereIn('user_id', $uids ?: [0]);
+            }
+        }
         if ($sid > 0)       { $q->where('storage_id', $sid); }
         if ($audit !== '')  { $q->where('audit_status', (int)$audit); }
         if ($status !== '') { $q->where('status', (int)$status); }

@@ -5,13 +5,7 @@
   <h1 class="page-title">图片管理 <span class="count">{$total} 张</span></h1>
   <form class="search-bar" method="get" action="/admin/image">
     <input type="text" name="kw" value="{$kw}" placeholder="文件名">
-    <select name="uid" class="filter-select">
-      <option value="0">全部用户</option>
-      <option value="-1" {if condition="$uid eq -1"}selected{/if}>游客（未登录）</option>
-      {foreach $users as $u}
-      <option value="{$u.id}" {if condition="$uid eq $u.id"}selected{/if}>{$u.nickname|default=$u.email}（{$u.email}）</option>
-      {/foreach}
-    </select>
+    <input type="text" name="ufilter" value="{$ufilter}" placeholder="用户ID/邮箱/昵称" style="width:150px">
     <select name="sid" class="filter-select">
       <option value="0">全部存储</option>
       {foreach $storages as $stId => $stName}
@@ -74,9 +68,9 @@
 
 {if condition="$pages gt 1"}
 <nav class="pager">
-  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}&uid={$uid}&sid={$sid}&audit={$audit}&status={$status}">上一页</a>{/if}
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}&ufilter={$ufilter}&sid={$sid}&audit={$audit}&status={$status}">上一页</a>{/if}
   <span class="pager-info">{$page_no} / {$pages}</span>
-  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}&uid={$uid}&sid={$sid}&audit={$audit}&status={$status}">下一页</a>{/if}
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}&ufilter={$ufilter}&sid={$sid}&audit={$audit}&status={$status}">下一页</a>{/if}
 </nav>
 {/if}
 {/block}
