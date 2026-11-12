@@ -113,6 +113,93 @@ class ImageManage extends Base
         return json(['status' => true, 'message' => "已{$label} {$count} 张"]);
     }
 
+    /** 扫描孤立文件（存储上存在但数据库无有效引用） */
+    public function orphanScan()
+    {
+        $result = $this->scanOrphans();
+        return json(['status' => true, 'data' => $result]);
+    }
+
+    /** 删除孤立文件（保护：1 小时内创建的文件跳过，防误删进行中的上传） */
+    public function orphanPurge()
+    {
+        $scan = $this->scanOrphans();
+        $deleted = 0;
+        $failed  = 0;
+        $protect = time() - 3600;
+
+        foreach ($scan['details'] as $d) {
+            if ($d['count'] === 0) {
+                continue;
+            }
+            try {
+                $driver = \app\common\service\storage\StorageManager::driver($d['storage_id']);
+            } catch (\Throwable $e) {
+                continue;
+            }
+            foreach ($d['files'] as $f) {
+                if ($f['mtime'] > $protect) {
+                    continue; // 新文件保护
+                }
+                if ($driver->delete($f['path'])) {
+                    $deleted++;
+                } else {
+                    $failed++;
+                }
+            }
+        }
+        $msg = "已清理 {$deleted} 个孤立文件";
+        if ($failed > 0) {
+            $msg .= "，{$failed} 个删除失败";
+        }
+        return json(['status' => true, 'message' => $msg]);
+    }
+
+    /** 扫描核心：按存储实例对比 DB 引用 */
+    protected function scanOrphans(): array
+    {
+        $storages = Db::name('storage_configs')->where('status', 1)->select()->toArray();
+        $details = [];
+        $total = 0;
+
+        foreach ($storages as $s) {
+            try {
+                $driver = \app\common\service\storage\StorageManager::driver((int)$s['id']);
+                $files = $driver->listFiles();
+            } catch (\Throwable $e) {
+                $details[] = [
+                    'storage_id' => (int)$s['id'], 'storage_name' => $s['name'],
+                    'driver' => $s['driver'], 'count' => 0, 'files' => [],
+                    'error' => $e->getMessage(),
+                ];
+                continue;
+            }
+
+            $refPaths = Db::name('images')
+                ->where('storage_id', (int)$s['id'])
+                ->where('status', '>', 0)
+                ->column('path');
+            $refSet = array_flip($refPaths ?: []);
+
+            $orphans = [];
+            foreach ($files as $f) {
+                if (!isset($refSet[$f['path']])) {
+                    $orphans[] = $f;
+                }
+            }
+            $total += count($orphans);
+            $details[] = [
+                'storage_id' => (int)$s['id'],
+                'storage_name' => $s['name'],
+                'driver' => $s['driver'],
+                'count' => count($orphans),
+                'files' => array_slice($orphans, 0, 200), // 样本上限
+            ];
+        }
+
+        return ['total' => $total, 'details' => $details];
+    }
+
     /** 按当前筛选导出 CSV */
     public function export()
     {

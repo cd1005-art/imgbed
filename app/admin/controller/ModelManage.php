@@ -94,20 +94,15 @@ class ModelManage extends Base
         return json(['status' => true, 'message' => '已切换状态']);
     }
 
-    /** 全局审核驱动开关（none / llm_vlm / local_nsfw） */
+    /** 审核开关 + 协同模式（审核开启 = 使用模型卡片链） */
     public function driverSave()
     {
-        $driver = (string)$this->request->post('default_audit_driver', 'none');
-        if (!in_array($driver, ['none', 'llm_vlm', 'local_nsfw'], true)) {
-            return json(['status' => false, 'message' => '驱动不合法']);
-        }
-        Setting::saveKey('default_audit_driver', $driver);
+        $enabled = (int)$this->request->post('audit_enabled', 0) === 1;
+        Setting::saveKey('default_audit_driver', $enabled ? 'llm_vlm' : 'none');
+
         $mode = (string)$this->request->post('audit_mode', 'failover');
         Setting::saveKey('audit_mode', in_array($mode, ['failover', 'parallel'], true) ? $mode : 'failover');
-        $nsfw = trim((string)$this->request->post('nsfw_endpoint', ''));
-        if ($nsfw !== '') {
-            Setting::saveKey('nsfw_endpoint', $nsfw);
-        }
-        return json(['status' => true, 'message' => '已保存']);
+
+        return json(['status' => true, 'message' => $enabled ? '已开启审核（模型卡片链）' : '已关闭审核']);
     }
 }

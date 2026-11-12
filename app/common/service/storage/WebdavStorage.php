@@ -81,6 +81,60 @@ class WebdavStorage implements StorageDriverInterface
         ];
     }
 
+    public function listFiles(): array
+    {
+        $out = [];
+        $this->walk('', $out, 0);
+        return $out;
+    }
+
+    /** 递归 PROPFIND（depth:1） */
+    protected function walk(string $rel, array &$out, int $depth): void
+    {
+        if ($depth > 6) {
+            return;
+        }
+        $resp = $this->request('PROPFIND', $rel === '' ? '/' : rtrim($rel, '/') . '/', null, ['Depth: 1']);
+        if ($resp['code'] < 200 || $resp['code'] >= 300 || !is_string($resp['body'])) {
+            return;
+        }
+        $xml = @simplexml_load_string($resp['body']);
+        if (!$xml) {
+            return;
+        }
+        $basePath = parse_url($this->baseUrl, PHP_URL_PATH) ?: '';
+        $nodes = $xml->xpath('//*[local-name()="response"]') ?: [];
+        foreach ($nodes as $node) {
+            $node->registerXPathNamespace('d', 'DAV:');
+            $href = '';
+            $hrefNode = $node->xpath('d:href');
+            if ($hrefNode) {
+                $href = urldecode((string)$hrefNode[0]);
+            }
+            if ($href === '') {
+                continue;
+            }
+            $isDir = !empty($node->xpath('d:propstat/d:prop/d:resourcetype/d:collection'));
+            $lmNode = $node->xpath('d:propstat/d:prop/d:getlastmodified');
+            $mtime = $lmNode ? (strtotime((string)$lmNode[0]) ?: 0) : 0;
+
+            $path = $href;
+            if ($basePath !== '' && str_starts_with($path, $basePath)) {
+                $path = substr($path, strlen($basePath));
+            }
+            $path = ltrim($path, '/');
+            $selfRtrim = rtrim($rel, '/');
+            if ($path === '' || ($selfRtrim !== '' && rtrim($path, '/') === $selfRtrim)) {
+                continue;
+            }
+            if ($isDir) {
+                $this->walk(rtrim($path, '/'), $out, $depth + 1);
+            } else {
+                $out[] = ['path' => $path, 'mtime' => (int)$mtime];
+            }
+        }
+    }
+
     /**
      * WebDAV 请求核心
      * @return array{code:int, body:mixed, error:string}

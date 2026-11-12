@@ -279,3 +279,6 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 .token-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .token-full { font: 11.5px/1.5 var(--font-mono); color: var(--ink-2); word-break: break-all; }
 .token-new { background: var(--accent-soft); border-radius: var(--r-sm); padding: 10px 12px; font-size: 13px; margin: 0 0 12px; }
+
+/* hidden 属性强制生效（display:grid/flex 会覆盖 UA 的 [hidden] 样式） */
+[hidden] { display: none !important; }

@@ -34,4 +34,10 @@ interface StorageDriverInterface
 
     /** 连通性测试，返回 ['ok' => bool, 'msg' => string] */
     public function probe(): array;
+
+    /**
+     * 列出存储根下全部文件（用于孤立文件扫描）
+     * @return array<int, array{path: string, mtime: int}>
+     */
+    public function listFiles(): array;
 }

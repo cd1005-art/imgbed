@@ -5,22 +5,20 @@
 
 <section class="panel">
   <h2 class="panel-title">审核策略</h2>
-  <p class="panel-sub">多模型链：按下方卡片顺序优先调用，某模型失败自动切换下一个；全部失败时转为人工复审（不冻结外链，后台可复核）。</p>
+  <p class="panel-sub">审核开启后使用下方模型卡片：按卡片顺序优先，失败自动切换；也可在协同模式选择并行投票。卡片全部失效时转人工复审（不冻结外链）。</p>
   <form class="form form-grid" id="driverForm">
-    <label class="field"><span class="field-label">审核开关 / 驱动</span>
-      <select name="default_audit_driver">
-        <option value="none" {if condition="($settings['default_audit_driver'] ?? 'none') eq 'none'"}selected{/if}>不审核</option>
-        <option value="llm_vlm" {if condition="($settings['default_audit_driver'] ?? '') eq 'llm_vlm'"}selected{/if}>多模型链（下图卡片）</option>
-        <option value="local_nsfw" {if condition="($settings['default_audit_driver'] ?? '') eq 'local_nsfw'"}selected{/if}>本地 NSFW 模型</option>
-      </select>
+    <label class="field"><span class="field-label">图片审核</span>
+      <div class="switch-group">
+        <input type="radio" name="audit_enabled" value="1" id="audit_on" {if condition="($settings['default_audit_driver'] ?? 'none') neq 'none'"}checked{/if}><label for="audit_on">开启</label>
+        <input type="radio" name="audit_enabled" value="0" id="audit_off" {if condition="($settings['default_audit_driver'] ?? 'none') eq 'none'"}checked{/if}><label for="audit_off">关闭</label>
+      </div>
     </label>
-    <label class="field"><span class="field-label">协同模式（多模型）</span>
+    <label class="field"><span class="field-label">协同模式</span>
       <select name="audit_mode">
         <option value="failover" {if condition="($settings['audit_mode'] ?? 'failover') eq 'failover'"}selected{/if}>顺序切换（失败自动下一个）</option>
         <option value="parallel" {if condition="($settings['audit_mode'] ?? '') eq 'parallel'"}selected{/if}>并行投票（同时审核，取多数）</option>
       </select>
     </label>
-    <label class="field field-wide"><span class="field-label">本地 NSFW 推理服务地址（未用卡片时的兜底；推荐在下方卡片添加「本地 NSFW 服务」参与协同）</span><input type="text" name="nsfw_endpoint" value="{$settings.nsfw_endpoint|default=''}" placeholder="http://127.0.0.1:8900/"></label>
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>
   </form>
 </section>

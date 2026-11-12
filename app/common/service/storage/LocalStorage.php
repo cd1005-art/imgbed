@@ -72,6 +72,24 @@ class LocalStorage implements StorageDriverInterface
         return ['ok' => (bool)$ok, 'msg' => $ok ? '本地目录可读写' : '目录不可写: ' . $this->root];
     }
 
+    public function listFiles(): array
+    {
+        $out = [];
+        if (!is_dir($this->root)) {
+            return $out;
+        }
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($this->root, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($it as $file) {
+            if ($file->isFile()) {
+                $rel = str_replace('\\', '/', substr($file->getPathname(), strlen($this->root) + 1));
+                $out[] = ['path' => $rel, 'mtime' => (int)$file->getMTime()];
+            }
+        }
+        return $out;
+    }
+
     /** 绝对路径 + 路径穿越防护 */
     protected function fullPath(string $relativePath): string
     {
