@@ -111,8 +111,8 @@ class PaymentService
 
         $params = [
             'pid'          => (string)$this->config['pid'],
-            // 支付通道：alipay/wxpay/qqpay 或商户后台的数字通道 ID（后台 pay_type 可配）
-            'type'         => (string)($this->config['pay_type'] ?? 'alipay'),
+            // 支付通道 type：按用户所选通道从后台映射表取（alipay/wxpay/qqpay 或通道 ID）
+            'type'         => $channelType,
             'out_trade_no' => $orderNo,
             'notify_url'   => rtrim(request()->domain(), '/') . '/pay/notify',
             'return_url'   => rtrim(request()->domain(), '/') . '/pay/return',
