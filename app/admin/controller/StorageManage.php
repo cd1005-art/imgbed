@@ -111,6 +111,8 @@ class StorageManage extends Base
                 'direct_url' => trim((string)$this->request->post('direct_url', '')),
                 // 手工配额上限（GB），0 = 不限；网盘无法自动读取剩余，按图床已用/上限估算
                 'quota_gb'   => max(0, (int)$this->request->post('quota_gb', 0)),
+                // 网盘空间（GB），0 = 不限；用于展示「网盘剩余」
+                'space_gb'   => max(0, (int)$this->request->post('space_gb', 0)),
             ];
         }
 
