@@ -8,6 +8,12 @@
   <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.gif,.webp,.avif,.bmp" multiple hidden>
 </section>
 
+<div id="uploadFloat" class="upload-float" hidden>
+  <div class="uf-head"><span>正在上传图片…</span><b id="ufPct">0%</b></div>
+  <div class="uf-track"><div class="uf-fill" id="ufFill"></div></div>
+  <p class="uf-hint">大图或开启审核时需要几秒，请勿关闭页面</p>
+</div>
+
 <section class="result" id="resultBox" hidden>
   <div class="result-head">
     <img id="resultThumb" class="result-thumb" alt="缩略图">
