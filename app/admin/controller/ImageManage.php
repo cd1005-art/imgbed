@@ -25,17 +25,25 @@ class ImageManage extends Base
         $dfrom  = (string)$this->request->param('dfrom', '');  // 起始日期 Y-m-d
         $dto    = (string)$this->request->param('dto', '');    // 结束日期 Y-m-d
 
-        $q = Image::where('status', '>', 0);
-        if ($kw !== '')     { $q->where('name', 'like', '%' . $kw . '%'); }
-        if ($uid > 0)       { $q->where('user_id', $uid); }
-        if ($sid > 0)       { $q->where('storage_id', $sid); }
-        if ($audit !== '')  { $q->where('audit_status', (int)$audit); }
-        if ($status !== '') { $q->where('status', (int)$status); }
-        if ($dfrom !== '') { $q->where('create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
-        if ($dto !== '')   { $q->where('create_time', '<=', strtotime($dto . ' 23:59:59')); }
+        $build = function () use ($kw, $uid, $sid, $audit, $status, $dfrom, $dto) {
+            $q = Image::alias('i')->leftJoin('img_users u', 'u.id = i.user_id')
+                ->field('i.*, u.nickname as user_nickname, u.email as user_email')
+                ->where('i.status', '>', 0);
+            if ($kw !== '')     { $q->where('i.name', 'like', '%' . $kw . '%'); }
+            if ($uid > 0)       { $q->where('i.user_id', $uid); }
+            if ($sid > 0)       { $q->where('i.storage_id', $sid); }
+            if ($audit !== '')  { $q->where('i.audit_status', (int)$audit); }
+            if ($status !== '') { $q->where('i.status', (int)$status); }
+            if ($dfrom !== '')  { $q->where('i.create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
+            if ($dto !== '')    { $q->where('i.create_time', '<=', strtotime($dto . ' 23:59:59')); }
+            return $q;
+        };
 
-        $list  = $q->order('id', 'desc')->page($page, $size)->select();
-        $total = (clone $q)->count();
+        $list  = $build()->order('i.id', 'desc')->page($page, $size)->select();
+        $total = $build()->count();
+
+        // 用户下拉（筛选用）
+        $users = Db::name('users')->field('id,nickname,email')->order('id', 'asc')->limit(500)->select()->toArray();
 
         // 存储实例名映射（列表展示用）
         $storages = [];
@@ -54,6 +62,7 @@ class ImageManage extends Base
             'dfrom'    => $dfrom,
             'dto'      => $dto,
             'storages' => $storages,
+            'users'    => $users,
             'page_no'  => $page,
             'total'    => $total,
             'pages'    => (int)ceil($total / $size) ?: 1,

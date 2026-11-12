@@ -20,6 +20,8 @@ Route::group(function () {
     Route::post('image/batch', 'ImageManage/batch');
 
     Route::get('user', 'UserManage/index');
+    Route::post('user/save/:id', 'UserManage/save');
+    Route::post('user/batch', 'UserManage/batch');
     Route::post('user/toggle/:id', 'UserManage/toggle');
     Route::post('user/group/:id', 'UserManage/changeGroup');
     Route::post('user/resetpwd/:id', 'UserManage/resetPwd');

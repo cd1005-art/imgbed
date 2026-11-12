@@ -4,16 +4,38 @@
 <div class="page-toolbar">
   <h1 class="page-title">用户管理 <span class="count">{$total} 人</span></h1>
   <form class="search-bar" method="get" action="/admin/user">
-    <input type="text" name="kw" value="{$kw}" placeholder="邮箱搜索">
+    <input type="text" name="kw" value="{$kw}" placeholder="邮箱/昵称搜索">
+    <select name="gid" class="filter-select">
+      <option value="0">全部策略组</option>
+      {foreach $groups as $g}
+      <option value="{$g.id}" {if condition="$gid eq $g.id"}selected{/if}>{$g.name}</option>
+      {/foreach}
+    </select>
+    <select name="status" class="filter-select">
+      <option value="">全部状态</option>
+      <option value="1" {if condition="$status eq '1'"}selected{/if}>正常</option>
+      <option value="2" {if condition="$status eq '2'"}selected{/if}>禁用</option>
+    </select>
+    <input type="date" name="dfrom" value="{$dfrom}" class="filter-select">
+    <input type="date" name="dto" value="{$dto}" class="filter-select">
     <button class="btn btn-sm" type="submit">筛选</button>
   </form>
 </div>
 
+<div class="batch-bar" id="userBatchBar" hidden>
+  <span id="userBatchCount">已选 0 人</span>
+  <button class="btn-ghost-sm" data-user-batch="enable">批量启用</button>
+  <button class="btn-ghost-sm" data-user-batch="disable">批量禁用</button>
+  <button class="btn-ghost-sm" data-user-batch="group">批量改组</button>
+  <button class="btn-ghost-sm" id="userBatchClear">取消选择</button>
+</div>
+
 <table class="table">
-  <thead><tr><th>ID</th><th>邮箱</th><th>昵称</th><th>策略组</th><th>已用容量</th><th>状态</th><th>注册IP</th><th>注册时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="userCheckAll"></th><th>ID</th><th>邮箱</th><th>昵称</th><th>策略组</th><th>已用容量</th><th>状态</th><th>注册IP</th><th>注册时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
-    <tr>
+    <tr data-uid="{$vo.id}">
+      <td><input type="checkbox" class="user-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td class="mono">{$vo.email}</td>
       <td>{$vo.nickname}</td>
@@ -29,6 +51,7 @@
       <td class="mono">{$vo.last_login_ip}</td>
       <td>{:date('Y-m-d', ts($vo.create_time))}</td>
       <td class="td-actions">
+        <button class="btn-ghost-sm" data-user-edit="{$vo.id}">编辑</button>
         <button class="btn-ghost-sm" data-user-toggle="{$vo.id}">{if condition="$vo.status eq 1"}禁用{else /}启用{/if}</button>
         <button class="btn-ghost-sm" data-user-reset="{$vo.id}">重置密码</button>
       </td>
@@ -39,13 +62,13 @@
 
 {if condition="$pages gt 1"}
 <nav class="pager">
-  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}">上一页</a>{/if}
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}&gid={$gid}&status={$status}&dfrom={$dfrom}&dto={$dto}">上一页</a>{/if}
   <span class="pager-info">{$page_no} / {$pages}</span>
-  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}">下一页</a>{/if}
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}&gid={$gid}&status={$status}&dfrom={$dfrom}&dto={$dto}">下一页</a>{/if}
 </nav>
 {/if}
 {/block}
 
 {block name="script"}
-<script>pageBoot('adminUser');</script>
+<script>window.__groups = {:json_encode($groups)}; pageBoot('adminUser');</script>
 {/block}
