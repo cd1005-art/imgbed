@@ -41,7 +41,7 @@ class UserManage extends Base
         };
 
         $groupMap = [];
-        foreach (StrategyGroup::field('id,max_tokens,quota_total,is_unlimited')->select()->toArray() as $g) {
+        foreach (StrategyGroup::field('id,max_tokens,quota_total')->select()->toArray() as $g) {
             $groupMap[(int)$g['id']] = ['max_tokens' => (int)$g['max_tokens'], 'quota_total' => (int)$g['quota_total']];
         }
 
