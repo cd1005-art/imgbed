@@ -24,7 +24,15 @@ class UserManage extends Base
 
         $build = function () use ($kw, $gid, $status, $dfrom, $dto) {
             $q = User::order('id', 'desc');
-            if ($kw !== '')     { $q->where(function ($qq) use ($kw) { $qq->where('email', 'like', '%' . $kw . '%')->whereOr('nickname', 'like', '%' . $kw . '%'); }); }
+            if ($kw !== '') {
+                $q->where(function ($qq) use ($kw) {
+                    if (ctype_digit($kw)) {
+                        $qq->whereOr('id', (int)$kw);
+                    }
+                    $qq->whereOr('email', 'like', '%' . $kw . '%')
+                       ->whereOr('nickname', 'like', '%' . $kw . '%');
+                });
+            }
             if ($gid > 0)       { $q->where('group_id', $gid); }
             if ($status !== '') { $q->where('status', (int)$status); }
             if ($dfrom !== '')  { $q->where('create_time', '>=', strtotime($dfrom . ' 00:00:00')); }

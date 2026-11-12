@@ -4,7 +4,7 @@
 <div class="page-toolbar">
   <h1 class="page-title">用户管理 <span class="count">{$total} 人</span></h1>
   <form class="search-bar" method="get" action="/admin/user">
-    <input type="text" name="kw" value="{$kw}" placeholder="邮箱/昵称搜索">
+    <input type="text" name="kw" value="{$kw}" placeholder="用户ID/邮箱/昵称">
     <select name="gid" class="filter-select">
       <option value="0">全部策略组</option>
       {foreach $groups as $g}

@@ -25,12 +25,21 @@ class ImageManage extends Base
         $dfrom  = (string)$this->request->param('dfrom', '');  // 起始日期 Y-m-d
         $dto    = (string)$this->request->param('dto', '');    // 结束日期 Y-m-d
 
-        $build = function () use ($kw, $uid, $sid, $audit, $status, $dfrom, $dto) {
+        $build = function () use ($kw, $ufilter, $sid, $audit, $status, $dfrom, $dto) {
             $q = Image::alias('i')->leftJoin('img_users u', 'u.id = i.user_id')
                 ->field('i.*, u.nickname as user_nickname, u.email as user_email')
                 ->where('i.status', '>', 0);
             if ($kw !== '')     { $q->where('i.name', 'like', '%' . $kw . '%'); }
-            if ($uid > 0)       { $q->where('i.user_id', $uid); }
+            if ($ufilter !== '') {
+                $q->where(function ($qq) use ($ufilter) {
+                    if (ctype_digit($ufilter)) {
+                        $qq->where('i.user_id', (int)$ufilter);
+                    } else {
+                        $qq->where('u.email', 'like', '%' . $ufilter . '%')
+                           ->whereOr('u.nickname', 'like', '%' . $ufilter . '%');
+                    }
+                });
+            }
             if ($sid > 0)       { $q->where('i.storage_id', $sid); }
             if ($audit !== '')  { $q->where('i.audit_status', (int)$audit); }
             if ($status !== '') { $q->where('i.status', (int)$status); }
@@ -47,9 +56,6 @@ class ImageManage extends Base
         });
         $total = $build()->count();
 
-        // 用户下拉（筛选用）
-        $users = Db::name('users')->field('id,nickname,email')->order('id', 'asc')->limit(500)->select()->toArray();
-
         // 存储实例名映射（列表展示用）
         $storages = [];
         foreach (Db::name('storage_configs')->field('id,name,driver')->select()->toArray() as $r) {
@@ -60,7 +66,7 @@ class ImageManage extends Base
             'page'     => 'image',
             'list'     => $list,
             'kw'       => $kw,
-            'uid'      => $uid,
+            'ufilter'  => $ufilter,
             'sid'      => $sid,
             'audit'    => $audit,
             'status'   => $status,
