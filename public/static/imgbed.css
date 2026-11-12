@@ -289,3 +289,15 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 .token-help-body { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .token-help-body p { margin: 0; }
 .token-help-body .url-text { font-size: 12px; padding: 8px 10px; }
+
+/* ---------- API 文档页 ---------- */
+.doc-main { max-width: 860px; margin: 0 auto; }
+.doc-main h2 { font-size: 17px; margin: 28px 0 10px; }
+.doc-main h3 { font-size: 14px; margin: 18px 0 8px; }
+.doc-main p, .doc-main li { font-size: 13.5px; color: var(--ink-2); line-height: 1.8; }
+.doc-main pre {
+  background: var(--code-bg); border-radius: var(--r-md); padding: 14px 16px;
+  overflow-x: auto; font: 12.5px/1.7 var(--font-mono); margin: 10px 0;
+}
+.doc-main pre code { background: none; padding: 0; }
+.doc-main table { width: 100%; }
