@@ -32,7 +32,9 @@ class ImageManage extends Base
             if ($kw !== '')     { $q->where('i.name', 'like', '%' . $kw . '%'); }
             if ($ufilter !== '') {
                 $q->where(function ($qq) use ($ufilter) {
-                    if (ctype_digit($ufilter)) {
+                    if ($ufilter === '游客' || strtolower($ufilter) === 'guest') {
+                        $qq->where('i.user_id', 0);          // 游客（未登录）图片
+                    } elseif (ctype_digit($ufilter)) {
                         $qq->where('i.user_id', (int)$ufilter);
                     } else {
                         $qq->where('u.email', 'like', '%' . $ufilter . '%')
@@ -122,9 +124,10 @@ class ImageManage extends Base
         $q = Image::where('status', '>', 0);
         if ($kw !== '')     { $q->where('name', 'like', '%' . $kw . '%'); }
         if ($ufilter !== '') {
-            $uid = (int)$ufilter;
-            if (ctype_digit($ufilter)) {
-                $q->where('user_id', $uid);
+            if ($ufilter === '游客' || strtolower($ufilter) === 'guest') {
+                $q->where('user_id', 0);
+            } elseif (ctype_digit($ufilter)) {
+                $q->where('user_id', (int)$ufilter);
             } else {
                 $uids = \think\facade\Db::name('users')
                     ->where('email', 'like', '%' . $ufilter . '%')

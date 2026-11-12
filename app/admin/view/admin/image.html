@@ -5,7 +5,7 @@
   <h1 class="page-title">图片管理 <span class="count">{$total} 张</span></h1>
   <form class="search-bar" method="get" action="/admin/image">
     <input type="text" name="kw" value="{$kw}" placeholder="文件名">
-    <input type="text" name="ufilter" value="{$ufilter}" placeholder="用户ID/邮箱/昵称" style="width:150px">
+    <input type="text" name="ufilter" value="{$ufilter}" placeholder="用户ID/邮箱/昵称（游客填 0）" style="width:150px">
     <select name="sid" class="filter-select">
       <option value="0">全部存储</option>
       {foreach $storages as $stId => $stName}
