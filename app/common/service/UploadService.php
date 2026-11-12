@@ -99,6 +99,22 @@ class UploadService
         $relativePath = date('Y/m/d/', $now) . $this->randomName() . '.' . $ext;
 
         try {
+            // 存储实例级配额：达到手工上限则停止上传（0=不限，本地/网盘均适用）
+            $storageRow = Db::name('storage_configs')->where('id', (int)$group->storage_id)->find();
+            if ($storageRow) {
+                $storageCfg = json_decode((string)$storageRow['config'], true) ?: [];
+                $quotaGb = (int)($storageCfg['quota_gb'] ?? 0);
+                if ($quotaGb > 0) {
+                    $usedB = (int)Db::name('images')
+                        ->where('storage_id', (int)$group->storage_id)
+                        ->where('status', 1)
+                        ->sum('size');
+                    if ($usedB >= $quotaGb * 1073741824) {
+                        throw new UploadException('存储空间已满，暂停上传（管理员可调整存储配额）');
+                    }
+                }
+            }
+
             $driver = StorageManager::driver((int)$group->storage_id);
         } catch (\RuntimeException $e) {
             throw new UploadException($e->getMessage());

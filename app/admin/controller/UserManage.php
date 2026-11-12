@@ -40,15 +40,18 @@ class UserManage extends Base
             return $q;
         };
 
-        $groupMax = [];
-        foreach (StrategyGroup::field('id,max_tokens')->select()->toArray() as $g) {
-            $groupMax[(int)$g['id']] = (int)$g['max_tokens'];
+        $groupMap = [];
+        foreach (StrategyGroup::field('id,max_tokens,quota_total,is_unlimited')->select()->toArray() as $g) {
+            $groupMap[(int)$g['id']] = ['max_tokens' => (int)$g['max_tokens'], 'quota_total' => (int)$g['quota_total']];
         }
 
-        $list  = $build()->page($page, 20)->select()->each(function ($item) use ($groupMax) {
+        $list  = $build()->page($page, 20)->select()->each(function ($item) use ($groupMap) {
             $count = (int)Db::name('api_tokens')->where('user_id', $item['id'])->count();
-            $limit = $groupMax[(int)$item['group_id']] ?? 0;
-            $item['token_display'] = $count . '/' . ($limit > 0 ? $limit : '不限');
+            $g = $groupMap[(int)$item['group_id']] ?? ['max_tokens' => 0, 'quota_total' => 0];
+            $item['token_display'] = $count . '/' . ($g['max_tokens'] > 0 ? $g['max_tokens'] : '不限');
+            // 容量：用量/总量（策略组 quota_total）
+            $item['quota_display'] = \app\common\service\UploadService::formatSize((int)$item['quota_used'])
+                . ' / ' . ($g['quota_total'] > 0 ? \app\common\service\UploadService::formatSize($g['quota_total']) : '不限');
             return $item;
         });
         $total = $build()->count();

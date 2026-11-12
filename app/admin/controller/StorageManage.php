@@ -87,7 +87,10 @@ class StorageManage extends Base
         }
 
         if ($driver === 'local') {
-            $cfg = ['root' => trim((string)$this->request->post('root', 'storage/images'), '/\\')];
+            $cfg = [
+                'root'     => trim((string)$this->request->post('root', 'storage/images'), '/\\'),
+                'quota_gb' => max(0, (int)$this->request->post('quota_gb', 0)),
+            ];
         } else {
             $cfg = [
                 'base_url'   => rtrim(trim((string)$this->request->post('base_url', '')), '/'),

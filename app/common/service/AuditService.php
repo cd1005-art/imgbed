@@ -54,7 +54,7 @@ class AuditService
     {
         return match ($key) {
             'local_nsfw' => new LocalNsfwDriver(['endpoint' => (string)Setting::get('nsfw_endpoint', '')]),
-            'llm_vlm'    => new MultiModelAuditDriver(),   // 多模型链：按排序优先，失败自动切换，全部失败转人工
+            'llm_vlm'    => new \app\common\service\audit\MultiModelAuditDriver(),   // 多模型链：按排序优先，失败自动切换，全部失败转人工
             // 'aliyun' => new AliyunDriver(...),     // 二期
             // 'tencent' => new TencentDriver(...),   // 二期
             default => throw new \RuntimeException('未知审核驱动: ' . $key),

@@ -46,7 +46,7 @@
           {/volist}
         </select>
       </td>
-      <td>{:round($vo.quota_used / 1048576, 1)} MB</td>
+      <td>{$vo.quota_display}</td>
       <td>{$vo.token_display}</td>
       <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">禁用</span>{/if}</td>
       <td class="mono">{$vo.last_login_ip}</td>

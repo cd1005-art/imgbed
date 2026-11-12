@@ -50,6 +50,7 @@
     </label>
     <div class="cfg-fields" data-cfg="local" {if condition="$vo.driver neq 'local'"}hidden{/if}>
       <label class="field field-wide"><span class="field-label">本地目录（相对 public/）</span><input type="text" name="root" value="{$vo.config.root|default='storage/images'}"></label>
+      <label class="field"><span class="field-label">配额上限（GB，0=不限，达量停止上传）</span><input type="number" name="quota_gb" value="{$vo.config.quota_gb|default=0}"></label>
     </div>
     <div class="cfg-fields" data-cfg="webdav" {if condition="$vo.driver neq 'webdav'"}hidden{/if}>
       <label class="field field-wide"><span class="field-label">WebDAV 地址</span><input type="text" name="base_url" value="{$vo.config.base_url|default=''}" placeholder="http://host:5244/dav/目录"></label>
@@ -85,6 +86,7 @@
     </label>
     <div class="cfg-fields" data-cfg="local">
       <label class="field field-wide"><span class="field-label">本地目录（相对 public/）</span><input type="text" name="root" value="storage/images"></label>
+      <label class="field"><span class="field-label">配额上限（GB，0=不限，达量停止上传）</span><input type="number" name="quota_gb" value="0"></label>
     </div>
     <div class="cfg-fields" data-cfg="webdav" hidden>
       <label class="field field-wide"><span class="field-label">WebDAV 地址</span><input type="text" name="base_url" placeholder="http://host:5244/dav/目录"></label>
