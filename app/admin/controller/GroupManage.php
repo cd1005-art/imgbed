@@ -14,10 +14,16 @@ class GroupManage extends Base
 {
     public function index()
     {
+        // 键统一转 int，避免 PDO 返回类型差异导致模板键匹配失败
+        $storages = [];
+        foreach (Db::name('storage_configs')->where('status', 1)->field('id,name')->select()->toArray() as $r) {
+            $storages[(int)$r['id']] = $r['name'];
+        }
+
         return $this->adminView('admin/group', [
-            'page'   => 'group',
-            'list'   => StrategyGroup::order('id', 'asc')->select(),
-            'storages' => Db::name('storage_configs')->where('status', 1)->column('name', 'id'),
+            'page'     => 'group',
+            'list'     => StrategyGroup::order('id', 'asc')->select(),
+            'storages' => $storages,
         ]);
     }
 

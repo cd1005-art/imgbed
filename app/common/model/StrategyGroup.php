@@ -9,13 +9,26 @@ class StrategyGroup extends Model
 {
     protected $table = 'img_strategy_groups';
 
-    protected $type = [
-        'allow_ext' => 'array',
-    ];
+    // allow_ext 存储为逗号分隔字符串，不用 array cast（json_decode 对逗号串会变 null 导致回填丢失）
 
-    /** 扩展名白名单（数组） */
+    /** 扩展名白名单（数组），兼容 array/string 两种取值形态 */
     public function allowedExt(): array
     {
-        return $this->allow_ext ?: ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $v = $this->allow_ext;
+        if (is_array($v)) {
+            $v = implode(',', $v);
+        }
+        $exts = array_filter(array_map('trim', explode(',', (string)$v)));
+        return $exts ?: ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    }
+
+    /** 供后台编辑回填的扩展名字符串 */
+    public function allowExtString(): string
+    {
+        $v = $this->allow_ext;
+        if (is_array($v)) {
+            $v = implode(',', $v);
+        }
+        return (string)$v ?: 'jpg,jpeg,png,gif,webp';
     }
 }
