@@ -104,6 +104,14 @@ class V1 extends BaseController
                 (string)$this->request->header('user-agent', '')
             );
         } catch (UploadException $e) {
+            // 上传失败但鉴权通过：计入 upload_fail_count（不影响 upload_count 成功口径）
+            try {
+                Db::name('api_tokens')->where('id', $this->token->id)->inc('upload_fail_count')->update();
+                Db::name('api_call_logs')->insert([
+                    'token_id' => (int)$this->token->id, 'user_id' => (int)$this->user->id,
+                    'action' => 'upload', 'success' => 0, 'ip' => $this->clientIp(), 'create_time' => time(),
+                ]);
+            } catch (\Throwable $ignore) {}
             $this->fail(400, $e->getMessage());
         }
 

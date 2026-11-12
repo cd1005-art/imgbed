@@ -14,6 +14,12 @@
         <option value="local_nsfw" {if condition="($settings['default_audit_driver'] ?? '') eq 'local_nsfw'"}selected{/if}>本地 NSFW 模型</option>
       </select>
     </label>
+    <label class="field"><span class="field-label">协同模式（多模型）</span>
+      <select name="audit_mode">
+        <option value="failover" {if condition="($settings['audit_mode'] ?? 'failover') eq 'failover'"}selected{/if}>顺序切换（失败自动下一个）</option>
+        <option value="parallel" {if condition="($settings['audit_mode'] ?? '') eq 'parallel'"}selected{/if}>并行投票（同时审核，取多数）</option>
+      </select>
+    </label>
     <label class="field field-wide"><span class="field-label">本地 NSFW 推理服务地址（选 local_nsfw 时生效）</span><input type="text" name="nsfw_endpoint" value="{$settings.nsfw_endpoint|default=''}" placeholder="http://127.0.0.1:8900/"></label>
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>
   </form>
@@ -39,32 +45,28 @@
       <button class="btn-ghost-sm btn-danger-sm" data-model-del="{$m.id}">删除</button>
     </div>
   </div>
-  <form class="form form-grid model-form">
+  <form class="model-inline-form model-form">
     <input type="hidden" name="id" value="{$m.id}">
-    <label class="field"><span class="field-label">名称</span><input type="text" name="name" value="{$m.name}"></label>
-    <label class="field"><span class="field-label">模型名（需支持图片）</span><input type="text" name="model_name" value="{$m.model_name}"></label>
-    <label class="field"><span class="field-label">状态</span>
-      <select name="status"><option value="1" {if condition="$m.status eq 1"}selected{/if}>启用</option><option value="2" {if condition="$m.status eq 2"}selected{/if}>停用</option></select>
-    </label>
-    <label class="field field-wide"><span class="field-label">接口地址（OpenAI 兼容，自动补 /chat/completions）</span><input type="text" name="endpoint" value="{$m.endpoint}"></label>
-    <label class="field field-wide"><span class="field-label">API Key</span><input type="text" name="api_key" value="{$m.api_key}"></label>
-    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存卡片</button></div>
+    <input type="text" name="name" value="{$m.name}" placeholder="名称" style="width:100px">
+    <input type="text" name="model_name" value="{$m.model_name}" placeholder="模型名" style="width:130px">
+    <select name="status" style="width:76px"><option value="1" {if condition="$m.status eq 1"}selected{/if}>启用</option><option value="2" {if condition="$m.status eq 2"}selected{/if}>停用</option></select>
+    <input type="text" name="endpoint" value="{$m.endpoint}" placeholder="接口地址" style="flex:1; min-width:170px">
+    <input type="text" name="api_key" value="{$m.api_key}" placeholder="API Key" style="width:190px">
+    <button type="submit" class="btn btn-sm">保存</button>
   </form>
 </section>
 {/volist}
 
 <section class="panel">
   <h2 class="panel-title">新增模型卡片</h2>
-  <form class="form form-grid model-form" id="modelNewForm">
+  <form class="model-inline-form model-form" id="modelNewForm">
     <input type="hidden" name="id" value="0">
-    <label class="field"><span class="field-label">名称</span><input type="text" name="name" placeholder="例如 备用模型-A"></label>
-    <label class="field"><span class="field-label">模型名</span><input type="text" name="model_name" placeholder="qwen-vl-plus / glm-4v"></label>
-    <label class="field"><span class="field-label">状态</span>
-      <select name="status"><option value="1">启用</option><option value="2">停用</option></select>
-    </label>
-    <label class="field field-wide"><span class="field-label">接口地址</span><input type="text" name="endpoint" placeholder="http://host:8788/v1"></label>
-    <label class="field field-wide"><span class="field-label">API Key</span><input type="text" name="api_key"></label>
-    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">+ 新增卡片</button></div>
+    <input type="text" name="name" placeholder="名称，如 备用-A" style="width:110px">
+    <input type="text" name="model_name" placeholder="模型名（需支持图片）" style="width:150px">
+    <select name="status" style="width:76px"><option value="1">启用</option><option value="2">停用</option></select>
+    <input type="text" name="endpoint" placeholder="接口地址，如 http://host:8788/v1" style="flex:1; min-width:180px">
+    <input type="text" name="api_key" placeholder="API Key" style="width:190px">
+    <button type="submit" class="btn btn-sm">+ 新增卡片</button>
   </form>
 </section>
 {/block}

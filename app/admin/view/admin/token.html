@@ -32,7 +32,7 @@
 </div>
 
 <table class="table">
-  <thead><tr><th style="width:28px"><input type="checkbox" id="tokenCheckAll"></th><th>ID</th><th>名称</th><th>属主</th><th>Token</th><th>日上限</th><th>容量上限</th><th>上传</th><th>列表</th><th>信息</th><th>删除</th><th>总调用</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="tokenCheckAll"></th><th>ID</th><th>名称</th><th>属主</th><th>Token</th><th>日上限</th><th>容量上限</th><th>上传成功</th><th>上传失败</th><th>列表</th><th>信息</th><th>删除</th><th>总调用</th><th>状态</th><th>最近使用</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr data-tid="{$vo.id}">
@@ -44,6 +44,7 @@
       <td>{if condition="$vo.daily_limit gt 0"}{$vo.daily_limit}{else /}不限{/if}</td>
       <td>{if condition="$vo.quota_limit gt 0"}{:round($vo.quota_limit / 1048576, 1)} MB{else /}不限{/if}</td>
       <td>{$vo.upload_count}</td>
+      <td>{$vo.upload_fail_count}</td>
       <td>{$vo.list_count}</td>
       <td>{$vo.info_count}</td>
       <td>{$vo.delete_count}</td>

@@ -46,6 +46,7 @@ class GroupManage extends Base
             'keep_days'   => (int)$this->request->post('keep_days', 0),
             'storage_id'  => 0,  // 占位，下方校验后回填
             'ad_exempt'   => (int)$this->request->post('ad_exempt', 0),
+            'max_tokens'  => max(0, (int)$this->request->post('max_tokens', 0)),
             'status'      => (int)$this->request->post('status', 1),
             'update_time' => time(),
         ];
@@ -68,6 +69,18 @@ class GroupManage extends Base
             Db::name('strategy_groups')->insert($data);
         }
         return json(['status' => true, 'message' => '已保存']);
+    }
+
+    /** 停用/启用切换 */
+    public function toggle(int $id)
+    {
+        $g = StrategyGroup::find($id);
+        if (!$g) {
+            return json(['status' => false, 'message' => '策略组不存在']);
+        }
+        $new = (int)$g->status === 1 ? 2 : 1;
+        Db::name('strategy_groups')->where('id', $id)->update(['status' => $new, 'update_time' => time()]);
+        return json(['status' => true, 'message' => $new === 1 ? '已启用' : '已停用']);
     }
 
     public function delete(int $id)

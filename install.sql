@@ -66,6 +66,7 @@ CREATE TABLE `img_strategy_groups` (
   `storage_id` int unsigned NOT NULL DEFAULT '1' COMMENT '默认存储实例ID',
   `token_daily_limit` int NOT NULL DEFAULT '0' COMMENT 'Token日调用上限(0不限)',
   `token_quota_mb` int NOT NULL DEFAULT '0' COMMENT 'Token容量上限MB(0不限)',
+  `max_tokens` int NOT NULL DEFAULT '0' COMMENT '可生成Token数量上限(0不限)',
   `audit_driver` varchar(30) NOT NULL DEFAULT '' COMMENT '审核驱动(空=跟全局)',
   `ad_exempt` tinyint NOT NULL DEFAULT '0' COMMENT '1=该组免广告',
   `is_guest` tinyint NOT NULL DEFAULT '0' COMMENT '1=游客默认组',
@@ -142,6 +143,7 @@ CREATE TABLE `img_api_tokens` (
   `quota_limit` bigint NOT NULL DEFAULT '0' COMMENT '容量上限字节(0=跟策略组)',
   `request_count` int unsigned NOT NULL DEFAULT '0' COMMENT '累计调用（鉴权通过）',
   `upload_count` int NOT NULL DEFAULT '0' COMMENT '上传成功次数',
+  `upload_fail_count` int NOT NULL DEFAULT '0' COMMENT '上传失败次数(鉴权通过)',
   `list_count` int NOT NULL DEFAULT '0' COMMENT '列表调用次数',
   `info_count` int NOT NULL DEFAULT '0' COMMENT '信息调用次数',
   `delete_count` int NOT NULL DEFAULT '0' COMMENT '删除调用次数',
@@ -350,7 +352,8 @@ INSERT INTO `img_settings` (`skey`, `svalue`, `remark`, `update_time`) VALUES
 ('llm_audit_model', '', 'LLM审核模型', UNIX_TIMESTAMP()),
 ('ad_vip_exempt', '1', 'VIP是否免广告', UNIX_TIMESTAMP()),
 ('allow_register', '1', '是否开放注册', UNIX_TIMESTAMP()),
-('upload_watermark', '0', '上传水印开关', UNIX_TIMESTAMP());
+('upload_watermark', '0', '上传水印开关', UNIX_TIMESTAMP()),
+('audit_mode', 'failover', '审核模式 failover顺序切换/parallel并行投票', UNIX_TIMESTAMP());
 
 -- 广告位（默认关闭）
 INSERT INTO `img_ad_slots` (`slot_key`, `name`, `type`, `content`, `is_open`, `sort`, `update_time`) VALUES

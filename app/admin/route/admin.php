@@ -27,6 +27,7 @@ Route::group(function () {
     Route::post('user/resetpwd/:id', 'UserManage/resetPwd');
 
     Route::get('group', 'GroupManage/index');
+    Route::post('group/toggle/:id', 'GroupManage/toggle');
     Route::post('group/save', 'GroupManage/save');
     Route::post('group/delete/:id', 'GroupManage/delete');
 

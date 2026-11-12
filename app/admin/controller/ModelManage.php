@@ -101,6 +101,8 @@ class ModelManage extends Base
             return json(['status' => false, 'message' => '驱动不合法']);
         }
         Setting::saveKey('default_audit_driver', $driver);
+        $mode = (string)$this->request->post('audit_mode', 'failover');
+        Setting::saveKey('audit_mode', in_array($mode, ['failover', 'parallel'], true) ? $mode : 'failover');
         $nsfw = trim((string)$this->request->post('nsfw_endpoint', ''));
         if ($nsfw !== '') {
             Setting::saveKey('nsfw_endpoint', $nsfw);
