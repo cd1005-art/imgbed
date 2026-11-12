@@ -2,6 +2,17 @@
 
 {block name="title"} · VIP 套餐{/block}
 
+{block name="script"}
+<script>
+document.querySelectorAll('.buy-btn').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var checked = document.querySelector('input[name="channel_' + b.dataset.plan + '"]:checked');
+    location.href = b.dataset.base + '?channel=' + (checked ? checked.value : 'alipay');
+  });
+});
+</script>
+{/block}
+
 {block name="content"}
 <h1 class="page-title">VIP 套餐</h1>
 
@@ -14,7 +25,12 @@
     <p class="plan-name">{$vo.name}</p>
     <p class="plan-price"><span class="plan-amount">{:round($vo.price / 100, 2)}</span> 元 / {$vo.days} 天</p>
     <p class="plan-desc">{$vo.description}</p>
-    <a class="btn btn-block" href="/vip/buy/{$vo.id}">立即开通</a>
+    <div class="pay-channel-row" data-plan="{$vo.id}">
+      <label class="pay-ch"><input type="radio" name="channel_{$vo.id}" value="alipay" checked><span>支付宝</span></label>
+      <label class="pay-ch"><input type="radio" name="channel_{$vo.id}" value="wxpay"><span>微信</span></label>
+      <label class="pay-ch"><input type="radio" name="channel_{$vo.id}" value="qqpay"><span>QQ 钱包</span></label>
+    </div>
+    <button class="btn btn-block buy-btn" type="button" data-plan="{$vo.id}" data-base="/vip/buy/{$vo.id}">立即开通</button>
   </div>
   {/volist}
 </div>

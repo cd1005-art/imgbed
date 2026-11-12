@@ -44,11 +44,18 @@ class GroupManage extends Base
             'quota_total' => (int)$this->request->post('quota_gb', 0) * 1073741824,
             'allow_ext'   => strtolower(trim((string)$this->request->post('allow_ext', 'jpg,jpeg,png,gif,webp'))),
             'keep_days'   => (int)$this->request->post('keep_days', 0),
-            'storage_id'  => (int)$this->request->post('storage_id', 1),
+            'storage_id'  => 0,  // 占位，下方校验后回填
             'ad_exempt'   => (int)$this->request->post('ad_exempt', 0),
             'status'      => (int)$this->request->post('status', 1),
             'update_time' => time(),
         ];
+
+        // 存储实例必须存在（防悬空引用导致 '-' 显示）
+        $storageId = (int)$this->request->post('storage_id', 1);
+        if (!Db::name('storage_configs')->where('id', $storageId)->where('status', 1)->find()) {
+            return json(['status' => false, 'message' => '所选存储实例不存在，请重新选择']);
+        }
+        $data['storage_id'] = $storageId;
 
         if ($data['name'] === '') {
             return json(['status' => false, 'message' => '组名必填']);

@@ -20,7 +20,10 @@ class PaymentManage extends Base
     {
         $config  = PaymentConfigModel::where('payment_code', 'yipay')->find();
         $gateway = $config && is_array($config->config) ? $config->config : [];
-        $gateway += ['api_url' => '', 'pid' => '', 'key' => '', 'gateway_type' => 'xpay', 'pay_type' => 'alipay'];
+        $gateway += ['api_url' => '', 'pid' => '', 'key' => '', 'gateway_type' => 'xpay'];
+        $gateway['pay_channels'] = (isset($gateway['pay_channels']) && is_array($gateway['pay_channels']))
+            ? $gateway['pay_channels'] + ['alipay' => '', 'wxpay' => '', 'qqpay' => '']
+            : ['alipay' => '', 'wxpay' => '', 'qqpay' => ''];
         $isOpen  = $config ? (int)$config->is_open : 0;
 
         return $this->adminView('admin/payment', [
@@ -32,7 +35,7 @@ class PaymentManage extends Base
         ]);
     }
 
-    /** 网关配置保存（pay_type 支持支付宝/wxpay 或通道 ID） */
+    /** 网关配置保存（三通道：支付宝/微信/QQ 钱包，每通道独立开关与通道号） */
     public function saveGateway()
     {
         $data = [
@@ -40,7 +43,12 @@ class PaymentManage extends Base
             'pid'          => trim((string)$this->request->post('pid', '')),
             'key'          => trim((string)$this->request->post('key', '')),
             'gateway_type' => (string)$this->request->post('gateway_type', 'xpay'),
-            'pay_type'     => trim((string)$this->request->post('pay_type', 'alipay')),
+            // 三通道映射：站内通道 => 网关 type（alipay/wxpay/qqpay 或逍遥PAY 通道 ID）
+            'pay_channels' => [
+                'alipay' => trim((string)$this->request->post('channel_alipay', '')),
+                'wxpay'  => trim((string)$this->request->post('channel_wxpay', '')),
+                'qqpay'  => trim((string)$this->request->post('channel_qqpay', '')),
+            ],
         ];
 
         if ($data['api_url'] !== '' && ($data['pid'] === '' || $data['key'] === '')) {

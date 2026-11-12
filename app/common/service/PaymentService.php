@@ -79,13 +79,21 @@ class PaymentService
      * @return array{order:Order, pay_url:string}
      * @throws \RuntimeException
      */
-    public function createVipOrder(User $user, VipPlan $plan): array
+    public function createVipOrder(User $user, VipPlan $plan, string $payChannel = 'alipay'): array
     {
         if (!$this->isAvailable()) {
             throw new \RuntimeException('支付通道未配置，联系站长');
         }
         if ((int)$plan->status !== 1) {
             throw new \RuntimeException('套餐已下架');
+        }
+
+        // 按用户所选通道取网关 type（三通道映射，未配置的通道拒绝下单）
+        $channels = (isset($this->config['pay_channels']) && is_array($this->config['pay_channels']))
+            ? $this->config['pay_channels'] : [];
+        $channelType = trim((string)($channels[$payChannel] ?? ''));
+        if ($channelType === '') {
+            throw new \RuntimeException('该支付方式未开通，请选择其他支付方式');
         }
 
         $orderNo = 'V' . date('YmdHis') . str_pad((string)random_int(0, 9999), 4, '0', STR_PAD_LEFT);

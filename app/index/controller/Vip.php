@@ -24,9 +24,11 @@ class Vip extends Base
         ]);
     }
 
-    /** 购买：创建订单 → 跳支付网关 */
+    /** 购买：创建订单 → 跳支付网关（channel=alipay/wxpay/qqpay） */
     public function buy(int $id)
     {
+        $channel = in_array(($this->request->param('channel', 'alipay')), ['alipay', 'wxpay', 'qqpay'], true)
+            ? (string)$this->request->param('channel', 'alipay') : 'alipay';
         \think\facade\Log::record('buy 被调用 id=' . $id . ' uid=' . (int)Session::get('user_id'), 'info');
         $userId = (int)Session::get('user_id');
         if ($userId <= 0) {
@@ -40,7 +42,7 @@ class Vip extends Base
         }
 
         try {
-            $result = (new PaymentService())->createVipOrder($user, $plan);
+            $result = (new PaymentService())->createVipOrder($user, $plan, $channel);
         } catch (\RuntimeException $e) {
             return $this->siteView('vip/index', [
                 'page_title' => 'VIP 套餐',
