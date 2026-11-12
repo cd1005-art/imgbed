@@ -22,7 +22,7 @@
       <td class="mono">{$vo.ip}</td>
       <td class="td-clip" title="{$vo.ua}">{$vo.ua}</td>
       <td class="td-clip" title="{$vo.reason}">{$vo.reason|default='-'}</td>
-      <td>{:date('m-d H:i', (int)$vo.create_time)}</td>
+      <td>{:date('m-d H:i', ts($vo.create_time))}</td>
     </tr>
     {/volist}
   </tbody>

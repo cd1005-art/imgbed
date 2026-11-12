@@ -27,7 +27,7 @@
       <td>{:round($vo.quota_used / 1048576, 1)} MB</td>
       <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">禁用</span>{/if}</td>
       <td class="mono">{$vo.last_login_ip}</td>
-      <td>{:date('Y-m-d', (int)$vo.create_time)}</td>
+      <td>{:date('Y-m-d', ts($vo.create_time))}</td>
       <td class="td-actions">
         <button class="btn-ghost-sm" data-user-toggle="{$vo.id}">{if condition="$vo.status eq 1"}禁用{else /}启用{/if}</button>
         <button class="btn-ghost-sm" data-user-reset="{$vo.id}">重置密码</button>

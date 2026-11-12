@@ -14,7 +14,7 @@
       <td class="mono td-clip" title="{$vo.token}">{$vo.token}</td>
       <td>{$vo.request_count}</td>
       <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
-      <td>{if condition="$vo.last_used_time gt 0"}{:date('m-d H:i', (int)$vo.last_used_time)}{else /}-{/if}</td>
+      <td>{if condition="$vo.last_used_time gt 0"}{:date('m-d H:i', ts($vo.last_used_time))}{else /}-{/if}</td>
       <td class="td-actions"><button class="btn-ghost-sm" data-token-toggle="{$vo.id}">{if condition="$vo.status eq 1"}停用{else /}启用{/if}</button></td>
     </tr>
     {/volist}

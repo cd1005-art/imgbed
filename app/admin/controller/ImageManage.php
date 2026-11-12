@@ -139,7 +139,7 @@ class ImageManage extends Base
                 $auditMap[(int)$img->audit_status] ?? '-',
                 $statusMap[(int)$img->status] ?? '-',
                 (string)$img->ip,
-                date('Y-m-d H:i:s', (int)$img->create_time),
+                date('Y-m-d H:i:s', ts($img->create_time)),
             ]);
         }
         fclose($out);

@@ -23,7 +23,7 @@
         <td>{$vo.user_id}</td>
         <td>{:round($vo.size / 1024, 1)} KB</td>
         <td class="mono">{$vo.ip}</td>
-        <td>{:date('m-d H:i', (int)$vo.create_time)}</td>
+        <td>{:date('m-d H:i', ts($vo.create_time))}</td>
       </tr>
       {/volist}
     </tbody>

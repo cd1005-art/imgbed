@@ -12,7 +12,7 @@
   <div class="quota-bar"><div class="quota-fill" style="width:{$quota_pct}%"></div></div>
   <p class="quota-line">
     已用 {:round($quota_used / 1048576, 1)} MB / {:round($quota_total / 1073741824, 1)} GB（{$quota_pct}%）
-    {if condition="$user.vip_expire_time gt 0"}· VIP 至 {:date('Y-m-d', (int)$user.vip_expire_time)}{else /}· 免费版{/if}
+    {if condition="$user.vip_expire_time gt 0"}· VIP 至 {:date('Y-m-d', ts($user.vip_expire_time))}{else /}· 免费版{/if}
   </p>
 
   <div class="rights-list">

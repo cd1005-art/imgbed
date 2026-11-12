@@ -78,7 +78,7 @@
     <thead><tr><th>订单号</th><th>用户</th><th>金额(元)</th><th>状态</th><th>时间</th></tr></thead>
     <tbody>
       {volist name="orders" id="o"}
-      <tr><td class="mono">{$o.order_no}</td><td>{$o.user_id}</td><td>{:round($o.amount / 100, 2)}</td><td>{$o.status}</td><td>{:date('m-d H:i', (int)$o.create_time)}</td></tr>
+      <tr><td class="mono">{$o.order_no}</td><td>{$o.user_id}</td><td>{:round($o.amount / 100, 2)}</td><td>{$o.status}</td><td>{:date('m-d H:i', ts($o.create_time))}</td></tr>
       {/volist}
     </tbody>
   </table>
