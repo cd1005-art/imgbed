@@ -282,3 +282,10 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 
 /* hidden 属性强制生效（display:grid/flex 会覆盖 UA 的 [hidden] 样式） */
 [hidden] { display: none !important; }
+
+/* ---------- Token 使用说明折叠 ---------- */
+.token-help { margin: 12px 0 4px; font-size: 13px; }
+.token-help summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.token-help-body { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.token-help-body p { margin: 0; }
+.token-help-body .url-text { font-size: 12px; padding: 8px 10px; }

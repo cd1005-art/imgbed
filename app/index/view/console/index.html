@@ -31,6 +31,17 @@
   <p class="panel-sub">给 PicGo / ShareX / Typora 或自家程序用。请求头 <code class="inline-code">X-API-TOKEN</code>，上传地址 <code class="inline-code">/api/v1/upload</code>。</p>
   <p class="panel-sub">Token 数量：<b>已用 {$token_used} 个</b> / {if condition="$token_limit gt 0"}上限 {$token_limit} 个{else /}不限{/if}</p>
 
+  <details class="token-help">
+    <summary>怎么用？（点击展开）</summary>
+    <div class="token-help-body">
+      <p><b>① 命令行 / 脚本上传</b></p>
+      <code class="url-text" style="display:block; white-space:pre-wrap">curl -X POST "https://img.oddpp.com/api/v1/upload" -H "X-API-TOKEN: 你的Token" -F "file=@图片.jpg"</code>
+      <p><b>② PicGo / Typora</b>：安装 <b>lskypro</b> 兼容插件，API 地址填 <code class="inline-code">https://img.oddpp.com/api/v1</code>，Token 填生成的即可。</p>
+      <p><b>③ 接口文档</b>：上传 / 列表 / 信息 / 删除 全部接口见仓库 <code class="inline-code">docs/API.md</code>。</p>
+      <p class="field-hint">提示：相同图片会自动秒传复用，不重复占用容量；Token 完整值只在生成时显示一次。</p>
+    </div>
+  </details>
+
   <div class="token-create">
     <input type="text" id="tokenName" maxlength="30" placeholder="Token 名称（可空）">
     <button class="btn" type="button" id="tokenCreateBtn"><svg class="ic"><use href="#i-key"/></svg> 生成</button>
