@@ -5,21 +5,49 @@
   <h1 class="page-title">图片管理 <span class="count">{$total} 张</span></h1>
   <form class="search-bar" method="get" action="/admin/image">
     <input type="text" name="kw" value="{$kw}" placeholder="文件名">
-    <input type="number" name="uid" value="{$uid}" placeholder="用户ID" style="width:90px">
+    <input type="number" name="uid" value="{$uid}" placeholder="用户ID" style="width:80px">
+    <select name="sid" class="filter-select">
+      <option value="0">全部存储</option>
+      {foreach $storages as $stId => $stName}
+      <option value="{$stId}" {if condition="$sid eq $stId"}selected{/if}>{$stName}</option>
+      {/foreach}
+    </select>
+    <select name="audit" class="filter-select">
+      <option value="">全部审核</option>
+      <option value="0" {if condition="$audit eq '0'"}selected{/if}>待审</option>
+      <option value="1" {if condition="$audit eq '1'"}selected{/if}>通过</option>
+      <option value="2" {if condition="$audit eq '2'"}selected{/if}>拒绝</option>
+      <option value="3" {if condition="$audit eq '3'"}selected{/if}>人工复审</option>
+    </select>
+    <select name="status" class="filter-select">
+      <option value="">全部状态</option>
+      <option value="1" {if condition="$status eq '1'"}selected{/if}>正常</option>
+      <option value="2" {if condition="$status eq '2'"}selected{/if}>冻结</option>
+    </select>
     <button class="btn btn-sm" type="submit">筛选</button>
   </form>
 </div>
 
+<div class="batch-bar" id="batchBar" hidden>
+  <span id="batchCount">已选 0 张</span>
+  <button class="btn-ghost-sm" data-batch="freeze">批量冻结</button>
+  <button class="btn-ghost-sm" data-batch="unfreeze">批量解冻</button>
+  <button class="btn-ghost-sm btn-danger-sm" data-batch="delete">批量删除</button>
+  <button class="btn-ghost-sm" id="batchClear">取消选择</button>
+</div>
+
 <table class="table">
-  <thead><tr><th>ID</th><th>缩略</th><th>文件名</th><th>用户</th><th>大小</th><th>审核</th><th>状态</th><th>IP</th><th>上传时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="checkAll"></th><th>ID</th><th>缩略</th><th>文件名</th><th>用户</th><th>大小</th><th>存储</th><th>审核</th><th>状态</th><th>IP</th><th>上传时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr data-row="{$vo.id}">
+      <td><input type="checkbox" class="row-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td><a href="/i/{$vo.path}" target="_blank"><img class="thumb" src="/i/{$vo.path}" alt=""></a></td>
       <td class="td-clip" title="{$vo.name}">{$vo.name}</td>
       <td>{$vo.user_id}</td>
       <td>{:round($vo.size / 1024, 1)} KB</td>
+      <td class="td-clip" title="{$storages[$vo.storage_id]|default='-'}">{$storages[$vo.storage_id]|default='-'}</td>
       <td>{if condition="$vo.audit_status eq 0"}待审{elseif condition="$vo.audit_status eq 1"}通过{elseif condition="$vo.audit_status eq 2"}<span class="danger">拒绝</span>{else /}复审{/if}</td>
       <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">冻结</span>{/if}</td>
       <td class="mono">{$vo.ip}</td>
@@ -35,9 +63,9 @@
 
 {if condition="$pages gt 1"}
 <nav class="pager">
-  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}&uid={$uid}">上一页</a>{/if}
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}&uid={$uid}&sid={$sid}&audit={$audit}&status={$status}">上一页</a>{/if}
   <span class="pager-info">{$page_no} / {$pages}</span>
-  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}&uid={$uid}">下一页</a>{/if}
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}&uid={$uid}&sid={$sid}&audit={$audit}&status={$status}">下一页</a>{/if}
 </nav>
 {/if}
 {/block}

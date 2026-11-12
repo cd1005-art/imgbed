@@ -16,6 +16,7 @@ Route::group(function () {
     Route::get('image', 'ImageManage/index');
     Route::post('image/toggle/:id', 'ImageManage/toggle');
     Route::post('image/delete/:id', 'ImageManage/delete');
+    Route::post('image/batch', 'ImageManage/batch');
 
     Route::get('user', 'UserManage/index');
     Route::post('user/toggle/:id', 'UserManage/toggle');
