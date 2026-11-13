@@ -17,6 +17,7 @@ Route::group(function () {
     Route::post('image/orphan/purge', 'ImageManage/orphanPurge');
     Route::get('image/export', 'ImageManage/export');
     Route::post('tag/delete', 'TagManage/delete');
+    Route::post('tag/batch-status', 'TagManage/batchStatus');
     Route::post('tag/toggle/:id', 'TagManage/toggle');
     Route::post('tag/merge', 'TagManage/merge');
     Route::post('report/confirm/:id', 'ReportManage/confirm');

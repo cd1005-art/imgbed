@@ -59,6 +59,18 @@ class TagManage extends Base
         return json(['status' => true, 'message' => "已删除 {$n} 个标签（图片关联已清理）"]);
     }
 
+    /** 批量启用/停用（ids 逗号分隔，status=1 启用 / 0 停用） */
+    public function batchStatus()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择标签']);
+        }
+        $status = (int)$this->request->post('status', 1) === 1 ? 1 : 0;
+        $n = Db::name('tags')->whereIn('id', $ids)->update(['status' => $status]);
+        return json(['status' => true, 'message' => '已' . ($status ? '启用' : '停用') . " {$n} 个标签"]);
+    }
+
     public function toggle(int $id)
     {
         $t = Db::name('tags')->where('id', $id)->find();

@@ -727,6 +727,22 @@
   /* ---------- 标签管理 ---------- */
   function adminTag() {
     bindBatchDelete({checkAll:'#tagCheckAll', checkbox:'.tag-check', batchBtn:'#tagBatchDel', api:'/admin/tag/delete', label:'标签', batchBar:'#tagBatchBar', barCount:'#tagBatchCount', clearBtn:'#tagBatchClear', unit:'个'});
+    function batchStatus(status) {
+      var ids = Array.prototype.map.call(document.querySelectorAll('.tag-check:checked'), function (c) { return c.value; });
+      if (!ids.length) { toast('先勾选标签'); return; }
+      var label = status ? '启用' : '停用';
+      var btn = document.getElementById(status ? 'tagBatchEnable' : 'tagBatchDisable');
+      armConfirm(btn, '批量' + label + '选中的 ' + ids.length + ' 个标签？', function () {
+        postBody('/admin/tag/batch-status', 'ids=' + ids.join(',') + '&status=' + status).then(function (d) {
+          toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 500);
+        });
+      });
+    }
+    var be = document.getElementById('tagBatchEnable');
+    if (be) be.addEventListener('click', function () { batchStatus(1); });
+    var bd = document.getElementById('tagBatchDisable');
+    if (bd) bd.addEventListener('click', function () { batchStatus(0); });
+
     document.querySelectorAll('[data-tag-toggle]').forEach(function (b) {
       b.addEventListener('click', function () {
         post('/admin/tag/toggle/' + b.dataset.tagToggle).then(function (d) {
