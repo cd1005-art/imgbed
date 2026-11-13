@@ -6,6 +6,7 @@ namespace app\index\controller;
 use app\index\controller\Base;
 use app\common\model\ApiToken;
 use app\common\model\Image;
+use app\common\model\User;
 use think\facade\Db;
 
 /**
