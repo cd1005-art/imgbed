@@ -720,7 +720,7 @@
 
     var rk = document.getElementById('cronRotate');
     if (rk) rk.addEventListener('click', function () {
-      if (!confirm('重置后旧地址立即失效，确认？')) return;
+      if (!confirm('重置密钥？\n\n· 旧密钥立即失效\n· 宝塔里用「方式 B（访问 URL）」的任务需全部替换新地址\n· 方式 A（CLI）不受影响')) return;
       post('/admin/cron/rotate').then(function (d) {
         toast(d.message); setTimeout(function () { location.reload(); }, 600);
       });
