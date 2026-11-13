@@ -706,6 +706,20 @@
     initTabs('#genTabs');
     // 新建 / 编辑任务
     var nf = document.getElementById('genNewForm');
+    function resetGenForm() {
+      if (!nf) { return; }
+      nf.reset();
+      nf.querySelector('[name=id]').value = '0';
+      var flag = document.getElementById('genEditFlag');
+      if (flag) { flag.hidden = true; flag.textContent = ''; }
+      var sb = document.getElementById('genSubmitBtn');
+      if (sb) sb.textContent = '创建任务';
+    }
+    var newTab = document.querySelector('[data-tab="new"]');
+    if (newTab) newTab.addEventListener('click', function () {
+      var fid = nf ? nf.querySelector('[name=id]').value : '0';
+      if (fid !== '0') { resetGenForm(); }
+    });
     if (nf) nf.addEventListener('submit', function (e) {
       e.preventDefault();
       postForm('/admin/gen/save', nf).then(function (d) {
@@ -726,10 +740,14 @@
         var ps = [];
         try { ps = JSON.parse(t.prompts) || []; } catch (e2) {}
         nf.querySelector('[name=prompts]').value = ps.join('\n');
+        var flag = document.getElementById('genEditFlag');
+        if (flag) { flag.hidden = false; flag.textContent = '编辑中 #' + t.id; }
+        var sb = document.getElementById('genSubmitBtn');
+        if (sb) sb.textContent = '保存修改';
         var tabBtn = document.querySelector('[data-tab="new"]');
         if (tabBtn) tabBtn.click();
         nf.scrollIntoView({ behavior: 'smooth' });
-        toast('已载入任务 #' + t.id + '，修改后点「保存任务」');
+        toast('已载入任务 #' + t.id + '，修改后点「保存修改」');
       });
     });
 

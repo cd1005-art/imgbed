@@ -13,7 +13,7 @@
   <!-- ===== 新建任务 ===== -->
   <div class="tab-pane" data-pane="new">
     <section class="panel">
-      <h2 class="panel-title">新建任务</h2>
+      <h2 class="panel-title">新建任务 <span class="count" id="genEditFlag" hidden></span></h2>
       <form class="form form-grid" id="genNewForm">
         <input type="hidden" name="id" value="0">
         <label class="field"><span class="field-label">任务名</span><input type="text" name="name" placeholder="如：每日壁纸"></label>
@@ -35,8 +35,7 @@
         </label>
         <label class="field field-wide"><span class="field-label">提示词池（每行一条，随机轮换）</span><textarea name="prompts" rows="3" class="modal-textarea" placeholder="抽象渐变背景&#10;极简几何图案&#10;森林晨雾风景"></textarea></label>
         <div class="field" style="justify-content:flex-end">
-          <button type="button" class="btn-ghost-sm" id="genFormReset">清空/新建</button>
-          <button type="submit" class="btn">保存任务</button>
+          <button type="submit" class="btn" id="genSubmitBtn">创建任务</button>
         </div>
       </form>
 
