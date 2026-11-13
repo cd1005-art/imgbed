@@ -26,6 +26,7 @@ Route::group(function () {
     Route::post('withdraw/approve/:id', 'WithdrawManage/approve');
     Route::post('withdraw/paid/:id', 'WithdrawManage/paid');
     Route::post('withdraw/reject/:id', 'WithdrawManage/reject');
+    Route::post('gen/batch', 'GenManage/batch');
     Route::post('gen/settings', 'GenManage/saveSettings');
     Route::post('gen/delete-logs', 'GenManage/deleteLogs');
     Route::post('gen/clear-logs', 'GenManage/clearLogs');
@@ -46,6 +47,7 @@ Route::group(function () {
     Route::post('user/delete/:id', 'UserManage/delete');
     Route::post('user/verify-email/:id', 'UserManage/verifyEmail');
     Route::post('user/credits/:id', 'UserManage/adjustCredits');
+    Route::post('credit/delete', 'CreditManage/delete');
     Route::get('credit', 'CreditManage/index');
     Route::get('user', 'UserManage/index');
     Route::post('user/save/:id', 'UserManage/save');

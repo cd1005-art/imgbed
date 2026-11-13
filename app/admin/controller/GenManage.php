@@ -89,6 +89,29 @@ class GenManage extends Base
         return json(['status' => true, 'message' => '已保存（目标账号：' . ($target['nickname'] ?: $target['email']) . '）']);
     }
 
+    /** 批量操作任务：enable / disable / delete */
+    public function batch()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        $action = (string)$this->request->post('action', '');
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择任务']);
+        }
+        if ($action === 'delete') {
+            $n = Db::name('gen_tasks')->whereIn('id', $ids)->delete();
+            Db::name('gen_task_logs')->whereIn('task_id', $ids)->delete();
+            return json(['status' => true, 'message' => "已删除 {$n} 个任务（含其日志）"]);
+        }
+        if (!in_array($action, ['enable', 'disable'], true)) {
+            return json(['status' => false, 'message' => '参数错误']);
+        }
+        $status = $action === 'enable' ? 1 : 0;
+        $data = ['status' => $status, 'update_time' => time()];
+        if ($status === 1) { $data['next_run'] = time(); }
+        $n = Db::name('gen_tasks')->whereIn('id', $ids)->update($data);
+        return json(['status' => true, 'message' => '已' . ($status ? '启用' : '暂停') . " {$n} 个任务"]);
+    }
+
     /** 保存造图运行设置（单日上限，0=不限） */
     public function saveSettings()
     {

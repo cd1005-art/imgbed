@@ -21,6 +21,17 @@ class CreditManage extends Base
         'gen_reward'      => '造图奖励',
     ];
 
+    /** 删除流水记录（单条/批量；财务记录，二次确认后执行） */
+    public function delete()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择记录']);
+        }
+        $n = Db::name('credit_logs')->whereIn('id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 条流水（不影响用户当前余额）"]);
+    }
+
     public function index()
     {
         $page = max(1, (int)$this->request->param('page', 1));

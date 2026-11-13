@@ -64,11 +64,21 @@
   <div class="tab-pane" data-pane="list">
     <section class="panel">
       <h2 class="panel-title">任务列表 <span class="count">{$list|count} 个</span></h2>
+
+      <div class="batch-bar" id="genTaskBar" hidden>
+        <span id="genTaskCount">已选 0 个</span>
+        <button class="btn-ghost-sm" type="button" id="genTaskEnable">批量启用</button>
+        <button class="btn-ghost-sm" type="button" id="genTaskDisable">批量暂停</button>
+        <button class="btn-ghost-sm btn-danger-sm" type="button" id="genTaskDel">批量删除</button>
+        <button class="btn-ghost-sm" type="button" id="genTaskClear">取消选择</button>
+      </div>
+
       <table class="table">
-        <thead><tr><th>ID</th><th>任务</th><th>模型/账号</th><th>频率</th><th>累计</th><th>状态</th><th>下次执行</th><th>操作</th></tr></thead>
+        <thead><tr><th style="width:28px"><input type="checkbox" id="genTaskCheckAll"></th><th>ID</th><th>任务</th><th>模型/账号</th><th>频率</th><th>累计</th><th>状态</th><th>下次执行</th><th>操作</th></tr></thead>
         <tbody>
           {volist name="list" id="vo"}
           <tr>
+            <td><input type="checkbox" class="gentask-check" value="{$vo.id}"></td>
             <td>{$vo.id}</td>
             <td>{$vo.name}</td>
             <td>#{$vo.model_id} / 用户 {$vo.target_user_id}</td>

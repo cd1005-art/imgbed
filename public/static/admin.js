@@ -9,7 +9,7 @@
       adminImage: adminImage, adminUser: adminUser, adminGroup: adminGroup,
       adminStorage: adminStorage, adminPayment: adminPayment,
       adminAd: adminAd, adminToken: adminToken, adminSite: adminSite, adminAudit: adminAudit,
-      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminNone: function () {}
+      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminCredit: adminCredit, adminNone: function () {}
     };
     if (map[page]) map[page]();
   };
@@ -669,6 +669,42 @@
   /* ---------- 造图任务 ---------- */
   function adminGen() {
     initTabs('#genTabs');
+    // 任务列表批量（启用/暂停/删除）
+    var tsAll = document.getElementById('genTaskCheckAll');
+    var tsBar = document.getElementById('genTaskBar');
+    var tsCnt = document.getElementById('genTaskCount');
+    function tsRefresh() {
+      var n = document.querySelectorAll('.gentask-check:checked').length;
+      if (tsBar) tsBar.hidden = n === 0;
+      if (tsCnt) tsCnt.textContent = '已选 ' + n + ' 个';
+    }
+    if (tsAll) tsAll.addEventListener('change', function () {
+      document.querySelectorAll('.gentask-check').forEach(function (c) { c.checked = tsAll.checked; });
+      tsRefresh();
+    });
+    document.querySelectorAll('.gentask-check').forEach(function (c) { c.addEventListener('change', tsRefresh); });
+    var tsClear = document.getElementById('genTaskClear');
+    if (tsClear) tsClear.addEventListener('click', function () {
+      document.querySelectorAll('.gentask-check').forEach(function (c) { c.checked = false; });
+      if (tsAll) tsAll.checked = false;
+      tsRefresh();
+    });
+    function tsBatch(action, label) {
+      var ids = Array.prototype.map.call(document.querySelectorAll('.gentask-check:checked'), function (c) { return c.value; });
+      if (!ids.length) { toast('先勾选任务'); return; }
+      var btn = document.getElementById(action === 'delete' ? 'genTaskDel' : (action === 'enable' ? 'genTaskEnable' : 'genTaskDisable'));
+      armConfirm(btn, '批量' + label + '选中的 ' + ids.length + ' 个任务？', function () {
+        postBody('/admin/gen/batch', 'action=' + action + '&ids=' + ids.join(',')).then(function (d) {
+          toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+        });
+      });
+    }
+    ['genTaskEnable|enable|启用', 'genTaskDisable|disable|暂停', 'genTaskDel|delete|删除'].forEach(function (spec) {
+      var p2 = spec.split('|');
+      var b = document.getElementById(p2[0]);
+      if (b) b.addEventListener('click', function () { tsBatch(p2[1], p2[2]); });
+    });
+
     bindBatchDelete({checkAll:'#genLogCheckAll', checkbox:'.genlog-check', batchBtn:'#genLogDel',
       api:'/admin/gen/delete-logs', label:'日志', batchBar:'#genLogBar', barCount:'#genLogCount',
       clearBtn:'#genLogClearSel', unit:'条'});
@@ -680,6 +716,13 @@
         });
       });
     });
+  }
+
+  /* ---------- 站币流水 ---------- */
+  function adminCredit() {
+    bindBatchDelete({checkAll:'#creditCheckAll', checkbox:'.credit-check', batchBtn:'#creditBatchDel',
+      api:'/admin/credit/delete', label:'流水记录', batchBar:'#creditBar',
+      barCount:'#creditCount', clearBtn:'#creditBatchClear', unit:'条'});
   }
 
   /* ---------- 举报管理 ---------- */

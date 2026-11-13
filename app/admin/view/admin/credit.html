@@ -19,11 +19,18 @@
   </form>
 </div>
 
+<div class="batch-bar" id="creditBar" hidden>
+  <span id="creditCount">已选 0 条</span>
+  <button class="btn-ghost-sm btn-danger-sm" type="button" id="creditBatchDel">批量删除</button>
+  <button class="btn-ghost-sm" type="button" id="creditBatchClear">取消选择</button>
+</div>
+
 <table class="table">
-  <thead><tr><th>ID</th><th>用户</th><th>类型</th><th>变动</th><th>变动后余额</th><th>备注</th><th>时间</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="creditCheckAll"></th><th>ID</th><th>用户</th><th>类型</th><th>变动</th><th>变动后余额</th><th>备注</th><th>时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr>
+      <td><input type="checkbox" class="credit-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td class="td-clip">{$user_map[$vo.user_id] ?? ('#' . $vo.user_id)}</td>
       <td>{$types[$vo.type] ?? $vo.type}</td>
@@ -31,6 +38,7 @@
       <td>{$vo.balance_after}</td>
       <td class="td-clip" title="{$vo.remark}">{$vo.remark|default='-'}</td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+      <td class="td-actions"><button class="btn-ghost-sm btn-danger-sm" data-row-del="{$vo.id}">删除</button></td>
     </tr>
     {/volist}
   </tbody>
@@ -46,5 +54,5 @@
 {/block}
 
 {block name="script"}
-<script>pageBoot('adminNone');</script>
+<script>pageBoot('adminCredit');</script>
 {/block}
