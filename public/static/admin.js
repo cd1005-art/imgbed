@@ -6,7 +6,7 @@
   window.pageBoot = function (page) {
     if (boot) boot(page);
     var map = {
-      adminImage: adminImage, adminUser: adminUser, adminGroup: adminGroup,
+      adminImage: function () { adminImage(); adminImageExtras(); }, adminUser: adminUser, adminGroup: adminGroup,
       adminStorage: adminStorage, adminPayment: adminPayment,
       adminAd: adminAd, adminToken: adminToken, adminSite: adminSite, adminAudit: adminAudit,
       adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminCredit: adminCredit, adminFinance: adminFinance, adminNone: function () {}
@@ -1066,6 +1066,69 @@
         if (!r.trim()) { toast('请填写驳回原因'); return; }
         postBody('/admin/withdraw/reject/' + b.dataset.wdReject, 'reason=' + encodeURIComponent(r)).then(function (d) {
           toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+        });
+      });
+    });
+  }
+
+  /* ---------- 图片管理：复制描述 / 编辑标题 / 人工复审 ---------- */
+  function adminImageExtras() {
+    // 点击审核列复制描述
+    document.querySelectorAll('[data-copy-desc]').forEach(function (td) {
+      td.addEventListener('click', function () {
+        var v = td.getAttribute('data-copy-desc') || '';
+        if (!v) { toast('无描述可复制'); return; }
+        copyText(v, function (ok) { toast(ok ? '审核描述已复制' : '复制失败'); });
+      });
+    });
+
+    // 编辑标题弹窗
+    var m = document.getElementById('imgTitleModal');
+    var inp = document.getElementById('imgTitleInput');
+    var desc = document.getElementById('imgTitleDesc');
+    var curId = 0;
+    document.querySelectorAll('[data-img-title]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        curId = b.dataset.imgTitle;
+        inp.value = b.dataset.name || '';
+        desc.value = b.dataset.desc || '';
+        m.hidden = false;
+        inp.focus();
+      });
+    });
+    if (m) {
+      document.getElementById('imgTitleCancel').onclick = function () { m.hidden = true; };
+      document.getElementById('imgTitleCopy').onclick = function () {
+        copyText(desc.value || '', function (ok) { toast(ok ? '描述已复制' : '复制失败'); });
+      };
+      document.getElementById('imgTitleSave').onclick = function () {
+        var t = (inp.value || '').trim();
+        if (!t) { toast('标题不能为空'); return; }
+        fetch('/admin/image/title/' + curId, {
+          method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'title=' + encodeURIComponent(t)
+        }).then(function (r) { return r.json(); }).then(function (d) {
+          toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+        }).catch(function () { toast('保存失败：网络错误'); });
+      };
+    }
+
+    // 人工复审：通过 / 驳回
+    document.querySelectorAll('[data-img-approve]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        armConfirm(b, '通过该图的人工复审？（恢复为正常审核状态）', function () {
+          post('/admin/image/approve/' + b.dataset.imgApprove).then(function (d) {
+            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+          });
+        });
+      });
+    });
+    document.querySelectorAll('[data-img-reject]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        armConfirm(b, '驳回该图？（审核拒绝 + 冻结，外链立即失效）', function () {
+          post('/admin/image/reject/' + b.dataset.imgReject).then(function (d) {
+            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+          });
         });
       });
     });

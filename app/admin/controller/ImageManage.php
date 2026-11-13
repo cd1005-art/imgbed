@@ -284,6 +284,49 @@ class ImageManage extends Base
     }
 
     /** 冻结 / 解冻（外链即断） */
+    /** 修改图片标题（审核描述作标题，可手动修正） */
+    public function setTitle(int $id)
+    {
+        $img = Image::find($id);
+        if (!$img) {
+            return json(['status' => false, 'message' => '图片不存在']);
+        }
+        $title = trim((string)$this->request->post('title', ''));
+        if ($title === '') {
+            return json(['status' => false, 'message' => '标题不能为空']);
+        }
+        Db::name('images')->where('id', $id)->update([
+            'name' => mb_substr($title, 0, 120), 'update_time' => time(),
+        ]);
+        return json(['status' => true, 'message' => '标题已更新']);
+    }
+
+    /** 人工复审：通过（恢复为正常审核状态） */
+    public function approve(int $id)
+    {
+        $img = Image::find($id);
+        if (!$img) {
+            return json(['status' => false, 'message' => '图片不存在']);
+        }
+        Db::name('images')->where('id', $id)->update([
+            'audit_status' => 1, 'status' => 1, 'update_time' => time(),
+        ]);
+        return json(['status' => true, 'message' => '已通过人工复审']);
+    }
+
+    /** 人工复审：驳回（拒绝 + 冻结，外链失效） */
+    public function reject(int $id)
+    {
+        $img = Image::find($id);
+        if (!$img) {
+            return json(['status' => false, 'message' => '图片不存在']);
+        }
+        Db::name('images')->where('id', $id)->update([
+            'audit_status' => 2, 'status' => 2, 'is_public' => 0, 'update_time' => time(),
+        ]);
+        return json(['status' => true, 'message' => '已驳回并冻结该图']);
+    }
+
     public function toggle(int $id)
     {
         $image = Image::find($id);

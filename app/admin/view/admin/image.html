@@ -59,11 +59,19 @@
       <td class="td-clip">{$vo.user_display}</td>
       <td>{:round($vo.size / 1024, 1)} KB</td>
       <td class="td-clip" title="{$storages[$vo.storage_id]|default='-'}">{$storages[$vo.storage_id]|default='-'}</td>
-      <td title="{$vo.audit_hint}">{if condition="$vo.audit_status eq 0"}待审{elseif condition="$vo.audit_status eq 1"}<span class="ok">{$vo.audit_model|default='通过'}</span>{elseif condition="$vo.audit_status eq 2"}<span class="danger">{$vo.audit_model|default='拒绝'}</span>{else /}复审{/if}</td>
+      <td title="{$vo.audit_hint}（点击复制描述）" style="cursor:pointer"
+          data-copy-desc="{$vo.audit_hint|htmlspecialchars}">
+        {if condition="$vo.audit_status eq 0"}待审{elseif condition="$vo.audit_status eq 1"}<span class="ok">{$vo.audit_model|default='通过'}</span>{elseif condition="$vo.audit_status eq 2"}<span class="danger">{$vo.audit_model|default='拒绝'}</span>{else /}<b>复审</b>{/if}
+      </td>
       <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">冻结</span>{/if}</td>
       <td class="mono">{$vo.ip}</td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>
       <td class="td-actions">
+        {if condition="$vo.audit_status eq 3"}
+        <button class="btn-ghost-sm" data-img-approve="{$vo.id}">通过</button>
+        <button class="btn-ghost-sm btn-danger-sm" data-img-reject="{$vo.id}">驳回</button>
+        {/if}
+        <button class="btn-ghost-sm" data-img-title="{$vo.id}" data-name="{$vo.name|htmlspecialchars}" data-desc="{$vo.audit_hint|htmlspecialchars}">编辑</button>
         <button class="btn-ghost-sm" data-toggle-status="{$vo.id}">{if condition="$vo.status eq 1"}冻结{else /}解冻{/if}</button>
         <button class="btn-ghost-sm btn-danger-sm" data-del="{$vo.id}">删除</button>
       </td>
@@ -71,6 +79,20 @@
     {/volist}
   </tbody>
 </table>
+<div class="modal-mask" id="imgTitleModal" hidden>
+  <div class="modal" style="width:min(620px,94vw)">
+    <h3 class="modal-title">编辑标题</h3>
+    <input type="text" id="imgTitleInput" class="modal-textarea" rows="1" style="height:38px" placeholder="标题">
+    <p class="field-hint" style="margin:10px 0 6px">审核模型描述（可复制后修改为标题）：</p>
+    <textarea id="imgTitleDesc" class="modal-textarea" rows="5" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost-sm" type="button" id="imgTitleCopy">复制描述</button>
+      <button class="btn-ghost-sm" type="button" id="imgTitleCancel">取消</button>
+      <button class="btn btn-sm" type="button" id="imgTitleSave">保存标题</button>
+    </div>
+  </div>
+</div>
+
 
 {if condition="$pages gt 1"}
 <nav class="pager">
