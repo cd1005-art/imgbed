@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+          extensions: fileinfo, gd, mbstring, curl, pdo_mysql
+
+      - name: Composer install (no-dev)
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Build release package
+        run: |
+          set -e
+          VERSION="${GITHUB_REF_NAME}"
+          mkdir -p "dist/imgbed-$VERSION"
+          rsync -a \
+            --exclude '.git' --exclude 'runtime/*' --exclude 'public/storage/images/*' \
+            --exclude 'dist' --exclude 'media' --exclude '.env' --exclude 'node_modules' \
+            ./ "dist/imgbed-$VERSION/"
+          mkdir -p "dist/imgbed-$VERSION/runtime" "dist/imgbed-$VERSION/public/storage/images"
+          cd dist
+          zip -qr "imgbed-$VERSION.zip" "imgbed-$VERSION"
+          sha256sum "imgbed-$VERSION.zip" > "imgbed-$VERSION.zip.sha256"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/*.sha256
+          generate_release_notes: true
+          body: |
+            逍遥图床 ${{ github.ref_name }} 发行包（已含 vendor，解压即用，无需 Composer）
+
+            **安装方式**
+            1. 下载 zip → 上传到站点根目录解压
+            2. 浏览器打开 `https://你的域名/install.php`，按向导填数据库与管理员信息
+            3. 安装完成后**删除 install.php**
+
+            或使用 Docker：见仓库 `docker-compose.yml` 与 `docs/DEPLOY.md`。

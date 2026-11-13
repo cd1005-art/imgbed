@@ -78,14 +78,27 @@ PHP 8.2 · ThinkPHP 8.1 · MIT License
 |:---:|:---:|
 | ![图片管理](docs/screenshots/admin-images.png) | |
 
-## 快速开始
+## 快速开始（三选一）
 
+**A. 发行包 + Web 向导（推荐，3 分钟）**
+1. 下载 [GitHub Releases](https://github.com/cd1005-art/imgbed/releases) 的 `imgbed-v*.zip`（已含 vendor）
+2. 上传解压到站点根目录
+3. 浏览器打开 `https://你的域名/install.php`，按向导填数据库与管理员信息
+4. 删除 install.php
+
+**B. Docker Compose**
 ```bash
-git clone https://github.com/cd1005-art/imgbed.git
-cd imgbed
+git clone https://github.com/cd1005-art/imgbed.git && cd imgbed
+docker compose up -d --build     # 改 compose 里的数据库密码
+# 访问 http://IP:8080/install.php
+```
+
+**C. 源码 + Composer**
+```bash
+git clone https://github.com/cd1005-art/imgbed.git && cd imgbed
 composer install --no-dev
-mysql < install.sql        # 建库 + 全部表 + 初始数据
-cp .env.example .env       # 改数据库连接
+mysql < install.sql        # 或配置伪静态后走 /install.php 向导
+cp .env.example .env       # 手动模式需改数据库连接
 ```
 
 ### 环境要求

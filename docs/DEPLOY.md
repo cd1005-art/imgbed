@@ -1,4 +1,59 @@
-# 部署指南（本地 / 云桌面 / 云服务器通用）
+# 部署指南
+
+## 安装方式（三选一）
+
+| 方式 | 适合 | 时间 |
+|---|---|---|
+| **A. 发行包 + Web 向导**（推荐）| 宝塔 / 虚拟主机用户 | 3 分钟 |
+| **B. Docker Compose** | 云服务器 / 运维 | 5 分钟 |
+| **C. 源码 + Composer** | 开发者 / 二次开发 | 10 分钟 |
+
+---
+
+### A. 发行包 + Web 向导（最简单）
+
+1. 到 [GitHub Releases](https://github.com/cd1005-art/imgbed/releases) 下载最新 `imgbed-v*.zip`（**已含 vendor，无需 Composer**）
+2. 上传到站点根目录并解压（宝塔：文件 → 上传 → 解压）
+3. 浏览器打开 `https://你的域名/install.php`
+4. 按向导填写：数据库信息（面板中先建好库）→ 管理员账号密码 → 站点名
+5. 安装完成后**删除 install.php**（向导会自动尝试重命名）
+
+> 伪静态必须配置（见文末 Nginx 配置），否则除首页外全部 404。
+
+### B. Docker Compose
+
+```bash
+git clone https://github.com/cd1005-art/imgbed.git
+cd imgbed
+# 修改 docker-compose.yml 里的数据库密码（两处）
+docker compose up -d --build
+# 首次启动会自动建表（install.sql 挂载到 mysql init 目录）
+```
+
+- 访问 `http://服务器IP:8080`
+- **安装向导仍要跑一次**（写 .env 与管理员密码）：`http://IP:8080/install.php`
+  - 数据库主机填 `db`，库名 `imgbed`，用户 `imgbed`，密码为你改的那个
+- 数据持久化：`db-data` 卷（MySQL）、`runtime/`、`public/storage/images/`（挂载于宿主机）
+
+### C. 源码 + Composer
+
+```bash
+git clone https://github.com/cd1005-art/imgbed.git
+cd imgbed
+composer install --no-dev
+# 方式一：Web 向导（推荐）
+#   配好伪静态后浏览器打开 /install.php
+# 方式二：手动
+mysql < install.sql
+cp .env.example .env   # 改数据库连接
+```
+
+---
+
+## Nginx 配置（必须）
+
+（以下为原有内容）
+
 
 > 图床本体 = ThinkPHP 8.1.4 + PHP 8.2 + MySQL 5.7/8 + Nginx
 > 本文按「新机器从零到可跑」写，云桌面（Ubuntu 沙箱）与轻量云服务器均适用。
