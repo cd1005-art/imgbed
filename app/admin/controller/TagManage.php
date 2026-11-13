@@ -11,24 +11,52 @@ class TagManage extends Base
 {
     public function index()
     {
-        $page = max(1, (int)$this->request->param('page', 1));
-        $kw   = trim((string)$this->request->param('kw', ''));
+        $page   = max(1, (int)$this->request->param('page', 1));
+        $kw     = trim((string)$this->request->param('kw', ''));
+        $status = (string)$this->request->param('tstatus', '');
+        $minUse = (int)$this->request->param('min_use', 0);
+        $order  = (string)$this->request->param('torder', 'use_desc');
 
-        $q = Db::name('tags');
-        if ($kw !== '') {
-            $q->where('name', 'like', '%' . $kw . '%');
-        }
-        $list  = $q->order('use_count', 'desc')->page($page, 40)->select()->toArray();
-        $total = (int)Db::name('tags')->where('name', 'like', '%' . $kw . '%')->count();
+        $build = function () use ($kw, $status, $minUse) {
+            $q = Db::name('tags');
+            if ($kw !== '') {
+                $q->where('name', 'like', '%' . $kw . '%');
+            }
+            if ($status !== '') {
+                $q->where('status', (int)$status);
+            }
+            if ($minUse > 0) {
+                $q->where('use_count', '>=', $minUse);
+            }
+            return $q;
+        };
+        $orderBy = $order === 'name' ? 'name asc' : ($order === 'use_asc' ? 'use_count asc' : 'use_count desc');
+        $list  = $build()->order($orderBy)->page($page, 40)->select()->toArray();
+        $total = $build()->count();
 
         return $this->adminView('admin/tag', [
             'page'    => 'tag',
             'list'    => $list,
             'kw'      => $kw,
+            'tstatus' => $status,
+            'min_use' => $minUse,
+            'torder'  => $order,
             'total'   => $total,
             'page_no' => $page,
             'pages'   => (int)ceil($total / 40) ?: 1,
         ]);
+    }
+
+    /** 删除标签（单条/批量，ids 逗号分隔） */
+    public function delete()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择标签']);
+        }
+        $n = Db::name('tags')->whereIn('id', $ids)->delete();
+        Db::name('image_tags')->whereIn('tag_id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 个标签（图片关联已清理）"]);
     }
 
     public function toggle(int $id)

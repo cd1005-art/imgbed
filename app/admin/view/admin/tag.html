@@ -3,6 +3,22 @@
 {block name="content"}
 <div class="page-toolbar">
   <h1 class="page-title">标签管理 <span class="count">{$total} 个</span></h1>
+  <form class="search-bar" method="get" action="/admin/tag" style="flex-wrap:wrap;margin:10px 0">
+    <input type="text" name="kw" value="{$kw}" placeholder="标签名关键词" style="width:180px">
+    <select name="tstatus" class="filter-select">
+      <option value="">全部状态</option>
+      <option value="1" {if condition="$tstatus eq '1'"}selected{/if}>启用</option>
+      <option value="0" {if condition="$tstatus eq '0'"}selected{/if}>停用</option>
+    </select>
+    <input type="number" name="min_use" value="{$min_use|default=0}" placeholder="最少使用次数" style="width:130px">
+    <select name="torder" class="filter-select">
+      <option value="use_desc" {if condition="$torder eq 'use_desc'"}selected{/if}>使用次数降序</option>
+      <option value="use_asc" {if condition="$torder eq 'use_asc'"}selected{/if}>使用次数升序</option>
+      <option value="name" {if condition="$torder eq 'name'"}selected{/if}>名称 A-Z</option>
+    </select>
+    <button class="btn btn-sm" type="submit">筛选</button>
+    <a class="btn-ghost-sm" href="/admin/tag">重置</a>
+  </form>
   <form class="search-bar" method="get" action="/admin/tag">
     <input type="text" name="kw" value="{$kw}" placeholder="标签名搜索">
     <button class="btn btn-sm" type="submit">搜索</button>
@@ -19,11 +35,15 @@
   <p class="panel-sub" style="margin:8px 0 0">来源标签的图片关联迁移到目标标签，来源词转为别名（AI 以后自动归并到目标）。</p>
 </section>
 
+<div class="gallery-batch" style="margin-bottom:10px">
+  <button class="btn-ghost-sm btn-danger-sm" type="button" id="tagBatchDel">删除选中</button>
+</div>
 <table class="table">
-  <thead><tr><th>ID</th><th>标签</th><th>分类</th><th>来源</th><th>使用次数</th><th>状态</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="tagCheckAll"></th><th>ID</th><th>标签</th><th>分类</th><th>来源</th><th>使用次数</th><th>状态</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr>
+      <td><input type="checkbox" class="tag-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td><b>{$vo.name}</b></td>
       <td>{$vo.category}</td>
@@ -32,6 +52,7 @@
       <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
       <td class="td-actions">
         <button class="btn-ghost-sm" data-tag-toggle="{$vo.id}">{if condition="$vo.status eq 1"}停用{else /}启用{/if}</button>
+        <button class="btn-ghost-sm btn-danger-sm" data-row-del="{$vo.id}">删除</button>
       </td>
     </tr>
     {/volist}

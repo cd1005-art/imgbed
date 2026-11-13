@@ -32,7 +32,7 @@
       <td><input type="checkbox" class="log-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td>{if condition="$vo.result eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
-      <td>{$vo.user_id}</td>
+      <td class="td-clip">{$vo.user_label}</td>
       <td>{$vo.image_id ?: '-'}</td>
       <td class="mono">{$vo.ip}</td>
       <td class="td-clip" title="{$vo.ua}">{$vo.ua}</td>

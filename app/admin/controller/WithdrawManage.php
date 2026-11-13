@@ -14,6 +14,9 @@ class WithdrawManage extends Base
     {
         $page   = max(1, (int)$this->request->param('page', 1));
         $status = trim((string)$this->request->param('status', ''));
+        $uw     = trim((string)$this->request->param('uw', ''));
+        $dfrom  = trim((string)$this->request->param('dfrom', ''));
+        $dto    = trim((string)$this->request->param('dto', ''));
 
         $q = Db::name('withdrawals')->alias('w')
             ->leftJoin('img_users u', 'u.id = w.user_id')
@@ -21,6 +24,18 @@ class WithdrawManage extends Base
         if ($status !== '') {
             $q->where('w.status', $status);
         }
+        if ($uw !== '') {
+            if (ctype_digit($uw)) {
+                $q->where('w.user_id', (int)$uw);
+            } else {
+                $uids = Db::name('users')->where(function ($qq) use ($uw) {
+                    $qq->where('email', 'like', '%' . $uw . '%')->whereOr('nickname', 'like', '%' . $uw . '%');
+                })->column('id');
+                $q->whereIn('w.user_id', $uids ?: [0]);
+            }
+        }
+        if ($dfrom !== '') { $q->where('w.create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
+        if ($dto !== '')   { $q->where('w.create_time', '<=', strtotime($dto . ' 23:59:59')); }
         $list  = $q->order('w.id', 'desc')->page($page, 30)->select()->toArray();
         $total = (int)Db::name('withdrawals')->when($status !== '', function ($qq) use ($status) { $qq->where('status', $status); })->count();
 
@@ -28,9 +43,28 @@ class WithdrawManage extends Base
             'page'    => 'withdraw',
             'list'    => $list,
             'status'  => $status,
+            'uw'      => $uw,
+            'dfrom'   => $dfrom,
+            'dto'     => $dto,
             'total'   => $total,
             'page_no' => $page,
             'pages'   => (int)ceil($total / 30) ?: 1,
+        ]);
+    }
+
+    /** 删除提现记录（仅已处理：paid/rejected，财务安全） */
+    public function delete()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择记录']);
+        }
+        $deletable = Db::name('withdrawals')->whereIn('id', $ids)->whereIn('status', ['paid', 'rejected'])->column('id');
+        $skip = count($ids) - count($deletable);
+        $n = $deletable ? Db::name('withdrawals')->whereIn('id', $deletable)->delete() : 0;
+        return json([
+            'status'  => true,
+            'message' => "已删除 {$n} 条" . ($skip > 0 ? "；{$skip} 条未处理记录已跳过（请先审核）" : ''),
         ]);
     }
 

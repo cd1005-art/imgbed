@@ -16,6 +16,7 @@ Route::group(function () {
     Route::post('image/orphan/scan', 'ImageManage/orphanScan');
     Route::post('image/orphan/purge', 'ImageManage/orphanPurge');
     Route::get('image/export', 'ImageManage/export');
+    Route::post('tag/delete', 'TagManage/delete');
     Route::post('tag/toggle/:id', 'TagManage/toggle');
     Route::post('tag/merge', 'TagManage/merge');
     Route::post('report/confirm/:id', 'ReportManage/confirm');
@@ -24,11 +25,15 @@ Route::group(function () {
     Route::post('withdraw/approve/:id', 'WithdrawManage/approve');
     Route::post('withdraw/paid/:id', 'WithdrawManage/paid');
     Route::post('withdraw/reject/:id', 'WithdrawManage/reject');
+    Route::post('gen/delete-logs', 'GenManage/deleteLogs');
+    Route::post('gen/clear-logs', 'GenManage/clearLogs');
     Route::post('gen/save', 'GenManage/save');
     Route::post('gen/toggle/:id', 'GenManage/toggle');
     Route::post('gen/delete/:id', 'GenManage/delete');
     Route::get('gen', 'GenManage/index');
+    Route::post('withdraw/delete', 'WithdrawManage/delete');
     Route::get('withdraw', 'WithdrawManage/index');
+    Route::post('report/delete', 'ReportManage/delete');
     Route::get('report', 'ReportManage/index');
     Route::get('tag', 'TagManage/index');
     Route::get('image', 'ImageManage/index');

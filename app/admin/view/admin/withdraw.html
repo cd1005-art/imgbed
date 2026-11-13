@@ -15,11 +15,15 @@
   </form>
 </div>
 
+<div class="gallery-batch" style="margin-bottom:10px">
+  <button class="btn-ghost-sm btn-danger-sm" type="button" id="wdBatchDel">删除选中（仅已处理）</button>
+</div>
 <table class="table">
-  <thead><tr><th>ID</th><th>用户</th><th>金额</th><th>手续费</th><th>实得</th><th>支付宝</th><th>状态</th><th>凭证</th><th>时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="wdCheckAll"></th><th>ID</th><th>用户</th><th>金额</th><th>手续费</th><th>实得</th><th>支付宝</th><th>状态</th><th>凭证</th><th>时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr>
+      <td><input type="checkbox" class="wd-check" value="{$vo.id}" data-status="{$vo.status}"></td>
       <td>{$vo.id}</td>
       <td class="td-clip">{$vo.email|default='-'}</td>
       <td>{$vo.amount} 元</td>
@@ -30,6 +34,9 @@
       <td class="mono">{$vo.voucher_no|default='-'}</td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>
       <td class="td-actions">
+        {if condition="$vo.status eq 'paid' || $vo.status eq 'rejected'"}
+        <button class="btn-ghost-sm btn-danger-sm" data-row-del="{$vo.id}">删除</button>
+        {/if}
         {if condition="$vo.status eq 'pending'"}
         <button class="btn-ghost-sm" data-wd-approve="{$vo.id}">通过</button>
         <button class="btn-ghost-sm btn-danger-sm" data-wd-reject="{$vo.id}">驳回</button>

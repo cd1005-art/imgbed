@@ -3,6 +3,24 @@
 {block name="content"}
 <div class="page-toolbar">
   <h1 class="page-title">举报管理 <span class="count">{$total} 条</span></h1>
+  <form class="search-bar" method="get" action="/admin/report" style="flex-wrap:wrap;margin:10px 0">
+    <input type="text" name="kw" value="{$kw}" placeholder="理由关键词 / 图片ID / 举报人ID" style="width:240px">
+    <select name="status" class="filter-select">
+      <option value="">全部状态</option>
+      <option value="pending" {if condition="$status eq 'pending'"}selected{/if}>待处理</option>
+      <option value="manual" {if condition="$status eq 'manual'"}selected{/if}>下架成立</option>
+      <option value="closed" {if condition="$status eq 'closed'"}selected{/if}>已驳回</option>
+      <option value="ai_rejected" {if condition="$status eq 'ai_rejected'"}selected{/if}>AI 驳回</option>
+    </select>
+    <input type="date" name="dfrom" value="{$dfrom}" style="width:140px">
+    <span class="field-hint">至</span>
+    <input type="date" name="dto" value="{$dto}" style="width:140px">
+    <button class="btn btn-sm" type="submit">筛选</button>
+    <a class="btn-ghost-sm" href="/admin/report">重置</a>
+  </form>
+  <div class="gallery-batch" style="margin-bottom:10px">
+    <button class="btn-ghost-sm btn-danger-sm" type="button" id="reportBatchDel">删除选中</button>
+  </div>
   <form class="search-bar" method="get" action="/admin/report">
     <select name="status" class="filter-select">
       <option value="">全部状态</option>
@@ -17,10 +35,11 @@
 </div>
 
 <table class="table">
-  <thead><tr><th>ID</th><th>图片</th><th>举报人</th><th>理由</th><th>AI 判定</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="reportCheckAll"></th><th>ID</th><th>图片</th><th>举报人</th><th>理由</th><th>AI 判定</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr>
+      <td><input type="checkbox" class="report-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td class="td-clip">
         {if condition="$vo.image_path"}<a href="/p/{$vo.image_id}" target="_blank">{$vo.image_name|default='图'}</a>{else /}已删除{/if}

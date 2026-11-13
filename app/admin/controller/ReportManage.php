@@ -15,6 +15,9 @@ class ReportManage extends Base
     {
         $page   = max(1, (int)$this->request->param('page', 1));
         $status = trim((string)$this->request->param('status', ''));
+        $kw     = trim((string)$this->request->param('kw', ''));
+        $dfrom  = trim((string)$this->request->param('dfrom', ''));
+        $dto    = trim((string)$this->request->param('dto', ''));
 
         $q = Db::name('reports')->alias('r')
             ->leftJoin('img_images i', 'i.id = r.image_id')
@@ -23,6 +26,15 @@ class ReportManage extends Base
         if ($status !== '') {
             $q->where('r.status', $status);
         }
+        if ($kw !== '') {
+            $q->where(function ($qq) use ($kw) {
+                $qq->where('r.reason', 'like', '%' . $kw . '%')
+                   ->whereOr('r.image_id', (int)$kw)
+                   ->whereOr('r.reporter_id', (int)$kw);
+            });
+        }
+        if ($dfrom !== '') { $q->where('r.create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
+        if ($dto !== '')   { $q->where('r.create_time', '<=', strtotime($dto . ' 23:59:59')); }
         $list  = $q->order('r.id', 'desc')->page($page, 30)->select()->toArray();
         $total = (int)Db::name('reports')->when($status !== '', function ($qq) use ($status) { $qq->where('status', $status); })->count();
 
@@ -30,6 +42,9 @@ class ReportManage extends Base
             'page'    => 'report',
             'list'    => $list,
             'status'  => $status,
+            'kw'      => $kw,
+            'dfrom'   => $dfrom,
+            'dto'     => $dto,
             'total'   => $total,
             'page_no' => $page,
             'pages'   => (int)ceil($total / 30) ?: 1,
@@ -66,6 +81,17 @@ class ReportManage extends Base
         ]);
         $this->notifyReporter((int)$rep['reporter_id'], '举报未成立，已驳回', (string)$rep['reason']);
         return json(['status' => true, 'message' => '已驳回']);
+    }
+
+    /** 删除举报记录（单条/批量） */
+    public function delete()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择记录']);
+        }
+        $n = Db::name('reports')->whereIn('id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 条举报记录（已下架的图片不受影响）"]);
     }
 
     /** 通知举报人处理结果 */

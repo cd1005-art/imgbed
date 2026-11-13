@@ -13,15 +13,28 @@ class GenManage extends Base
     {
         $list = Db::name('gen_tasks')->order('id', 'desc')->select()->toArray();
         $models = Db::name('audit_models')->where('purpose', 'image_gen')->order('sort', 'asc')->select()->toArray();
-        $users  = Db::name('users')->order('id', 'asc')->limit(50)->select()->toArray();
-        $logs   = Db::name('gen_task_logs')->order('id', 'desc')->limit(15)->select()->toArray();
+
+        // 执行日志筛选：任务 / 结果 / 日期
+        $lgTask = (int)$this->request->param('lg_task', 0);
+        $lgOk   = (string)$this->request->param('lg_ok', '');
+        $lgFrom = trim((string)$this->request->param('lg_from', ''));
+        $lgTo   = trim((string)$this->request->param('lg_to', ''));
+
+        $lq = Db::name('gen_task_logs');
+        if ($lgTask > 0)   { $lq->where('task_id', $lgTask); }
+        if ($lgOk !== '')  { $lgOk === '1' ? $lq->where('fail_count', 0) : $lq->where('fail_count', '>', 0); }
+        if ($lgFrom !== '') { $lq->where('create_time', '>=', strtotime($lgFrom . ' 00:00:00')); }
+        if ($lgTo !== '')   { $lq->where('create_time', '<=', strtotime($lgTo . ' 23:59:59')); }
+        $logs = $lq->order('id', 'desc')->limit(100)->select()->toArray();
+        $logsTotal = (int)Db::name('gen_task_logs')->count();
 
         return $this->adminView('admin/gen', [
             'page'   => 'gen',
             'list'   => $list,
             'models' => $models,
-            'users'  => $users,
             'logs'   => $logs,
+            'logs_total' => $logsTotal,
+            'lg_task' => $lgTask, 'lg_ok' => $lgOk, 'lg_from' => $lgFrom, 'lg_to' => $lgTo,
         ]);
     }
 
@@ -33,6 +46,26 @@ class GenManage extends Base
         if (!$arr) {
             return json(['status' => false, 'message' => '至少填一条提示词']);
         }
+
+        // 目标账号：输入框（用户ID / 邮箱 / 昵称 模糊），不用下拉（用户量大时下拉不实用）
+        $targetInput = trim((string)$this->request->post('target_user_input', ''));
+        if ($targetInput === '') {
+            return json(['status' => false, 'message' => '请填写目标上传账号']);
+        }
+        $uq = Db::name('users')->where('status', '<>', 3);
+        if (ctype_digit($targetInput)) {
+            $uq->where('id', (int)$targetInput);
+        } else {
+            $uq->where(function ($qq) use ($targetInput) {
+                $qq->where('email', 'like', '%' . $targetInput . '%')
+                   ->whereOr('nickname', 'like', '%' . $targetInput . '%');
+            });
+        }
+        $target = $uq->find();
+        if (!$target) {
+            return json(['status' => false, 'message' => "未找到目标账号：「{$targetInput}」（支持用户ID/邮箱/昵称）"]);
+        }
+
         $data = [
             'name'            => mb_substr(trim((string)$this->request->post('name', '')), 0, 60) ?: '造图任务',
             'prompts'         => json_encode(array_slice($arr, 0, 50), JSON_UNESCAPED_UNICODE),
@@ -40,7 +73,7 @@ class GenManage extends Base
             'count_per_run'   => max(1, min(20, (int)$this->request->post('count_per_run', 1))),
             'interval_minutes' => max(5, min(1440, (int)$this->request->post('interval_minutes', 60))),
             'model_id'        => max(0, (int)$this->request->post('model_id', 0)),
-            'target_user_id'  => max(0, (int)$this->request->post('target_user_id', 0)),
+            'target_user_id'  => (int)$target['id'],
             'auto_public'     => (int)$this->request->post('auto_public', 1) === 1 ? 1 : 0,
             'status'          => (int)$this->request->post('status', 1) === 1 ? 1 : 0,
             'update_time'     => time(),
@@ -52,7 +85,25 @@ class GenManage extends Base
             $data['create_time'] = time();
             Db::name('gen_tasks')->insert($data);
         }
-        return json(['status' => true, 'message' => '已保存']);
+        return json(['status' => true, 'message' => '已保存（目标账号：' . ($target['nickname'] ?: $target['email']) . '）']);
+    }
+
+    /** 删除执行日志（ids 逗号分隔） */
+    public function deleteLogs()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择日志']);
+        }
+        $n = Db::name('gen_task_logs')->whereIn('id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 条日志"]);
+    }
+
+    /** 清空全部执行日志 */
+    public function clearLogs()
+    {
+        $n = Db::name('gen_task_logs')->where('id', '>', 0)->delete();
+        return json(['status' => true, 'message' => "已清空 {$n} 条日志"]);
     }
 
     public function toggle(int $id)

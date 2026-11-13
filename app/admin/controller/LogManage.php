@@ -45,8 +45,32 @@ class LogManage extends Base
             return $q;
         };
 
-        $list  = $build()->page($page, 30)->select();
+        $list  = $build()->page($page, 30)->select()->toArray();   // 数组化，便于注入昵称
         $total = $build()->count();
+
+        // 用户昵称映射（含已删除用户，标注）
+        $uids = [];
+        foreach ($list as $row) {
+            $uid = (int)$row['user_id'];
+            if ($uid > 0) {
+                $uids[$uid] = $uid;
+            }
+        }
+        $uMap = [];
+        if ($uids) {
+            foreach (Db::name('users')->whereIn('id', array_values($uids))->field('id,nickname,email,status')->select()->toArray() as $u) {
+                $label = $u['nickname'] !== '' ? $u['nickname'] : $u['email'];
+                if ((int)$u['status'] === 3 || strpos((string)$u['email'], '#del') !== false) {
+                    $label .= '（已删除）';
+                }
+                $uMap[(int)$u['id']] = $label;
+            }
+        }
+        foreach ($list as &$row) {
+            $uid = (int)$row['user_id'];
+            $row['user_label'] = $uid > 0 ? ($uMap[$uid] ?? ('#' . $uid)) : '游客';
+        }
+        unset($row);
 
         return $this->adminView('admin/log', [
             'page'    => 'log',
