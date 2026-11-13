@@ -17,7 +17,10 @@
       <input type="password" name="password" required autocomplete="current-password" placeholder="登录密码">
     </label>
     <p class="auth-sub" style="text-align:right;margin:6px 0 0">
-      <a href="/verify-sent">收不到验证码？</a> · <a href="/forgot">忘记密码？</a>
+      {if condition="!empty($need_resend)"}
+      <a href="/verify-sent?email={$resend_email|urlencode}">重发验证码</a> ·
+      {/if}
+      <a href="/forgot">忘记密码？</a>
     </p>
       <button type="submit" class="btn btn-block">登录</button>
   </form>

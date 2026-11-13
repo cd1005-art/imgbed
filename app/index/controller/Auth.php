@@ -64,7 +64,10 @@ class Auth extends Base
         }
         // 邮箱验证：register 模式必须验证后才能登录
         if ((string)Setting::get('verify_mode', 'none') === 'register' && (int)$user->email_verified !== 1) {
-            return $this->authFail('请先完成邮箱验证（查看注册时收到的邮件，或联系站长重发）');
+            return $this->authFail(
+                '请先完成邮箱验证：去邮箱查收 6 位验证码，或点击下方「重发验证码」重新获取。',
+                ['need_resend' => 1, 'resend_email' => (string)$user->email]
+            );
         }
 
         // VIP 到期检查：过期自动回落注册组
@@ -444,15 +447,15 @@ class Auth extends Base
     }
 
     /** 登录/注册失败：回到表单页带错误提示 */
-    protected function authFail(string $msg)
+    protected function authFail(string $msg, array $extra = [])
     {
         $isRegister = str_contains($this->request->pathinfo(), 'register');
         $view = $isRegister ? 'auth/register' : 'auth/login';
-        return $this->siteView($view, [
+        return $this->siteView($view, array_merge([
             'error'    => $msg,
             'email'    => (string)$this->request->post('email', ''),
             'redirect' => (string)$this->request->post('redirect', ''),
-        ]);
+        ], $extra));
     }
 
     protected function clientIp(): string
