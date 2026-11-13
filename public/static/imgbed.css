@@ -371,3 +371,7 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
   transition: color .15s, background .15s;
 }
 .brand-link:hover { color: var(--accent); background: rgba(46,160,67,.2); }
+
+/* 分页按钮：确保在任何容器（含深色区）可见 */
+.pager a.pager-btn { background: var(--accent) !important; color: #fff !important; border: 1px solid var(--accent) !important; opacity: 1 !important; }
+.pager a.pager-btn:hover { background: var(--accent-hover) !important; border-color: var(--accent-hover) !important; }

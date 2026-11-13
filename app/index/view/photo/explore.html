@@ -38,9 +38,9 @@
 </div>
 {if condition="$pages gt 1"}
 <nav class="pager">
-  {if condition="$page gt 1"}<a class="btn btn-ghost btn-sm" href="?page={$page-1}&sort={$sort}">上一页</a>{/if}
+  {if condition="$page gt 1"}<a class="btn btn-sm pager-btn" href="?page={$page-1}&sort={$sort}">上一页</a>{/if}
   <span class="pager-info">{$page} / {$pages}</span>
-  {if condition="$page lt $pages"}<a class="btn btn-ghost btn-sm" href="?page={$page+1}&sort={$sort}">下一页</a>{/if}
+  {if condition="$page lt $pages"}<a class="btn btn-sm pager-btn" href="?page={$page+1}&sort={$sort}">下一页</a>{/if}
 </nav>
 {/if}
 {/if}
