@@ -134,6 +134,46 @@ class PaymentManage extends Base
     }
 
     /** 套餐删除 */
+    /** 订单详情（JSON） */
+    public function orderDetail(int $id)
+    {
+        $o = \app\common\model\Order::find($id);
+        if (!$o) {
+            return json(['status' => false, 'message' => '订单不存在']);
+        }
+        $u = \app\common\model\User::find((int)$o->user_id);
+        $plan = (int)$o->plan_id > 0 ? \app\common\model\VipPlan::find((int)$o->plan_id) : null;
+        $lines = [
+            '订单号：' . $o->order_no,
+            '用户：' . ($u ? (($u->nickname ?: $u->email) . '（#' . $u->id . '）') : ('#' . $o->user_id)),
+            '类型：' . ($o->type === 'credits' ? '站币充值' : 'VIP 开通') . ($plan ? '（' . $plan->name . '）' : ''),
+            '金额：' . round((int)$o->amount / 100, 2) . ' 元',
+            '渠道：' . ($o->pay_channel ?: '-'),
+            '交易号：' . ($o->trade_no ?: '-'),
+            '状态：' . ([0 => '待支付', 1 => '已支付', 2 => '已关闭', 3 => '已退款'][(int)$o->status] ?? $o->status),
+            '创建：' . date('Y-m-d H:i:s', (int)$o->create_time),
+            '支付：' . ((int)$o->pay_time > 0 ? date('Y-m-d H:i:s', (int)$o->pay_time) : '-'),
+        ];
+        if ((string)$o->notify_raw !== '') {
+            $lines[] = '回调/备注：' . mb_substr((string)$o->notify_raw, 0, 200);
+        }
+        return json(['status' => true, 'detail' => implode("\n", $lines)]);
+    }
+
+    /** 人工补单（未支付 → 已支付 + 发放权益） */
+    public function orderPay(int $id)
+    {
+        $r = (new \app\common\service\PaymentService())->manualComplete($id, 'admin:' . (string)session('admin_id'));
+        return json(['status' => $r['ok'], 'message' => $r['msg']]);
+    }
+
+    /** 关闭未支付订单 */
+    public function orderClose(int $id)
+    {
+        $r = (new \app\common\service\PaymentService())->closeOrder($id);
+        return json(['status' => $r['ok'], 'message' => $r['msg']]);
+    }
+
     /** 删除订单（批量，ids 逗号分隔）——仅允许删除非已支付订单 */
     public function deleteOrders()
     {

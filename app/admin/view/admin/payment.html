@@ -129,7 +129,7 @@
   <p class="empty-line">没有符合条件的订单。支付回调地址（站内）：/pay/notify 与 /pay/return。</p>
   {else /}
   <table class="table">
-    <thead><tr><th style="width:28px"><input type="checkbox" id="ordCheckAll"></th><th>订单号</th><th>用户</th><th>类型</th><th>金额(元)</th><th>渠道</th><th>交易号</th><th>状态</th><th>时间</th></tr></thead>
+    <thead><tr><th style="width:28px"><input type="checkbox" id="ordCheckAll"></th><th>订单号</th><th>用户</th><th>类型</th><th>金额(元)</th><th>渠道</th><th>交易号</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
     <tbody>
       {volist name="orders" id="o"}
       <tr>
@@ -142,6 +142,16 @@
         <td class="td-clip mono">{$o.trade_no|default='-'}</td>
         <td>{if condition="$o.status eq 0"}<span class="badge badge-pending">待支付</span>{elseif condition="$o.status eq 1"}<span class="ok">已支付</span>{else /}<span class="count">已关闭</span>{/if}</td>
         <td>{:date('m-d H:i', ts($o.create_time))}</td>
+        <td class="td-actions">
+          <button class="btn-ghost-sm" data-ord-detail="{$o.id}">详情</button>
+          {if condition="$o.status eq 0"}
+          <button class="btn-ghost-sm" data-ord-pay="{$o.id}">补单</button>
+          <button class="btn-ghost-sm" data-ord-close="{$o.id}">关闭</button>
+          {/if}
+          {if condition="$o.status neq 1"}
+          <button class="btn-ghost-sm btn-danger-sm" data-row-del="{$o.id}">删除</button>
+          {/if}
+        </td>
       </tr>
       {/volist}
     </tbody>

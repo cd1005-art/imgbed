@@ -50,6 +50,41 @@
     }).then(function (r) { return r.json(); });
   }
 
+  /* 订单操作：详情 / 补单 / 关闭（全局委托） */
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t || !t.closest) { return; }
+
+    var d = t.closest('[data-ord-detail]');
+    if (d) {
+      fetch('/admin/order/detail/' + d.dataset.ordDetail)
+        .then(function (r) { return r.json(); })
+        .then(function (res) { alert(res.detail || res.message); })
+        .catch(function () { toast('读取失败'); });
+      return;
+    }
+
+    var pbtn = t.closest('[data-ord-pay]');
+    if (pbtn) {
+      if (!confirm('⚠ 人工补单：将直接把该订单标记为已支付，\n并立即发放权益（VIP 延长 / 站币到账）。\n\n确认已收到用户付款？')) { return; }
+      toast('补单处理中…');
+      fetch('/admin/order/pay/' + pbtn.dataset.ordPay, { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) { toast(res.message); if (res.status) setTimeout(function () { location.reload(); }, 900); })
+        .catch(function () { toast('补单失败：网络错误'); });
+      return;
+    }
+
+    var cbtn = t.closest('[data-ord-close]');
+    if (cbtn) {
+      if (!confirm('关闭该未支付订单？（用户再打开支付页将提示订单已关闭）')) { return; }
+      fetch('/admin/order/close/' + cbtn.dataset.ordClose, { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (res) { toast(res.message); if (res.status) setTimeout(function () { location.reload(); }, 600); })
+        .catch(function () { toast('操作失败：网络错误'); });
+    }
+  });
+
   /* 用户站币调整：全局委托 */
   document.addEventListener('click', function (e) {
     var btn = e.target && e.target.closest ? e.target.closest('[data-user-credits]') : null;

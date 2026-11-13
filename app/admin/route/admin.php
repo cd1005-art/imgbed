@@ -69,6 +69,9 @@ Route::group(function () {
     Route::get('payment', 'PaymentManage/index');
     Route::post('payment/gateway', 'PaymentManage/saveGateway');
     Route::post('payment/plan', 'PaymentManage/savePlan');
+    Route::post('order/pay/:id', 'PaymentManage/orderPay');
+    Route::post('order/close/:id', 'PaymentManage/orderClose');
+    Route::get('order/detail/:id', 'PaymentManage/orderDetail');
     Route::post('payment/delete-orders', 'PaymentManage/deleteOrders');
     Route::post('payment/plan/delete/:id', 'PaymentManage/deletePlan');
 

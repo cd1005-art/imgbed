@@ -222,6 +222,64 @@ class PaymentService
     }
 
     /** VIP 生效：到期时间取 max(now, 现有到期) + 套餐天数；策略组切到套餐组 */
+    /**
+     * 人工补单：把未支付订单标记为已支付并发放权益（VIP 延长 / 站币到账）
+     * 用于支付成功但回调丢失、或网关未回调的场景
+     */
+    public function manualComplete(int $orderId, string $operator = 'admin'): array
+    {
+        $order = Order::where('id', $orderId)->find();
+        if (!$order) {
+            return ['ok' => false, 'msg' => '订单不存在'];
+        }
+        if ((int)$order->status === Order::STATUS_PAID) {
+            return ['ok' => false, 'msg' => '该订单已支付，无需补单'];
+        }
+        if ((int)$order->status !== Order::STATUS_UNPAID) {
+            return ['ok' => false, 'msg' => '仅未支付订单可补单'];
+        }
+        if ((string)$order->type === 'vip' && !VipPlan::find((int)$order->plan_id)) {
+            return ['ok' => false, 'msg' => '该订单的 VIP 套餐已不存在，无法补单'];
+        }
+
+        Db::startTrans();
+        try {
+            Db::name('orders')->where('id', $orderId)->update([
+                'status'     => Order::STATUS_PAID,
+                'pay_time'   => time(),
+                'trade_no'   => 'MANUAL-' . date('YmdHis'),
+                'notify_raw' => 'manual complete by ' . $operator,
+                'update_time'=> time(),
+            ]);
+            $fresh = Order::find($orderId);
+            if ((string)$order->type === 'credits') {
+                $yuan = (int)round((int)$order->amount / 100);
+                \app\common\service\CreditsService::recharge((int)$order->user_id, $yuan, $orderId);
+            } else {
+                $this->activateVip($fresh);
+            }
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            return ['ok' => false, 'msg' => '补单失败：' . $e->getMessage()];
+        }
+        return ['ok' => true, 'msg' => '补单成功，权益已发放（' . ($order->type === 'credits' ? '站币到账' : 'VIP 已延长') . '）'];
+    }
+
+    /** 关闭未支付订单 */
+    public function closeOrder(int $orderId): array
+    {
+        $order = Order::where('id', $orderId)->find();
+        if (!$order) {
+            return ['ok' => false, 'msg' => '订单不存在'];
+        }
+        if ((int)$order->status !== Order::STATUS_UNPAID) {
+            return ['ok' => false, 'msg' => '仅未支付订单可关闭'];
+        }
+        Db::name('orders')->where('id', $orderId)->update(['status' => Order::STATUS_CANCEL, 'update_time' => time()]);
+        return ['ok' => true, 'msg' => '订单已关闭'];
+    }
+
     protected function activateVip(Order $order): void
     {
         $plan = VipPlan::find((int)$order->plan_id);
