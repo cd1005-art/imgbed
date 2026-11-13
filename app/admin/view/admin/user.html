@@ -15,6 +15,7 @@
       <option value="">全部状态</option>
       <option value="1" {if condition="$status eq '1'"}selected{/if}>正常</option>
       <option value="2" {if condition="$status eq '2'"}selected{/if}>禁用</option>
+      <option value="3" {if condition="$status eq '3'"}selected{/if}>已删除</option>
     </select>
     <input type="date" name="dfrom" value="{$dfrom}" class="filter-select">
     <input type="date" name="dto" value="{$dto}" class="filter-select">
@@ -27,6 +28,7 @@
   <button class="btn-ghost-sm" data-user-batch="enable">批量启用</button>
   <button class="btn-ghost-sm" data-user-batch="disable">批量禁用</button>
   <button class="btn-ghost-sm" data-user-batch="group">批量改组</button>
+  <button class="btn-ghost-sm btn-danger-sm" data-user-batch="delete">批量删除</button>
   <button class="btn-ghost-sm" id="userBatchClear">取消选择</button>
 </div>
 
@@ -48,11 +50,14 @@
       </td>
       <td>{$vo.quota_display}</td>
       <td>{$vo.token_display}</td>
-      <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">禁用</span>{/if}</td>
+      <td>{if condition="$vo.status eq 1"}<span class="ok">正常</span>{elseif condition="$vo.status eq 2"}<span class="danger">禁用</span>{else /}<span class="count">已删除</span>{/if}</td>
       <td class="mono">{$vo.last_login_ip}</td>
       <td>{:date('Y-m-d', ts($vo.create_time))}</td>
       <td class="td-actions">
         <button class="btn-ghost-sm" data-user-edit="{$vo.id}">编辑</button>
+        {if condition="$vo.status neq 3"}
+        <button class="btn-ghost-sm btn-danger-sm" data-user-del="{$vo.id}" data-imgs="{$vo.img_count}" data-name="{$vo.nickname}">删除</button>
+        {/if}
         <button class="btn-ghost-sm" data-user-toggle="{$vo.id}">{if condition="$vo.status eq 1"}禁用{else /}启用{/if}</button>
         <button class="btn-ghost-sm" data-user-reset="{$vo.id}">重置密码</button>
       </td>

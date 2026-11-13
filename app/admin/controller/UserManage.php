@@ -34,7 +34,11 @@ class UserManage extends Base
                 });
             }
             if ($gid > 0)       { $q->where('group_id', $gid); }
-            if ($status !== '') { $q->where('status', (int)$status); }
+            if ($status !== '') {
+                $q->where('status', (int)$status);
+            } else {
+                $q->where('status', '<>', 3);   // 默认不显示已删除用户
+            }
             if ($dfrom !== '')  { $q->where('create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
             if ($dto !== '')    { $q->where('create_time', '<=', strtotime($dto . ' 23:59:59')); }
             return $q;
@@ -50,6 +54,7 @@ class UserManage extends Base
             $g = $groupMap[(int)$item['group_id']] ?? ['max_tokens' => 0, 'quota_total' => 0];
             $item['token_display'] = $count . '/' . ($g['max_tokens'] > 0 ? $g['max_tokens'] : '不限');
             // 容量：用量/总量（策略组 quota_total）
+            $item['img_count'] = (int)Db::name('images')->where('user_id', $item['id'])->count();
             $item['quota_display'] = \app\common\service\UploadService::formatSize((int)$item['quota_used'])
                 . ' / ' . ($g['quota_total'] > 0 ? \app\common\service\UploadService::formatSize($g['quota_total']) : '不限');
             return $item;
@@ -72,6 +77,44 @@ class UserManage extends Base
     }
 
     /** 编辑保存（昵称/邮箱/策略组/状态/可选新密码） */
+    /**
+     * 删除用户（软删除：status=3，登录即刻失效；记录与图片保留，避免孤儿数据）
+     * @param int $id
+     * purge=1 时同时下架其所有图片（设为私密 + 禁止再公开）
+     */
+    public function delete(int $id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return json(['status' => false, 'message' => '用户不存在']);
+        }
+        if ((int)$user->status === 3) {
+            return json(['status' => false, 'message' => '该用户已删除']);
+        }
+        $purge = (int)$this->request->post('purge', 0) === 1;
+
+        try {
+            Db::startTrans();
+            Db::name('users')->where('id', $id)->update(['status' => 3, 'update_time' => time()]);
+            // 立即踢下线：清该用户所有 token
+            Db::name('api_tokens')->where('user_id', $id)->delete();
+            if ($purge) {
+                Db::name('images')->where('user_id', $id)->update([
+                    'is_public' => 0, 'ban_public' => 1, 'update_time' => time(),
+                ]);
+            }
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            return json(['status' => false, 'message' => '删除失败：' . $e->getMessage()]);
+        }
+
+        return json([
+            'status'  => true,
+            'message' => '用户已删除（无法登录）' . ($purge ? '，其图片已全部下架' : '，图片保留'),
+        ]);
+    }
+
     public function save(int $id)
     {
         $user = User::find($id);
@@ -131,6 +174,12 @@ class UserManage extends Base
             }
             Db::name('users')->whereIn('id', $ids)->update(['group_id' => $gid, 'update_time' => time()]);
             return json(['status' => true, 'message' => '已将 ' . count($ids) . ' 个用户切换到该策略组']);
+        }
+
+        if ($action === 'delete') {
+            Db::name('users')->whereIn('id', $ids)->update(['status' => 3, 'update_time' => time()]);
+            Db::name('api_tokens')->whereIn('user_id', $ids)->delete();
+            return json(['status' => true, 'message' => '已删除 ' . count($ids) . ' 个用户（图片保留）']);
         }
 
         if (!in_array($action, ['disable', 'enable'], true)) {
