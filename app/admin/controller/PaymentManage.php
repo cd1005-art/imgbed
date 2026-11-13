@@ -26,12 +26,34 @@ class PaymentManage extends Base
             : ['alipay' => '', 'wxpay' => '', 'qqpay' => ''];
         $isOpen  = $config ? (int)$config->is_open : 0;
 
+        // 订单筛选：订单号 / 用户 / 类型 / 状态 / 日期范围
+        $ono     = trim((string)$this->request->param('ono', ''));
+        $ouser   = trim((string)$this->request->param('ouser', ''));
+        $otype   = trim((string)$this->request->param('otype', ''));
+        $ostatus = trim((string)$this->request->param('ostatus', ''));
+        $odfrom  = trim((string)$this->request->param('odfrom', ''));
+        $odto    = trim((string)$this->request->param('odto', ''));
+
+        $q = Order::order('id', 'desc');
+        if ($ono !== '')     { $q->where('order_no', 'like', '%' . $ono . '%'); }
+        if ($ouser !== '')   { $q->where('user_id', (int)$ouser); }
+        if ($otype !== '')   { $q->where('type', $otype); }
+        if ($ostatus !== '') { $q->where('status', (int)$ostatus); }
+        if ($odfrom !== '')  { $q->where('create_time', '>=', strtotime($odfrom . ' 00:00:00')); }
+        if ($odto !== '')    { $q->where('create_time', '<=', strtotime($odto . ' 23:59:59')); }
+        $orders = $q->limit(100)->select();
+        $totalOrders = (int)Order::count();
+
         return $this->adminView('admin/payment', [
             'page'    => 'payment',
             'gateway' => $gateway,
             'is_open' => $isOpen,
             'plans'   => VipPlan::order('sort', 'asc')->select(),
-            'orders'  => Order::order('id', 'desc')->limit(20)->select(),
+            'orders'  => $orders,
+            'total_orders' => $totalOrders,
+            'filtered_orders' => count($orders),
+            'ono' => $ono, 'ouser' => $ouser, 'otype' => $otype,
+            'ostatus' => $ostatus, 'odfrom' => $odfrom, 'odto' => $odto,
         ]);
     }
 
@@ -102,6 +124,26 @@ class PaymentManage extends Base
     }
 
     /** 套餐删除 */
+    /** 删除订单（批量，ids 逗号分隔）——仅允许删除非已支付订单 */
+    public function deleteOrders()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择订单']);
+        }
+        // 已支付订单不删除（保留财务记录）；如需清理请先改状态
+        $deletable = Order::whereIn('id', $ids)->where('status', '<>', Order::STATUS_PAID)->column('id');
+        $skip = count($ids) - count($deletable);
+        $n = 0;
+        if ($deletable) {
+            $n = Order::whereIn('id', $deletable)->delete();
+        }
+        return json([
+            'status'  => true,
+            'message' => "已删除 {$n} 条" . ($skip > 0 ? "，{$skip} 条已支付订单已跳过（财务记录保留）" : ''),
+        ]);
+    }
+
     public function deletePlan(int $id)
     {
         Db::name('vip_plans')->where('id', $id)->delete();

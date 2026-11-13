@@ -10,6 +10,14 @@
   </p>
 </div>
 
+<div id="payTabs">
+  <nav class="tabs-nav">
+    <button class="tab-btn" type="button" data-tab="gateway">支付网关</button>
+    <button class="tab-btn" type="button" data-tab="plans">VIP 套餐</button>
+    <button class="tab-btn" type="button" data-tab="orders">最近订单 <span class="count">{$total_orders}</span></button>
+  </nav>
+
+  <div class="tab-pane" data-pane="gateway">
 <section class="panel">
   <h2 class="panel-title">支付网关</h2>
   <div class="hint-bar">
@@ -42,6 +50,9 @@
   </form>
 </section>
 
+</div>
+
+  <div class="tab-pane" data-pane="plans">
 <section class="panel">
   <h2 class="panel-title">VIP 套餐</h2>
   <table class="table">
@@ -76,21 +87,65 @@
   </form>
 </section>
 
+</div>
+
+  <div class="tab-pane" data-pane="orders">
 <section class="panel">
-  <h2 class="panel-title">最近订单</h2>
+  <h2 class="panel-title">最近订单 <span class="count">共 {$total_orders} 条{if condition="$filtered_orders neq $total_orders"} · 筛选后 {$filtered_orders} 条{/if}</span></h2>
+
+  <form class="search-bar" method="get" action="/admin/payment" style="flex-wrap:wrap;margin-bottom:12px">
+    <input type="hidden" name="tab" value="orders">
+    <input type="text" name="ono" value="{$ono}" placeholder="订单号" style="width:190px">
+    <input type="number" name="ouser" value="{$ouser}" placeholder="用户ID" style="width:100px">
+    <select name="otype" class="filter-select">
+      <option value="">全部类型</option>
+      <option value="vip" {if condition="$otype eq 'vip'"}selected{/if}>VIP</option>
+      <option value="credits" {if condition="$otype eq 'credits'"}selected{/if}>站币充值</option>
+    </select>
+    <select name="ostatus" class="filter-select">
+      <option value="">全部状态</option>
+      <option value="0" {if condition="$ostatus eq '0'"}selected{/if}>待支付</option>
+      <option value="1" {if condition="$ostatus eq '1'"}selected{/if}>已支付</option>
+      <option value="2" {if condition="$ostatus eq '2'"}selected{/if}>已关闭</option>
+    </select>
+    <input type="date" name="odfrom" value="{$odfrom}" style="width:140px">
+    <span class="field-hint">至</span>
+    <input type="date" name="odto" value="{$odto}" style="width:140px">
+    <button class="btn btn-sm" type="submit">筛选</button>
+    <a class="btn-ghost-sm" href="/admin/payment#orders">重置</a>
+  </form>
+
+  <div class="gallery-batch" style="margin-bottom:10px">
+    <button class="btn-ghost-sm" type="button" id="ordAll">全选</button>
+    <button class="btn-ghost-sm btn-danger-sm" type="button" id="ordDel">删除选中</button>
+    <span class="field-hint">已支付订单不可删除（财务记录保留）</span>
+  </div>
+
   {if condition="empty($orders)"}
-  <p class="empty-line">还没有订单。支付回调地址（站内）：/pay/notify 与 /pay/return，一期随回调控制器一起交付。</p>
+  <p class="empty-line">没有符合条件的订单。支付回调地址（站内）：/pay/notify 与 /pay/return。</p>
   {else /}
   <table class="table">
-    <thead><tr><th>订单号</th><th>用户</th><th>金额(元)</th><th>状态</th><th>时间</th></tr></thead>
+    <thead><tr><th style="width:28px"><input type="checkbox" id="ordCheckAll"></th><th>订单号</th><th>用户</th><th>类型</th><th>金额(元)</th><th>渠道</th><th>交易号</th><th>状态</th><th>时间</th></tr></thead>
     <tbody>
       {volist name="orders" id="o"}
-      <tr><td class="mono">{$o.order_no}</td><td>{$o.user_id}</td><td>{:round($o.amount / 100, 2)}</td><td>{$o.status}</td><td>{:date('m-d H:i', ts($o.create_time))}</td></tr>
+      <tr>
+        <td><input type="checkbox" class="ord-check" value="{$o.id}" data-paid="{if condition="$o.status eq 1"}1{else /}0{/if}"></td>
+        <td class="mono">{$o.order_no}</td>
+        <td>{$o.user_id}</td>
+        <td>{if condition="$o.type eq 'vip'"}VIP{elseif condition="$o.type eq 'credits'"}站币{else /}{$o.type}{/if}</td>
+        <td>{:round($o.amount / 100, 2)}</td>
+        <td>{$o.pay_channel|default='-'}</td>
+        <td class="td-clip mono">{$o.trade_no|default='-'}</td>
+        <td>{if condition="$o.status eq 0"}<span class="badge badge-pending">待支付</span>{elseif condition="$o.status eq 1"}<span class="ok">已支付</span>{else /}<span class="count">已关闭</span>{/if}</td>
+        <td>{:date('m-d H:i', ts($o.create_time))}</td>
+      </tr>
       {/volist}
     </tbody>
   </table>
   {/if}
 </section>
+  </div>
+</div>
 {/block}
 
 {block name="script"}
