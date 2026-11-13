@@ -59,8 +59,9 @@ class GenRun extends Command
                 continue;
             }
 
+            $cursor = (int)($task['prompt_cursor'] ?? 0);
             for ($i = 0; $i < max(1, (int)$task['count_per_run']); $i++) {
-                $prompt = $prompts[array_rand($prompts)];
+                [$prompt, $cursor] = \app\common\service\CronService::pickPrompt($prompts, $cursor);
                 $tmp = sys_get_temp_dir() . '/gen_' . uniqid() . '.jpg';
                 $made = $this->generate((int)$task['model_id'], $prompt, $tmp);
                 if (!$made) {
@@ -101,6 +102,7 @@ class GenRun extends Command
                 'last_run'        => $now,
                 'next_run'        => $now + $interval * 60,
                 'total_generated' => (int)$task['total_generated'] + $ok,
+                'prompt_cursor'   => $cursor,
                 'fail_streak'     => $fail > 0 && $ok === 0 ? (int)$task['fail_streak'] + 1 : 0,
                 'update_time'     => time(),
             ]);

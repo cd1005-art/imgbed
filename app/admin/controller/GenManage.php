@@ -72,6 +72,8 @@ class GenManage extends Base
             return json(['status' => false, 'message' => '至少填一条提示词']);
         }
         $dropped = count($arr) > 2000 ? count($arr) - 2000 : 0;
+        // 打乱顺序：之后按游标顺序轮换，一轮内不重复，整体仍随机
+        shuffle($arr);
 
         // 目标账号：输入框（用户ID / 邮箱 / 昵称 模糊），不用下拉（用户量大时下拉不实用）
         $targetInput = trim((string)$this->request->post('target_user_input', ''));
@@ -104,6 +106,7 @@ class GenManage extends Base
         $data = [
             'name'            => mb_substr(trim((string)$this->request->post('name', '')), 0, 60) ?: '造图任务',
             'prompts'         => json_encode(array_slice($arr, 0, 2000), JSON_UNESCAPED_UNICODE),
+            'prompt_cursor'   => 0,
             'category'        => mb_substr(trim((string)$this->request->post('category', '')), 0, 30),
             'count_per_run'   => max(1, min(20, (int)$this->request->post('count_per_run', 1))),
             'interval_minutes' => max(5, min(1440, (int)$this->request->post('interval_minutes', 60))),

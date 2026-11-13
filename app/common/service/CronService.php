@@ -405,6 +405,21 @@ class CronService
         return "检查 " . count($users) . " 个到期用户，发送 {$sent} 封提醒";
     }
 
+    /**
+     * 提示词轮换取值：保存时已打乱池子，这里按游标顺序取，用完一轮自动回到开头
+     * @return array [prompt, nextCursor]
+     */
+    public static function pickPrompt(array $prompts, int $cursor): array
+    {
+        $n = count($prompts);
+        if ($n === 0) {
+            return ['abstract gradient', 0];
+        }
+        $cursor = $cursor < 0 ? 0 : $cursor;
+        $idx    = $cursor % $n;
+        return [$prompts[$idx], ($idx + 1) % $n];
+    }
+
     /** 判断图片是否"无意义"（过小/纯色/近纯色）；用于拦截模型返回的空白图 */
     protected static function isMeaninglessImage(string $file): bool
     {
@@ -582,8 +597,9 @@ class CronService
             $perRun  = max(1, (int)$task['count_per_run']);
             $times   = $limit > 0 ? min($limit, $perRun) : $perRun;
 
+            $cursor = (int)($task['prompt_cursor'] ?? 0);
             for ($i = 0; $i < $times; $i++) {
-                $prompt = $prompts[array_rand($prompts)];
+                [$prompt, $cursor] = self::pickPrompt($prompts, $cursor);
                 $tmp = sys_get_temp_dir() . '/gen_' . uniqid() . '.jpg';
 
                 $made = self::generateImage((int)$task['model_id'], $prompt, $tmp);
@@ -618,6 +634,7 @@ class CronService
                 'last_run'        => $now,
                 'next_run'        => $now + $interval * 60,
                 'total_generated' => (int)$task['total_generated'] + $ok,
+                'prompt_cursor'   => $cursor,
                 'fail_streak'     => $newStreak,
                 'update_time'     => time(),
             ]);
