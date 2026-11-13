@@ -29,7 +29,10 @@
           <input type="text" name="target_user_input" placeholder="如 2 / demo@img.local / 演示账号" required>
         </label>
         <label class="field"><span class="field-label">每次生成数量</span><input type="number" name="count_per_run" value="1" min="1" max="20"></label>
-        <label class="field"><span class="field-label">间隔（分钟）</span><input type="number" name="interval_minutes" value="60" min="5" max="1440"></label>
+        <label class="field">
+          <span class="field-label">间隔（分钟）<span class="field-hint">最小 5 = 调度器检查周期</span></span>
+          <input type="number" name="interval_minutes" value="60" min="5" max="1440" title="计划任务每 5 分钟检查一次，设为 5 即最快频率">
+        </label>
         <label class="field"><span class="field-label">自动公开</span>
           <select name="auto_public"><option value="1">是</option><option value="0">否</option></select>
         </label>
