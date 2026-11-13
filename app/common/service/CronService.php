@@ -463,10 +463,7 @@ class CronService
     /** 自动打标签：任务分类 + 审核描述首段（需任务开启 auto_tag） */
     public static function applyAutoTags(array $task, int $imageId): void
     {
-        if ((int)($task['auto_tag'] ?? 0) !== 1) {
-            return;
-        }
-        // 只补任务分类；审核短标签由审核驱动在入库时自动挂载（2~6 字的主体/风格/色调）
+        // 审核短标签由审核驱动在入库时自动挂载；这里只补「任务分类」（若填写）
         $tags = [];
         $cat  = trim((string)($task['category'] ?? ''));
         if ($cat !== '') {
