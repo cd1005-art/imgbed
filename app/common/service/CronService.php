@@ -654,16 +654,23 @@ class CronService
     /** 展示用 CLI php 路径（不探测，避免 disable_functions 限制；按服务器实际修改） */
     public static function phpBinary(): string
     {
-        $bin = defined('PHP_BINARY') ? PHP_BINARY : '';
-        if ($bin !== '' && stripos($bin, 'fpm') === false && stripos($bin, 'cgi') === false) {
+        // 纯字符串推导（不访问文件系统：宝塔 open_basedir 会限制 is_file/is_executable）
+        $bin = defined('PHP_BINARY') ? (string)PHP_BINARY : '';
+        if ($bin !== '') {
+            $dir = dirname($bin);
+            // fpm/cgi 不能用于 CLI，取同目录的 php
+            if (stripos($bin, 'fpm') !== false || stripos($bin, 'cgi') !== false) {
+                return rtrim($dir, '/') . '/php';
+            }
             return $bin;
         }
-        $cand = $bin !== '' ? dirname($bin) . '/php' : '';
-        if ($cand !== '' && (string)@php_ini_loaded_file() !== '') {
-            return $cand;
+        $bindir = defined('PHP_BINDIR') ? rtrim((string)PHP_BINDIR, '/') : '';
+        if ($bindir !== '') {
+            return $bindir . '/php';
         }
-        return '/www/server/php/83/bin/php';
+        return 'php';
     }
+
 
     /** exec 验证 php 可执行 */
     protected static function probePhp(string $bin): bool

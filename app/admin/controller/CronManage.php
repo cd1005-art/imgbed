@@ -25,8 +25,9 @@ class CronManage extends Base
 
         foreach ($tasks as &$t) {
             // CLI 命令带注释头（复制到宝塔也一眼知道是什么任务；# 注释不影响执行）
-            $t['cli_inner'] = ($php !== '' ? $php : 'php') . ' ' . $root . '/think ' . $t['cmd'];
-            $t['cli'] = '# ' . $t['name'] . '\n' . $t['cli_inner'];
+            $t['cli_inner'] = 'cd ' . $root . ' && ' . ($php !== '' ? $php : 'php') . ' think ' . $t['cmd'];
+            // 注释头用真实换行（单引号里的 \n 不会转义，会变成字面量导致整行被注释）
+            $t['cli'] = '# ' . $t['name'] . "\n" . $t['cli_inner'];
             $t['url'] = $domain . '/cron/' . $t['key'] . '?key=' . $key;
         }
         unset($t);
