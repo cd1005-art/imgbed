@@ -263,6 +263,127 @@ class CronService
     }
 
     /** VIP 到期提醒（与 monitor:vip 同逻辑） */
+    /** 站点健康巡检：首页可用性 + HTTPS 证书剩余 + 域名到期 */
+    public static function taskSite(): string
+    {
+        $domain = (string)\app\common\model\Setting::get('site_domain', '');
+        if ($domain === '') {
+            $domain = (string)request()->domain();
+        }
+        $host = parse_url($domain, PHP_URL_HOST) ?: trim($domain);
+        if ($host === '') {
+            $host = '127.0.0.1';
+        }
+        $msgs = [];
+        $bad  = false;
+
+        // 1) 首页可用性（走本机 https）
+        $ch = @curl_init('https://127.0.0.1/');
+        if ($ch) {
+            @curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 12, CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false, CURLOPT_HTTPHEADER => ['Host: ' . $host],
+                CURLOPT_USERAGENT => 'imgbed-monitor',
+            ]);
+            @curl_exec($ch);
+            $code = (int)@curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            @curl_close($ch);
+            if ($code >= 200 && $code < 400) {
+                $msgs[] = "首页 {$code} 正常";
+            } else {
+                $bad = true;
+                $msgs[] = '首页不可用（HTTP ' . ($code > 0 ? $code : '连接失败') . '）';
+                self::notifyAdmin('site_down', '【站点不可用】' . $host, 'storage_alert', ['reason' => $msgs[count($msgs) - 1]]);
+            }
+        }
+
+        // 2) HTTPS 证书剩余天数（复用首页请求的 CERTINFO，最稳）
+        $certDays = null;
+        $ch2 = @curl_init('https://127.0.0.1/');
+        if ($ch2) {
+            @curl_setopt_array($ch2, [
+                CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 12, CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false, CURLOPT_CERTINFO => true,
+                CURLOPT_HTTPHEADER => ['Host: ' . $host], CURLOPT_USERAGENT => 'imgbed-monitor',
+            ]);
+            @curl_exec($ch2);
+            $ci = @curl_getinfo($ch2, CURLINFO_CERTINFO);
+            @curl_close($ch2);
+            $expire = '';
+            if (is_array($ci) && isset($ci[0])) {
+                foreach ($ci[0] as $line) {
+                    if (stripos($line, 'Expire date:') === 0) {
+                        $expire = trim(substr($line, strlen('Expire date:')));
+                        break;
+                    }
+                }
+            }
+            if ($expire !== '') {
+                $ts = strtotime($expire);
+                if ($ts > 0) {
+                    $certDays = (int)floor(($ts - time()) / 86400);
+                }
+            }
+        }
+        if ($certDays !== null) {
+            $msgs[] = "证书剩余 {$certDays} 天";
+            if ($certDays < 15) {
+                $bad = true;
+                $msgs[] = '⚠ 证书即将到期';
+                self::notifyAdmin('cert_expire', '【证书即将到期】' . $host, 'storage_alert', ['reason' => $certDays . ' 天']);
+            }
+        } else {
+            $msgs[] = '证书状态未知（不影响巡检结论）';
+        }
+
+        // 3) 域名到期（RDAP，0=不限；失败静默）
+        try {
+            $root = self::rootDomain($host);
+            if ($root !== '') {
+                $rdap = '';
+                for ($try = 0; $try < 2 && $rdap === ''; $try++) {
+                    $rch = @curl_init('https://rdap.org/domain/' . $root);
+                    if (!$rch) {
+                        break;
+                    }
+                    @curl_setopt_array($rch, [
+                        CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8,
+                        CURLOPT_FOLLOWLOCATION => true, CURLOPT_SSL_VERIFYPEER => false,
+                        CURLOPT_USERAGENT => 'imgbed-monitor',
+                    ]);
+                    $rdap = (string)@curl_exec($rch);
+                    @curl_close($rch);
+                }
+                if ($rdap !== '') {
+                    $jd  = json_decode($rdap, true);
+                    $exp = null;
+                    foreach (($jd['events'] ?? []) as $ev) {
+                        if (($ev['eventAction'] ?? '') === 'expiration') {
+                            $exp = strtotime((string)$ev['eventDate']);
+                        }
+                    }
+                    if ($exp) {
+                        $days = (int)floor(($exp - time()) / 86400);
+                        $msgs[] = "域名剩余 {$days} 天";
+                        if ($days < 30) {
+                            $bad = true;
+                            $msgs[] = '⚠ 域名即将到期，请立即续费';
+                            self::notifyAdmin('domain_expire', '【域名即将到期】' . $root, 'domain_expire', ['name' => $root, 'reason' => $days . ' 天']);
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+
+        $text = implode('；', $msgs);
+        if ($bad) {
+            self::notifyAdmin('site_down', '【站点巡检异常】' . $host, 'storage_alert', ['reason' => $text]);
+            return 'fail: ' . $text;
+        }
+        return $text;
+    }
+
     public static function taskVip(): string
     {
         $now = time();
