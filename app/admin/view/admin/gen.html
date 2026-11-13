@@ -178,22 +178,25 @@
         </div>
 
         <div class="tab-pane" data-pane="io">
-          <div class="form form-grid">
-            <label class="field"><span class="field-label">导出当前任务提示词</span>
-              <span>
-                <select id="ioTaskExport">
-                  {volist name="list" id="t"}
-                  <option value="{$t.id}">#{$t.id} {$t.name}（{$t.prompt_count} 条）</option>
-                  {/volist}
-                </select>
-                <a class="btn-ghost-sm" href="#" id="ioExport">下载 txt</a>
-              </span>
-            </label>
-            <label class="field"><span class="field-label">导入文件（txt，每行一条）</span>
-              <input type="file" id="ioFile" accept=".txt,text/plain">
-            </label>
+          <div class="hint-bar" style="padding:14px 16px">
+            <div class="model-inline-form" style="margin-bottom:12px">
+              <span class="field-label" style="min-width:132px">导出当前任务</span>
+              <select id="ioTaskExport" style="width:320px">
+                {volist name="list" id="t"}
+                <option value="{$t.id}">#{$t.id} {$t.name}（{$t.prompt_count} 条）</option>
+                {/volist}
+              </select>
+              <a class="btn-ghost-sm" href="#" id="ioExport" style="margin-left:10px">下载 txt</a>
+            </div>
+            <div class="model-inline-form">
+              <span class="field-label" style="min-width:132px">导入 txt 文件</span>
+              <input type="file" id="ioFile" accept=".txt,text/plain"
+                     style="width:320px;padding:6px 8px;border:1px dashed #D8D4CB;border-radius:8px;background:#fff;font-size:12px">
+            </div>
+            <p class="field-hint" style="margin:12px 0 0">
+              导入的文件会先读入下方编辑框，确认无误后点「追加到任务」；每行一条提示词，自动去重。
+            </p>
           </div>
-          <p class="field-hint">选择 txt 文件后会读入下方编辑框，确认后再追加到任务。</p>
         </div>
 
         <div class="tab-pane" data-pane="rev">
