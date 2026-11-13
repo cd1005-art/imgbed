@@ -718,6 +718,15 @@
     });
     if (lm) document.getElementById('cronLogClose').onclick = function () { lm.hidden = true; };
 
+    var kc = document.getElementById('cronKeyCopy');
+    if (kc) kc.addEventListener('click', function () {
+      var el = document.getElementById('cronKeyInput');
+      var val = el ? String(el.value || '').trim() : '';
+      if (!val) { toast('未取到密钥'); return; }
+      copyText(val, function (ok) { toast(ok ? '密钥已复制' : '复制失败，请手动选择'); });
+      try { el.focus(); el.select(); } catch (e) {}
+    });
+
     var rk = document.getElementById('cronRotate');
     if (rk) rk.addEventListener('click', function () {
       if (!confirm('重置密钥？\n\n· 旧密钥立即失效\n· 宝塔里用「方式 B（访问 URL）」的任务需全部替换新地址\n· 方式 A（CLI）不受影响')) return;
