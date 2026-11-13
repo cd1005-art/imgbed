@@ -405,10 +405,15 @@ class CronService
             $rootDomain = self::rootDomain($host);
             if ($rootDomain !== '') {
                 $rdap = '';
-                $ch = @curl_init('https://rdap.org/domain/' . $rootDomain);
-                if ($ch) {
+                // 重试 2 次：国外 RDAP 端点在国内网络偶发超时
+                for ($try = 0; $try < 2 && $rdap === ''; $try++) {
+                    $ch = @curl_init('https://rdap.org/domain/' . $rootDomain);
+                    if (!$ch) {
+                        break;
+                    }
                     @curl_setopt_array($ch, [
-                        CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_FOLLOWLOCATION => true,
+                        CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8,
+                        CURLOPT_FOLLOWLOCATION => true,
                         CURLOPT_SSL_VERIFYPEER => false, CURLOPT_USERAGENT => 'imgbed-monitor',
                     ]);
                     $rdap = (string)@curl_exec($ch);
