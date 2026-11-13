@@ -16,6 +16,9 @@ use think\facade\Db;
  */
 class MailerService
 {
+    /** 最近一次发送的 SMTP 对话（诊断用） */
+    public static array $smtpTrace = [];
+
     /** 全站通知事件（后台按勾选启用；空配置=全部启用） */
     public const EVENTS = [
         'system' => [
@@ -127,9 +130,18 @@ class MailerService
             $mail->isHTML(true);
             $mail->Subject = $subject;
             $mail->Body    = $html;
+
+            // 收集 SMTP 对话（用于诊断"服务商是否真的收下"）
+            self::$smtpTrace = [];
+            $mail->SMTPDebug  = 2;
+            $mail->Debugoutput = function ($str, $level) {
+                self::$smtpTrace[] = trim((string)$str);
+            };
             $mail->send();
 
-            self::log($to, $subject, $template, 1, '');
+            // 记录服务器最终响应（如 "250 Message accepted for delivery"）
+            $trace = array_slice(self::$smtpTrace, -3);
+            self::log($to, $subject, $template, 1, 'SMTP: ' . mb_substr(implode(' | ', $trace), 0, 220));
             return true;
         } catch (\Throwable $e) {
             self::log($to, $subject, $template, 0, mb_substr($e->getMessage(), 0, 240));

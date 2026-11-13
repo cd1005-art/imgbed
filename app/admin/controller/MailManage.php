@@ -129,8 +129,18 @@ class MailManage extends Base
             '<p>这是一封测试邮件。</p><p>收到本邮件说明 SMTP 配置正确，通知功能可用。</p>',
             'test'
         );
-        return $ok
-            ? json(['status' => true, 'message' => '发送成功，请查收（含垃圾箱）'])
-            : json(['status' => false, 'message' => '发送失败，请到「发送日志」查看具体错误']);
+        $trace = implode("\n", array_slice(MailerService::$smtpTrace, -6));
+        if ($ok) {
+            return json([
+                'status'  => true,
+                'message' => 'SMTP 服务器已接受（见下方响应）。若收件箱没有，请检查垃圾邮件/拦截记录。',
+                'detail'  => $trace,
+            ]);
+        }
+        return json([
+            'status'  => false,
+            'message' => '发送失败（SMTP 阶段报错）',
+            'detail'  => $trace,
+        ]);
     }
 }
