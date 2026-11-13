@@ -189,7 +189,8 @@ class CronService
     public static function taskStorage(): string
     {
         $to = trim((string)\app\common\model\Setting::get('admin_mail_to', ''));
-        $diskTh  = (int)\app\common\model\Setting::get('alert_disk_free_gb', 10);
+        // 统一按「剩余百分比」判断（磁盘/配额/网盘同一口径）
+        $diskTh  = (int)\app\common\model\Setting::get('alert_disk_left_pct', 10);
         $quotaTh = (int)\app\common\model\Setting::get('alert_quota_left_pct', 10);
         $spaceTh = (int)\app\common\model\Setting::get('alert_space_left_pct', 10);
 
@@ -202,9 +203,15 @@ class CronService
             if ($s['driver'] === 'local') {
                 $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
                 $root = rtrim(public_path(), '/\\') . '/' . $rootRel;
-                $free = @disk_free_space(@is_dir($root) ? $root : public_path());
-                if ($free !== false && $free / 1073741824 < $diskTh) {
-                    $alerts[] = sprintf('【磁盘】%s 剩余 %.1f GB（阈值 %d GB）', $name, $free / 1073741824, $diskTh);
+                $probe = @is_dir($root) ? $root : public_path();
+                $free  = @disk_free_space($probe);
+                $totalDisk = @disk_total_space($probe);
+                if ($free !== false && $totalDisk !== false && $totalDisk > 0) {
+                    $leftPct = $free / $totalDisk * 100;
+                    if ($leftPct < $diskTh) {
+                        $alerts[] = sprintf('【磁盘】%s 剩余 %.1f%%（%.1f GB / 共 %.1f GB，阈值 %d%%）',
+                            $name, $leftPct, $free / 1073741824, $totalDisk / 1073741824, $diskTh);
+                    }
                 }
             }
             $quotaGb = (int)($cfg['quota_gb'] ?? 0);

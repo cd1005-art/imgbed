@@ -47,8 +47,9 @@
   <div class="tab-pane" data-pane="events">
     <section class="panel">
       <h2 class="panel-title">告警阈值</h2>
+      <p class="panel-sub">三种阈值统一按<b>剩余百分比</b>判断（低于阈值即告警）；告警邮件会附带剩余容量绝对值，方便判断严重程度。</p>
       <form class="form form-grid" id="mailPolicyForm">
-        <label class="field"><span class="field-label">磁盘剩余告警（GB）</span><input type="number" name="alert_disk_free_gb" value="{$settings.alert_disk_free_gb|default=10}"></label>
+        <label class="field"><span class="field-label">磁盘剩余告警（%）</span><input type="number" name="alert_disk_left_pct" value="{$settings.alert_disk_left_pct|default=10}"></label>
         <label class="field"><span class="field-label">配额剩余告警（%）</span><input type="number" name="alert_quota_left_pct" value="{$settings.alert_quota_left_pct|default=10}"></label>
         <label class="field"><span class="field-label">网盘空间剩余告警（%）</span><input type="number" name="alert_space_left_pct" value="{$settings.alert_space_left_pct|default=10}"></label>
         <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>

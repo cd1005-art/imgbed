@@ -65,7 +65,7 @@ class MailManage extends Base
         $keys = [
             'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass',
             'smtp_from_name', 'smtp_from_addr', 'admin_mail_to', 'verify_mode',
-            'alert_disk_free_gb', 'alert_quota_left_pct', 'alert_space_left_pct',
+            'alert_disk_left_pct', 'alert_quota_left_pct', 'alert_space_left_pct',
         ];
         $all = $this->request->post();
         $saved = 0;

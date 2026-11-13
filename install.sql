@@ -443,3 +443,6 @@ INSERT IGNORE INTO `img_settings` (`skey`,`svalue`,`remark`,`update_time`) VALUE
 ('site_domain','','站点域名（巡检用，空=自动）',UNIX_TIMESTAMP()),
 ('gen_daily_limit','100','造图机器人单日上限',UNIX_TIMESTAMP()),
 ('credits_per_yuan','10','1元兑换站币数',UNIX_TIMESTAMP());
+
+INSERT IGNORE INTO `img_settings` (`skey`,`svalue`,`remark`,`update_time`) VALUES
+('alert_disk_left_pct','10','磁盘剩余告警%（与配额/网盘统一口径）',UNIX_TIMESTAMP());
