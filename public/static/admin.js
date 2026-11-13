@@ -716,7 +716,9 @@
       if (sb) sb.textContent = '创建任务';
     }
     var newTab = document.querySelector('[data-tab="new"]');
+    var genSwitchByCode = false;   // 程序化切换时不触发"重置"
     if (newTab) newTab.addEventListener('click', function () {
+      if (genSwitchByCode) { return; }
       var fid = nf ? nf.querySelector('[name=id]').value : '0';
       if (fid !== '0') { resetGenForm(); }
     });
@@ -740,12 +742,26 @@
         var ps = [];
         try { ps = JSON.parse(t.prompts) || []; } catch (e2) {}
         nf.querySelector('[name=prompts]').value = ps.join('\n');
+        // 先把 id 归零并程序化切到新建标签（避免触发重置），再回填
+        nf.querySelector('[name=id]').value = '0';
+        var tabBtn = document.querySelector('[data-tab="new"]');
+        if (tabBtn) { genSwitchByCode = true; tabBtn.click(); genSwitchByCode = false; }
+
+        nf.querySelector('[name=id]').value = t.id;
+        nf.querySelector('[name=name]').value = t.name;
+        nf.querySelector('[name=model_id]').value = t.model_id;
+        nf.querySelector('[name=target_user_input]').value = t.target_user_id;
+        nf.querySelector('[name=count_per_run]').value = t.count_per_run;
+        nf.querySelector('[name=interval_minutes]').value = t.interval_minutes;
+        nf.querySelector('[name=auto_public]').value = t.auto_public;
+        var ps2 = [];
+        try { ps2 = JSON.parse(t.prompts) || []; } catch (e3) {}
+        nf.querySelector('[name=prompts]').value = ps2.join('\n');
+
         var flag = document.getElementById('genEditFlag');
         if (flag) { flag.hidden = false; flag.textContent = '编辑中 #' + t.id; }
         var sb = document.getElementById('genSubmitBtn');
         if (sb) sb.textContent = '保存修改';
-        var tabBtn = document.querySelector('[data-tab="new"]');
-        if (tabBtn) tabBtn.click();
         nf.scrollIntoView({ behavior: 'smooth' });
         toast('已载入任务 #' + t.id + '，修改后点「保存修改」');
       });
