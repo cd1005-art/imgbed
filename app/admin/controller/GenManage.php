@@ -187,13 +187,13 @@ class GenManage extends Base
         }
         // 只取属于该任务的图：优先 gen_task_id；历史图回退到日志里解析出的图片 ID
         $imgIds = Db::name('images')->where('gen_task_id', $id)
-            ->order('id', 'desc')->limit(6)->column('id');
+            ->order('id', 'desc')->limit(12)->column('id');
         if (!$imgIds) {
             $logs = Db::name('gen_task_logs')->where('task_id', $id)
-                ->order('id', 'desc')->limit(50)->column('detail');
+                ->order('id', 'desc')->limit(200)->column('detail');
             $txt = implode("\n", array_map('strval', $logs));
             if (preg_match_all('/OK #(\d+)/', $txt, $mm)) {
-                $imgIds = array_slice(array_values(array_unique(array_reverse($mm[1]))), 0, 6);
+                $imgIds = array_slice(array_values(array_unique(array_reverse($mm[1]))), 0, 12);
             }
         }
         $imgs = [];
@@ -213,7 +213,8 @@ class GenManage extends Base
             'status' => true,
             'name'   => $task['name'],
             'info'   => '提示词 ' . count($pl) . ' 条 · 累计生成 ' . (int)$task['total_generated']
-                        . ' 张 · 每 ' . (int)$task['interval_minutes'] . ' 分钟 × ' . (int)$task['count_per_run'],
+                        . ' 张 · 每 ' . (int)$task['interval_minutes'] . ' 分钟 × ' . (int)$task['count_per_run']
+                        . ' · 下列为最近 ' . count($imgs) . ' 张',
             'images' => $imgs,
             'message' => count($imgs) ? '' : '该账号下暂无造图记录',
         ]);

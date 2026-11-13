@@ -935,7 +935,8 @@
       promptPost('/admin/gen/prompt/append',
         'task_id=' + sel.value + '&prompts=' + encodeURIComponent(txt)
       ).then(function (d) {
-        toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 800);
+        toast(d.message);
+        if (d.status) { setTimeout(function () { location.href = '/admin/gen?tab=prompts'; }, 800); }
       }).catch(function () { toast('追加失败：网络错误'); });
     });
 
