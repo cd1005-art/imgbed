@@ -359,3 +359,11 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 .tab-pane { display: none; }
 .tab-pane.active { display: block; }
 .tab-pane > .panel:first-child { margin-top: 0; }
+
+/* ---------- 品牌旁的「画廊」入口 ---------- */
+.brand-link {
+  margin-left: 14px; padding: 4px 12px; border-radius: 999px;
+  font-size: 13px; color: var(--ink-2); background: var(--accent-soft);
+  transition: color .15s, background .15s;
+}
+.brand-link:hover { color: var(--accent); background: rgba(46,160,67,.2); }
