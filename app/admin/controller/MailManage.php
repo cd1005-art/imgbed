@@ -75,6 +75,15 @@ class MailManage extends Base
                 $saved++;
             }
         }
+        // 验证策略（下拉并入通知卡片）：off / register / lazy
+        if (isset($all['verify_policy'])) {
+            $vp = (string)$all['verify_policy'];
+            if (in_array($vp, ['off', 'register', 'lazy'], true)) {
+                Setting::saveKey('verify_mode', $vp === 'off' ? 'none' : $vp);
+            }
+            $saved++;
+        }
+
         // 通知开关矩阵（mail_events JSON）：events_form 标记确保"全不勾=全关"也能保存
         if (isset($all['events_form'])) {
             $ev = (isset($all['mail_events']) && is_array($all['mail_events']))

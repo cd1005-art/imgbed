@@ -51,6 +51,15 @@ class MailerService
     /** 事件是否启用（mail_events 为空 = 全部启用） */
     public static function enabled(string $event): bool
     {
+        // 功能依赖类事件：不受"通知开关"影响，避免误关造成死锁
+        if ($event === 'reset') {
+            return true;   // 找回密码恒发（账号安全必需）
+        }
+        if ($event === 'verify') {
+            // 由验证策略决定：非 none 必须有验证邮件，否则用户永远无法验证
+            return (string)\app\common\model\Setting::get('verify_mode', 'none') !== 'none';
+        }
+
         $row = \app\common\model\Setting::get('mail_events', null);
         if ($row === null || $row === '') {
             return true;   // 未配置 = 全部启用（兼容旧版）

@@ -46,15 +46,8 @@
   <!-- ===== Tab: 通知开关（含验证模式与阈值）===== -->
   <div class="tab-pane" data-pane="events">
     <section class="panel">
-      <h2 class="panel-title">邮箱验证与告警阈值</h2>
+      <h2 class="panel-title">告警阈值</h2>
       <form class="form form-grid" id="mailPolicyForm">
-        <label class="field"><span class="field-label">邮箱验证模式</span>
-          <select name="verify_mode">
-            <option value="none" {if condition="($settings['verify_mode'] ?? 'none') eq 'none'"}selected{/if}>不验证</option>
-            <option value="register" {if condition="($settings['verify_mode'] ?? '') eq 'register'"}selected{/if}>注册即须验证才能登录</option>
-            <option value="lazy" {if condition="($settings['verify_mode'] ?? '') eq 'lazy'"}selected{/if}>可登录，上传/公开前须验证</option>
-          </select>
-        </label>
         <label class="field"><span class="field-label">磁盘剩余告警（GB）</span><input type="number" name="alert_disk_free_gb" value="{$settings.alert_disk_free_gb|default=10}"></label>
         <label class="field"><span class="field-label">配额剩余告警（%）</span><input type="number" name="alert_quota_left_pct" value="{$settings.alert_quota_left_pct|default=10}"></label>
         <label class="field"><span class="field-label">网盘空间剩余告警（%）</span><input type="number" name="alert_space_left_pct" value="{$settings.alert_space_left_pct|default=10}"></label>
@@ -64,7 +57,10 @@
 
     <section class="panel">
       <h2 class="panel-title">通知开关（勾选启用 · 全站事件覆盖）</h2>
-      <p class="panel-sub">勾选的事件才会发邮件；「全不勾 = 全部关闭」，新功能上线会在此自动增加对应事件。</p>
+      <p class="panel-sub">
+        勾选的事件才会发邮件；「全不勾 = 全部关闭」。互斥功能用下拉（如注册邮箱验证），🔒 为功能必需不可关闭。
+        新功能上线在此自动增加对应事件，不会再有"两处重复配置"。
+      </p>
       <form id="eventsForm" class="notify-matrix">
         <input type="hidden" name="events_form" value="1">
         {volist name="events" id="group"}
@@ -80,10 +76,28 @@
           </div>
           <div class="notify-items">
             {volist name="group" id="label"}
-            <label class="notify-item">
-              <input type="checkbox" name="mail_events[]" value="{$key}" {if condition="in_array($key, $enabled_events)"}checked{/if}>
-              <span>{$label}</span>
-            </label>
+              {if condition="$key eq 'verify'"}
+              <!-- 验证策略：互斥多档 → 下拉（并入通知卡片，避免与独立配置项冲突） -->
+              <label class="notify-item notify-item-select">
+                <span>{$label}</span>
+                <select name="verify_policy">
+                  <option value="off" {if condition="($settings['verify_mode'] ?? 'none') eq 'none'"}selected{/if}>不验证（关闭）</option>
+                  <option value="register" {if condition="($settings['verify_mode'] ?? '') eq 'register'"}selected{/if}>注册须验证才能登录</option>
+                  <option value="lazy" {if condition="($settings['verify_mode'] ?? '') eq 'lazy'"}selected{/if}>可登录，上传/公开前须验证</option>
+                </select>
+              </label>
+              {elseif condition="$key eq 'reset'"}
+              <!-- 功能必需项：锁定，不可取消 -->
+              <label class="notify-item notify-item-locked">
+                <input type="checkbox" checked disabled>
+                <span>🔒 {$label}</span>
+              </label>
+              {else /}
+              <label class="notify-item">
+                <input type="checkbox" name="mail_events[]" value="{$key}" {if condition="in_array($key, $enabled_events)"}checked{/if}>
+                <span>{$label}</span>
+              </label>
+              {/if}
             {/volist}
           </div>
         </div>
