@@ -50,7 +50,8 @@ a:hover { text-decoration: underline; }
 
 /* ---------- 顶栏 ---------- */
 .topbar { background: var(--surface); border-bottom: 1px solid var(--line); }
-.topbar-in { display: flex; align-items: center; justify-content: space-between; height: 52px; }
+.topbar-in { display: flex; align-items: center; height: 52px; }
+.topbar-in .nav { margin-left: auto; }   /* 只有右侧导航推右，品牌与入口紧贴 */
 .brand { font-size: 16px; font-weight: 700; letter-spacing: -0.015em; color: var(--ink); }
 .brand:hover { text-decoration: none; color: var(--accent); }
 .nav { display: flex; align-items: center; gap: 16px; }
@@ -362,7 +363,7 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 
 /* ---------- 品牌旁的「画廊」入口 ---------- */
 .brand-link {
-  margin-left: 14px; padding: 4px 12px; border-radius: 999px;
+  margin-left: 10px; padding: 4px 12px; border-radius: 999px;
   font-size: 13px; color: var(--ink-2); background: var(--accent-soft);
   transition: color .15s, background .15s;
 }
