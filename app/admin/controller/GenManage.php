@@ -19,6 +19,9 @@ class GenManage extends Base
         if ($tstatus !== '') { $tq->where('status', (int)$tstatus); }
         $list = $tq->order('id', 'desc')->select()->toArray();
         $models = Db::name('audit_models')->where('purpose', 'image_gen')->order('sort', 'asc')->select()->toArray();
+        // 文本/视觉模型（用于 AI 生成提示词、图生文），排除生图模型
+        $textModels = Db::name('audit_models')->whereIn('purpose', ['audit', 'text'])
+            ->order('sort', 'asc')->select()->toArray();
 
         // 模型名 / 目标账号昵称（列表展示与编辑回填用）
         $modelName = [];
@@ -81,6 +84,7 @@ class GenManage extends Base
             'tstatus' => $tstatus,
             'list'   => $list,
             'models' => $models,
+            'text_models' => $textModels,
             'logs'   => $logs,
             'logs_total' => $logsTotal,
             'gen_daily_limit' => (int)\app\common\model\Setting::get('gen_daily_limit', 100),
@@ -271,6 +275,9 @@ class GenManage extends Base
         if (!$m || (string)$m['endpoint'] === '') {
             return json(['status' => false, 'message' => '请选择可用的文本模型']);
         }
+        if ((string)$m['purpose'] === 'image_gen') {
+            return json(['status' => false, 'message' => '这是生图模型，不能用于生成提示词，请选择「审核模型」或文本模型']);
+        }
         $sys = '你是图像生成提示词工程师。只输出提示词本人，每条独占一行，不要编号、不要解释、不要引号。';
         $user = "为图像生成模型写 {$count} 条中文提示词。\n主题：{$topic}\n风格：{$style}\n"
               . "要求：每条 40~80 字，包含主体、场景、光线、镜头（必要时加风格），彼此不重复。";
@@ -326,6 +333,9 @@ class GenManage extends Base
         $m = Db::name('audit_models')->where('id', $modelId)->find();
         if (!$m || (string)$m['endpoint'] === '') {
             return json(['status' => false, 'message' => '请选择视觉模型']);
+        }
+        if ((string)$m['purpose'] === 'image_gen') {
+            return json(['status' => false, 'message' => '这是生图模型，不能用于看图反推，请选择视觉模型']);
         }
         // 图片转为 base64 data URI（部分网关不接受远程 URL）
         $bin = @file_get_contents($imageUrl);
