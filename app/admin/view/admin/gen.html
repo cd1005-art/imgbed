@@ -38,12 +38,22 @@
       </form>
 
       <div class="hint-bar" style="margin-top:14px">
+        <p class="panel-title" style="font-size:13px;margin:0 0 8px">运行设置</p>
+        <div class="model-inline-form">
+          <span class="field-hint">单日生成上限：</span>
+          <input type="number" id="genDailyLimit" min="0" max="100000" value="{$gen_daily_limit|default=100}" style="width:110px">
+          <span class="field-hint">张/天（0 = 不限，所有任务合计）</span>
+          <button class="btn btn-sm" type="button" id="genDailySave">保存</button>
+        </div>
+      </div>
+
+      <div class="hint-bar" style="margin-top:14px">
         <p class="panel-sub" style="margin:0">
           <b>运行流程与时间参数说明</b><br>
           ① 宝塔计划任务每 <b>5 分钟</b> 执行一次 <code class="inline-code">php think gen:run</code>（调度器心跳，检查有没有到期任务）；<br>
           ② 每个任务有自己的<b>间隔（分钟）</b>：上次执行完成后再过 N 分钟才允许下一次，例如「间隔 60」= 每小时生成一轮；<br>
           ③ 两者<b>不冲突</b>：5 分钟只是检查频率，未到间隔的任务会被跳过。实际执行时间可能有最多 5 分钟延迟；<br>
-          ④ <b>单日总量上限</b> <code class="inline-code">gen_daily_limit</code>（默认 100 张/天，所有任务合计）是硬闸，达到后当天不再生成；<br>
+          ④ <b>单日总量上限</b>：可在上方「运行设置」修改（默认 100 张/天，所有任务合计；<b>填 0 = 不限</b>），达到后当天不再生成；<br>
           ⑤ 单轮最多生成 <b>每次生成数量</b> 张，连续失败 3 轮会自动暂停该任务。
         </p>
       </div>

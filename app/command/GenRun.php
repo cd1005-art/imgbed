@@ -31,8 +31,9 @@ class GenRun extends Command
         // 单日上限
         $dailyLimit = (int)Setting::get('gen_daily_limit', 100);
         $today = (int)Db::name('gen_task_logs')->where('create_time', '>', strtotime(date('Y-m-d')))->sum('gen_count');
-        if ($today >= $dailyLimit) {
-            $output->writeln("已达单日生成上限 {$dailyLimit}，跳过");
+        // 0 = 不限
+        if ($dailyLimit > 0 && $today >= $dailyLimit) {
+            $output->writeln("已达单日生成上限 {$dailyLimit}，跳过（设为 0 表示不限）");
             return 0;
         }
 

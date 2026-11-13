@@ -291,6 +291,17 @@ class CronService
         if (!$tasks) {
             return '无任务';
         }
+
+        // 单日上限（0 = 不限）；手动触发同样受限，避免绕过日限额
+        $dailyLimit = (int)\app\common\model\Setting::get('gen_daily_limit', 100);
+        if ($dailyLimit > 0) {
+            $today = (int)Db::name('gen_task_logs')->where('create_time', '>=', strtotime(date('Y-m-d')))->sum('gen_count');
+            $left = $dailyLimit - $today;
+            if ($left <= 0) {
+                return "已达单日上限 {$dailyLimit} 张（设为 0 表示不限）";
+            }
+            $limit = min($limit, $left);
+        }
         $total = 0;
         foreach ($tasks as $task) {
             $user  = \app\common\model\User::find((int)$task['target_user_id']);

@@ -34,6 +34,7 @@ class GenManage extends Base
             'models' => $models,
             'logs'   => $logs,
             'logs_total' => $logsTotal,
+            'gen_daily_limit' => (int)\app\common\model\Setting::get('gen_daily_limit', 100),
             'lg_task' => $lgTask, 'lg_ok' => $lgOk, 'lg_from' => $lgFrom, 'lg_to' => $lgTo,
         ]);
     }
@@ -86,6 +87,18 @@ class GenManage extends Base
             Db::name('gen_tasks')->insert($data);
         }
         return json(['status' => true, 'message' => '已保存（目标账号：' . ($target['nickname'] ?: $target['email']) . '）']);
+    }
+
+    /** 保存造图运行设置（单日上限，0=不限） */
+    public function saveSettings()
+    {
+        $v = (int)$this->request->post('gen_daily_limit', 100);
+        $v = max(0, min(100000, $v));
+        \app\common\model\Setting::saveKey('gen_daily_limit', (string)$v);
+        return json([
+            'status'  => true,
+            'message' => $v === 0 ? '已保存：单日上限为「不限」' : "已保存：单日上限 {$v} 张",
+        ]);
     }
 
     /** 删除执行日志（ids 逗号分隔） */

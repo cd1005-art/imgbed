@@ -630,6 +630,15 @@
   /* ---------- 造图任务 ---------- */
   function adminGen() {
     initTabs('#genTabs');
+    var ds = document.getElementById('genDailySave');
+    if (ds) ds.addEventListener('click', function () {
+      var v = parseInt((document.getElementById('genDailyLimit') || {}).value, 10);
+      if (isNaN(v) || v < 0) { toast('请输入 0 或正整数'); return; }
+      postBody('/admin/gen/settings', 'gen_daily_limit=' + v).then(function (d) {
+        toast(d.message);
+      });
+    });
+
     bindBatchDelete({checkAll:'#genLogCheckAll', checkbox:'.genlog-check', batchBtn:'#genLogDel',
       api:'/admin/gen/delete-logs', label:'日志', batchBar:'#genLogBar', barCount:'#genLogCount',
       clearBtn:'#genLogClearSel', unit:'条'});
