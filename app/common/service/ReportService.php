@@ -41,6 +41,17 @@ class ReportService
             'update_time' => time(),
         ]);
 
+        // 通知举报人：已受理
+        try {
+            $reporter = Db::name('users')->where('id', $reporterId)->find();
+            if ($reporter) {
+                MailerService::notify('report_received', (string)$reporter['email'],
+                    '举报已受理 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                    'report_received', ['reason' => mb_substr($reason, 0, 140)]);
+            }
+        } catch (\Throwable $e) {
+        }
+
         // AI 初审
         $verdict = 'review';
         $detail = 'AI 初审未给出结论';
@@ -111,7 +122,7 @@ class ReportService
             $limit = max(1, (int)Setting::get('violation_autoban', 3));
             if ($u && (int)$u['violation_count'] >= $limit && (int)$u['status'] === 1) {
                 Db::name('users')->where('id', $uid)->update(['status' => 2, 'update_time' => time()]);
-                MailerService::sendTemplate((string)$u['email'], '账号已被限制 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                MailerService::notify('violation', (string)$u['email'], '账号已被限制 · ' . (string)Setting::get('site_name', '逍遥图床'),
                     'violation', ['name' => (string)$u['nickname'], 'reason' => '累计 ' . (int)$u['violation_count'] . ' 次违规上传']);
             }
         }

@@ -419,3 +419,26 @@ INSERT IGNORE INTO `img_settings` (`skey`,`svalue`,`remark`,`update_time`) VALUE
 ('cron_key','','计划任务访问密钥',UNIX_TIMESTAMP()),
 ('gen_daily_limit','100','造图机器人单日上限',UNIX_TIMESTAMP()),
 ('credits_per_yuan','10','1元兑换站币数',UNIX_TIMESTAMP());
+
+CREATE TABLE IF NOT EXISTS `img_cron_runs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `task_key` varchar(40) NOT NULL DEFAULT '',
+  `ok` tinyint NOT NULL DEFAULT '1',
+  `duration_ms` int NOT NULL DEFAULT '0',
+  `result` varchar(200) NOT NULL DEFAULT '',
+  `source` varchar(10) NOT NULL DEFAULT '',
+  `create_time` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`), KEY `idx_task` (`task_key`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划任务执行历史';
+
+ALTER TABLE `img_cron_heartbeats`
+  ADD COLUMN `fail_streak` int NOT NULL DEFAULT '0',
+  ADD COLUMN `last_duration` int NOT NULL DEFAULT '0',
+  ADD COLUMN `last_ok_time` int unsigned NOT NULL DEFAULT '0',
+  ADD COLUMN `manual_result` varchar(200) NOT NULL DEFAULT '';
+
+INSERT IGNORE INTO `img_settings` (`skey`,`svalue`,`remark`,`update_time`) VALUES
+('mail_events','','通知开关JSON（空=全开）',UNIX_TIMESTAMP()),
+('site_domain','','站点域名（巡检用，空=自动）',UNIX_TIMESTAMP()),
+('gen_daily_limit','100','造图机器人单日上限',UNIX_TIMESTAMP()),
+('credits_per_yuan','10','1元兑换站币数',UNIX_TIMESTAMP());

@@ -37,7 +37,17 @@ class CreditsService
     public static function recharge(int $userId, int $yuan, int $orderId): int
     {
         $rate = max(1, (int)Setting::get('credits_per_yuan', 10));
-        return self::change($userId, $yuan * $rate, 'recharge', $orderId, "充值 {$yuan} 元（1:{$rate}）");
+        $balance = self::change($userId, $yuan * $rate, 'recharge', $orderId, "充值 {$yuan} 元（1:{$rate}）");
+        try {
+            $u = Db::name('users')->where('id', $userId)->find();
+            if ($u) {
+                MailerService::notify('recharge', (string)$u['email'],
+                    '充值成功 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                    'recharge', ['amount' => (string)$yuan, 'name' => (string)$balance]);
+            }
+        } catch (\Throwable $e) {
+        }
+        return $balance;
     }
 
     /**
@@ -95,7 +105,7 @@ class CreditsService
         try {
             $author = Db::name('users')->where('id', (int)$img['user_id'])->find();
             if ($author) {
-                MailerService::sendTemplate((string)$author['email'],
+                MailerService::notify('sold', (string)$author['email'],
                     '你的图片被解锁 · ' . (string)Setting::get('site_name', '逍遥图床'),
                     'sold', ['name' => (string)$img['name'], 'amount' => (string)$authorShare]);
             }

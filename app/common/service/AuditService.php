@@ -88,6 +88,21 @@ class AuditService
         ];
         if ($result['result'] === 'reject') {
             $update['status'] = Image::ST_FROZEN;   // 拒绝即冻结，外链断
+            // 审核拒绝通知上传者
+            try {
+                if ((int)$image->user_id > 0) {
+                    $u = Db::name('users')->where('id', $image->user_id)->find();
+                    if ($u) {
+                        MailerService::notify('audit_reject', (string)$u['email'],
+                            '图片审核未通过 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                            'audit_reject', [
+                                'name'   => (string)$u['nickname'],
+                                'reason' => mb_substr((string)($result['detail'] ?? '内容不合规'), 0, 140),
+                            ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
         }
 
         // 标签（仅通过时入库，复审/拒绝不公示）

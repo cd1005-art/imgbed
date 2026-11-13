@@ -44,7 +44,8 @@ class VipNotice extends Command
             if ($recent > 0) {
                 continue;
             }
-            $ok = MailerService::sendTemplate(
+            $ok = MailerService::notify(
+                'vip_expire',
                 (string)$u['email'],
                 '会员即将到期 · ' . (string)Setting::get('site_name', '逍遥图床'),
                 'vip_expire',

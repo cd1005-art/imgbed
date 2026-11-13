@@ -16,11 +16,27 @@ class MailManage extends Base
         $logs = Db::name('mail_logs')->order('id', 'desc')->limit(20)->select()->toArray();
         $total = (int)Db::name('mail_logs')->count();
 
+        $raw = (string)Setting::get('mail_events', '');
+        $enabled = $raw === '' ? null : (json_decode($raw, true) ?: []);
+        $allEvents = MailerService::eventOptions();
+        $flat = [];
+        foreach ($allEvents as $g => $items) {
+            foreach ($items as $k => $label) {
+                $flat[$k] = $label;
+            }
+        }
+        // 空配置视为全开
+        if ($enabled === null) {
+            $enabled = array_keys($flat);
+        }
+
         return $this->adminView('admin/mail', [
             'page'     => 'mail',
             'settings' => Setting::allSettings(),
             'logs'     => $logs,
             'total'    => $total,
+            'events'   => $allEvents,
+            'enabled_events' => $enabled,
         ]);
     }
 
@@ -39,9 +55,12 @@ class MailManage extends Base
                 $saved++;
             }
         }
-        // 通知开关矩阵（mail_events JSON）
-        if (isset($all['mail_events'])) {
-            Setting::saveKey('mail_events', json_encode($all['mail_events'], JSON_UNESCAPED_UNICODE));
+        // 通知开关矩阵（mail_events JSON）：events_form 标记确保"全不勾=全关"也能保存
+        if (isset($all['events_form'])) {
+            $ev = (isset($all['mail_events']) && is_array($all['mail_events']))
+                ? array_values(array_filter($all['mail_events'], 'is_string'))
+                : [];
+            Setting::saveKey('mail_events', json_encode($ev, JSON_UNESCAPED_UNICODE));
             $saved++;
         }
         return json(['status' => true, 'message' => "已保存 {$saved} 项"]);

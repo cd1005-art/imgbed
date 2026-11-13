@@ -27,10 +27,11 @@
           {if condition="$t.last_run gt 0"}{:date('m-d H:i:s', ts($t.last_run))}{else /}-{/if}
           {if condition="$t.manual_time gt 0"}<br><span class="count">手动测试 {:date('m-d H:i', ts($t.manual_time))}（{$t.manual_count} 次）：{$t.manual_result|default='无输出'}</span>{/if}
         </td>
-        <td>{$t.run_count}</td>
-        <td class="td-clip" title="{$t.last_result}">{$t.last_result|default='-'}</td>
+        <td>{$t.run_count}{if condition="$t.last_duration gt 0"}<br><span class="count">{$t.last_duration} ms</span>{/if}</td>
+        <td class="td-clip" title="{$t.last_result}">{$t.last_result|default='-'}{if condition="$t.next_eta gt 0"}<br><span class="count">下次预计 {:date('m-d H:i', ts($t.next_eta))}</span>{/if}</td>
         <td class="td-actions">
           <button class="btn-ghost-sm" data-cron-run="{$t.key}">立即执行</button>
+          <button class="btn-ghost-sm" data-cron-log="{$t.key}">日志</button>
           <button class="btn-ghost-sm" data-copy-text="{$t.cli}">复制命令</button>
         </td>
       </tr>
@@ -72,6 +73,16 @@
     <button class="btn-ghost-sm" type="button" id="cronRotate">重置密钥</button>
   </div>
 </section>
+<div class="modal-mask" id="cronLogModal" hidden>
+  <div class="modal" style="width:min(760px,94vw)">
+    <h3 class="modal-title" id="cronLogTitle">执行日志</h3>
+    <div id="cronLogRuns" class="count" style="margin-bottom:8px"></div>
+    <pre id="cronLogTail" class="url-text" style="white-space:pre-wrap;max-height:46vh;overflow:auto;font-size:12px"></pre>
+    <div class="modal-actions">
+      <button class="btn-ghost-sm" type="button" id="cronLogClose">关闭</button>
+    </div>
+  </div>
+</div>
 {/block}
 
 {block name="script"}

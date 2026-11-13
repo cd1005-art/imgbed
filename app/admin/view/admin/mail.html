@@ -25,6 +25,40 @@
 </section>
 
 <section class="panel">
+  <h2 class="panel-title">通知开关（勾选启用 · 全站事件覆盖）</h2>
+  <p class="panel-sub">勾选的事件才会发邮件；「全不勾 = 全部关闭」，新功能上线会在此自动增加对应事件。</p>
+  <form id="eventsForm" class="notify-matrix">
+    <input type="hidden" name="events_form" value="1">
+    {volist name="events" id="group"}
+    <div class="notify-group">
+      <div class="notify-group-title">
+        {switch name="$key"}
+          {case value="system"}系统与运维{/case}
+          {case value="account"}账号与内容{/case}
+          {case value="trade"}交易与收益{/case}
+          {case value="report"}举报{/case}
+          {case value="ops"}运营{/case}
+        {/switch}
+      </div>
+      <div class="notify-items">
+        {volist name="group" id="label"}
+        <label class="notify-item">
+          <input type="checkbox" name="mail_events[]" value="{$key}" {if condition="in_array($key, $enabled_events)"}checked{/if}>
+          <span>{$label}</span>
+        </label>
+        {/volist}
+      </div>
+    </div>
+    {/volist}
+    <div class="notify-actions">
+      <button type="button" class="btn-ghost-sm" id="evAll">全选</button>
+      <button type="button" class="btn-ghost-sm" id="evNone">全不选</button>
+      <button type="submit" class="btn btn-sm">保存通知开关</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
   <h2 class="panel-title">测试发送</h2>
   <div class="model-inline-form">
     <input type="text" id="testTo" placeholder="收件邮箱（留空用管理员邮箱）" style="width:280px">

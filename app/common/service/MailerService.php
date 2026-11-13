@@ -15,6 +15,72 @@ use think\facade\Db;
  */
 class MailerService
 {
+    /** 全站通知事件（后台按勾选启用；空配置=全部启用） */
+    public const EVENTS = [
+        'system' => [
+            'storage_alert'  => '存储告急（磁盘/配额/网盘）',
+            'cron_fail'      => '计划任务连续失败',
+            'site_down'      => '站点不可用',
+            'cert_expire'    => 'HTTPS 证书即将到期',
+        ],
+        'account' => [
+            'verify'         => '注册邮箱验证',
+            'reset'          => '找回密码',
+            'audit_reject'   => '图片审核拒绝',
+            'violation'      => '违规警告 / 账号停用',
+            'ban_public'     => '图片被下架',
+        ],
+        'trade' => [
+            'vip_open'       => 'VIP 开通成功',
+            'vip_expire'     => 'VIP 即将到期',
+            'recharge'       => '站币充值成功',
+            'sold'           => '付费图片被购买（作者）',
+            'withdraw_apply' => '提现申请已提交',
+            'withdraw_result'=> '提现审核结果',
+            'settle'         => '分成结算',
+        ],
+        'report' => [
+            'report_received'=> '举报已受理（举报人）',
+            'report_result'  => '举报处理结果（双方）',
+        ],
+        'ops' => [
+            'announce'       => '公告 / 版本更新',
+        ],
+    ];
+
+    /** 事件是否启用（mail_events 为空 = 全部启用） */
+    public static function enabled(string $event): bool
+    {
+        $row = \app\common\model\Setting::get('mail_events', null);
+        if ($row === null || $row === '') {
+            return true;   // 未配置 = 全部启用（兼容旧版）
+        }
+        $list = json_decode((string)$row, true);
+        if (!is_array($list)) {
+            return true;
+        }
+        return in_array($event, $list, true);   // [] = 全部关闭
+    }
+
+    /** 按事件发送（未启用直接跳过，返回 false） */
+    public static function notify(string $event, string $to, string $subject, string $template, array $vars = []): bool
+    {
+        if (!self::enabled($event)) {
+            return false;
+        }
+        return self::send($to, $subject, self::render($template, $vars), $event);
+    }
+
+    /** 事件扁平列表（后台勾选面板用） */
+    public static function eventOptions(): array
+    {
+        $flat = [];
+        foreach (self::EVENTS as $group => $items) {
+            $flat[$group] = $items;
+        }
+        return $flat;
+    }
+
     /** 发送邮件（失败仅记日志，不抛异常） */
     public static function send(string $to, string $subject, string $html, string $template = ''): bool
     {
@@ -85,6 +151,12 @@ class MailerService
             'withdraw_result' => '<p>你的提现申请已处理。</p><p>金额：{{amount}} 元<br>状态：{{reason}}</p>',
             'violation' => '<p>你的账号因多次上传违规内容已被限制。</p><p>详情：{{reason}}</p>',
             'sold' => '<p>你公开的图片被购买：{{name}}</p><p>你获得收益 {{amount}} 站币，已入账。</p>',
+            'recharge' => '<p>充值成功：{{amount}} 元，当前余额 {{name}} 站币。</p>',
+            'cron_fail' => '<p>计划任务「{{name}}」连续失败。</p><p>{{reason}}</p><p>请检查宝塔计划任务与 runtime 日志。</p>',
+            'cron_recover' => '<p>计划任务「{{name}}」已恢复正常执行。</p>',
+            'report_received' => '<p>你的举报已受理，我们将在复核后通过邮件告知结果。</p><p>举报理由：{{reason}}</p>',
+            'report_result' => '<p>举报处理结果：{{name}}</p><p>{{reason}}</p>',
+            'ban_public' => '<p>你的图片「{{name}}」因{{reason}}已被下架，不能再设为公开。</p>',
         ];
         $html = $templates[$key] ?? ('<p>{{reason}}</p><p>—— {{site}}</p>');
 

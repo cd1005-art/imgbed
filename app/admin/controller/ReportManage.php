@@ -50,6 +50,7 @@ class ReportManage extends Base
         Db::name('reports')->where('id', $id)->update([
             'status' => 'manual', 'handled_by' => (int)session('admin_id'), 'update_time' => time(),
         ]);
+        $this->notifyReporter((int)$rep['reporter_id'], '举报成立，图片已下架', (string)$rep['reason']);
         return json(['status' => true, 'message' => '已下架并加入违规指纹库']);
     }
 
@@ -63,7 +64,22 @@ class ReportManage extends Base
         Db::name('reports')->where('id', $id)->update([
             'status' => 'closed', 'handled_by' => (int)session('admin_id'), 'update_time' => time(),
         ]);
+        $this->notifyReporter((int)$rep['reporter_id'], '举报未成立，已驳回', (string)$rep['reason']);
         return json(['status' => true, 'message' => '已驳回']);
+    }
+
+    /** 通知举报人处理结果 */
+    protected function notifyReporter(int $uid, string $verdict, string $reason): void
+    {
+        try {
+            $u = Db::name('users')->where('id', $uid)->find();
+            if ($u) {
+                \app\common\service\MailerService::notify('report_result', (string)$u['email'],
+                    '举报处理结果 · ' . (string)\app\common\model\Setting::get('site_name', '逍遥图床'),
+                    'report_result', ['name' => $verdict, 'reason' => mb_substr($reason, 0, 140)]);
+            }
+        } catch (\Throwable $e) {
+        }
     }
 
     /** 解除图片下架限制（管理员） */

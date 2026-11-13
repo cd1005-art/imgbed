@@ -57,7 +57,7 @@ class WithdrawManage extends Base
         try {
             $u = Db::name('users')->where('id', (int)$w['user_id'])->find();
             if ($u) {
-                \app\common\service\MailerService::sendTemplate((string)$u['email'], '提现已打款 · ' . (string)\app\common\model\Setting::get('site_name', '逍遥图床'),
+                \app\common\service\MailerService::notify('withdraw_result', (string)$u['email'], '提现已打款 · ' . (string)\app\common\model\Setting::get('site_name', '逍遥图床'),
                     'withdraw_result', ['amount' => (string)$w['real_amount'], 'reason' => '已打款']);
             }
         } catch (\Throwable $e) {

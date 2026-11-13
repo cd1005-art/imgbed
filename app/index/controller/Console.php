@@ -129,6 +129,12 @@ class Console extends Base
             Db::rollback();
             return json(['status' => false, 'message' => $e->getMessage()]);
         }
+        try {
+            \app\common\service\MailerService::notify('withdraw_apply', (string)$user->email,
+                '提现申请已提交 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                'withdraw_result', ['amount' => (string)$amount, 'reason' => '审核中']);
+        } catch (\Throwable $e) {
+        }
         return json(['status' => true, 'message' => '提现申请已提交，等待审核打款']);
     }
 

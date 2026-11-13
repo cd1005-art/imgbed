@@ -15,6 +15,7 @@ class CronService
         'gen' => ['name' => '造图机器人', 'cmd' => 'gen:run', 'interval' => 300, 'desc' => '每 5 分钟', 'why' => '定时生成图片并走审核/公开'],
         'storage' => ['name' => '存储告警', 'cmd' => 'monitor:storage', 'interval' => 3600, 'desc' => '每小时', 'why' => '磁盘/配额/网盘阈值检查'],
         'vip' => ['name' => 'VIP 到期提醒', 'cmd' => 'monitor:vip', 'interval' => 86400, 'desc' => '每天', 'why' => '到期前 3 天提醒邮件'],
+        'site' => ['name' => '站点健康巡检', 'cmd' => 'monitor:site', 'interval' => 600, 'desc' => '每 10 分钟', 'why' => '首页可用性 + HTTPS 证书到期检查'],
     ];
 
     /**
@@ -22,7 +23,7 @@ class CronService
      * @param string $source cli=命令行计划任务 / url=URL计划任务 / manual=后台手动测试
      * 说明：manual 只更新时间与次数，不影响「接入状态」（灯色）
      */
-    public static function beat(string $key, string $result = 'ok', string $source = 'cli'): void
+    public static function beat(string $key, string $result = 'ok', string $source = 'cli', int $durationMs = 0): void
     {
         try {
             $row = Db::name('cron_heartbeats')->where('task_key', $key)->find();
@@ -35,12 +36,16 @@ class CronService
                 $row = Db::name('cron_heartbeats')->where('task_key', $key)->find();
             }
             // 所有来源都记账：灯色 = 最近一次执行的成败
+            $failed = stripos($result, 'fail') !== false || stripos($result, 'error') !== false;
             $update = [
-                'last_run'    => time(),
-                'last_result' => mb_substr($result, 0, 200),
-                'last_source' => $source,
-                'source_time' => time(),
-                'run_count'   => (int)$row['run_count'] + 1,
+                'last_run'      => time(),
+                'last_result'   => mb_substr($result, 0, 200),
+                'last_source'   => $source,
+                'source_time'   => time(),
+                'run_count'     => (int)$row['run_count'] + 1,
+                'last_duration' => max(0, $durationMs),
+                'fail_streak'   => $failed ? ((int)$row['fail_streak'] + 1) : 0,
+                'last_ok_time'  => $failed ? (int)$row['last_ok_time'] : time(),
             ];
             if ($source === 'manual') {
                 // 手动执行额外记录统计（用于展示"手动验证 N 次"）
@@ -49,6 +54,43 @@ class CronService
                 $update['manual_result'] = mb_substr($result, 0, 200);
             }
             Db::name('cron_heartbeats')->where('task_key', $key)->update($update);
+
+            // 执行历史（30 天清理）
+            try {
+                Db::name('cron_runs')->insert([
+                    'task_key'    => $key, 'ok' => $failed ? 0 : 1,
+                    'duration_ms' => max(0, $durationMs), 'result' => mb_substr($result, 0, 200),
+                    'source'      => $source, 'create_time' => time(),
+                ]);
+                if (mt_rand(1, 20) === 1) {
+                    Db::name('cron_runs')->where('create_time', '<', time() - 30 * 86400)->delete();
+                }
+            } catch (\Throwable $e) {
+            }
+
+            // 连续失败告警（每满 3 次发一封）/ 恢复通知
+            $streak = (int)$update['fail_streak'];
+            $name = self::TASKS[$key]['name'] ?? $key;
+            if ($failed && $streak > 0 && $streak % 3 === 0) {
+                self::notifyAdmin('cron_fail', '【计划任务连续失败】' . $name, 'cron_fail',
+                    ['name' => $name, 'reason' => "已连续失败 {$streak} 次。最近：" . mb_substr($result, 0, 150)]);
+            }
+            if (!$failed && (int)$row['fail_streak'] >= 3) {
+                self::notifyAdmin('cron_fail', '【计划任务已恢复】' . $name, 'cron_recover', ['name' => $name]);
+            }
+        } catch (\Throwable $e) {
+        }
+    }
+
+    /** 管理员通知（按事件开关） */
+    protected static function notifyAdmin(string $event, string $subject, string $template, array $vars = []): void
+    {
+        $to = trim((string)\app\common\model\Setting::get('admin_mail_to', ''));
+        if ($to === '') {
+            return;
+        }
+        try {
+            MailerService::notify($event, $to, $subject . ' · ' . (string)\app\common\model\Setting::get('site_name', '逍遥图床'), $template, $vars);
         } catch (\Throwable $e) {
         }
     }
@@ -100,6 +142,9 @@ class CronService
                 'run_count' => $runCount, 'last_source' => $source,
                 'manual_time' => $manualTime, 'manual_count' => $manualCount,
                 'manual_result' => (string)($r['manual_result'] ?? ''),
+                'last_duration' => (int)($r['last_duration'] ?? 0),
+                'fail_streak'   => (int)($r['fail_streak'] ?? 0),
+                'next_eta'      => $lastRun > 0 ? $lastRun + (int)$def['interval'] : 0,
                 'overdue' => $overdue,
             ];
         }
@@ -114,6 +159,7 @@ class CronService
     public static function runNow(string $key, string $source = 'manual'): array
     {
         @set_time_limit(300);
+        $t0 = microtime(true);
         try {
             switch ($key) {
                 case 'storage':
@@ -125,13 +171,16 @@ class CronService
                 case 'gen':
                     $msg = self::taskGen(1); // web 触发每次限 1 张，避免超时
                     break;
+                case 'site':
+                    $msg = self::taskSite();
+                    break;
                 default:
                     return ['ok' => false, 'msg' => 'unknown task'];
             }
-            self::beat($key, $msg, $source);
+            self::beat($key, $msg, $source, (int)round((microtime(true) - $t0) * 1000));
             return ['ok' => true, 'msg' => $msg];
         } catch (\Throwable $e) {
-            self::beat($key, 'fail: ' . mb_substr($e->getMessage(), 0, 120));
+            self::beat($key, 'fail: ' . mb_substr($e->getMessage(), 0, 120), $source, (int)round((microtime(true) - $t0) * 1000));
             return ['ok' => false, 'msg' => '执行失败：' . mb_substr($e->getMessage(), 0, 200)];
         }
     }
@@ -191,7 +240,7 @@ class CronService
         if ($to === '') {
             return '发现告警但未配置管理员邮箱：' . implode('；', $fresh);
         }
-        $ok = \app\common\service\MailerService::sendTemplate($to, '【存储告警】' . (string)\app\common\model\Setting::get('site_name', '逍遥图床'),
+        $ok = \app\common\service\MailerService::notify('storage_alert', $to, '【存储告警】' . (string)\app\common\model\Setting::get('site_name', '逍遥图床'),
             'storage_alert', ['reason' => implode('<br>', array_map('htmlspecialchars', $fresh))]);
         return $ok ? '告警邮件已发送' : '告警邮件发送失败';
     }
@@ -209,7 +258,7 @@ class CronService
             if ($recent > 0) {
                 continue;
             }
-            if (\app\common\service\MailerService::sendTemplate((string)$u['email'],
+            if (MailerService::notify('vip_expire', (string)$u['email'],
                 '会员即将到期 · ' . (string)\app\common\model\Setting::get('site_name', '逍遥图床'),
                 'vip_expire', ['name' => (string)$u['nickname'], 'link' => date('Y-m-d', (int)$u['vip_expire_time'])])) {
                 $sent++;
@@ -270,6 +319,72 @@ class CronService
             Db::name('gen_tasks')->where('id', $task['id'])->update(['last_run' => time(), 'total_generated' => (int)$task['total_generated'] + 1]);
         }
         return "生成 {$total} 张";
+    }
+
+    /** 站点健康巡检：应用可用性 + 证书到期（本机 127.0.0.1 探测，规避 DNS 问题） */
+    public static function taskSite(): string
+    {
+        $domain = (string)\app\common\model\Setting::get('site_domain', '');
+        if ($domain === '') {
+            $domain = (string)request()->domain();
+        }
+        $host = parse_url($domain, PHP_URL_HOST) ?: '127.0.0.1';
+        $msgs = [];
+        $bad = false;
+
+        $ch = @curl_init('https://127.0.0.1/');
+        if ($ch) {
+            @curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15,
+                CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => false,
+                CURLOPT_HTTPHEADER => ['Host: ' . $host],
+            ]);
+            @curl_exec($ch);
+            $code = (int)@curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            @curl_close($ch);
+            if ($code !== 200) {
+                $bad = true;
+                $msgs[] = "首页返回 {$code}（非 200）";
+            } else {
+                $msgs[] = '首页 200 正常';
+            }
+        } else {
+            $msgs[] = 'curl 不可用';
+        }
+
+        $certDays = null;
+        $ctx = @stream_context_create(['ssl' => [
+            'capture_peer_cert' => true, 'verify_peer' => false,
+            'verify_peer_name' => false, 'SNI_enabled' => true, 'peer_name' => $host,
+        ]]);
+        $sock = @stream_socket_client('ssl://127.0.0.1:443', $errno, $errstr, 8, STREAM_CLIENT_CONNECT, $ctx);
+        if ($sock) {
+            $params = @stream_context_get_params($sock);
+            $cert = $params['options']['ssl']['peer_certificate'] ?? null;
+            if ($cert) {
+                $info = @openssl_x509_parse($cert);
+                if ($info && isset($info['validTo_time_t'])) {
+                    $certDays = (int)floor(($info['validTo_time_t'] - time()) / 86400);
+                }
+            }
+            @fclose($sock);
+        }
+        if ($certDays !== null) {
+            $msgs[] = "证书剩余 {$certDays} 天";
+            if ($certDays < 15) {
+                $bad = true;
+                $msgs[] = '⚠ 证书即将到期';
+            }
+        } else {
+            $msgs[] = '证书读取失败';
+        }
+
+        $text = implode('；', $msgs);
+        if ($bad) {
+            self::notifyAdmin('site_down', '【站点巡检异常】' . $host, 'storage_alert', ['reason' => $text]);
+            return 'fail: ' . $text;
+        }
+        return $text;
     }
 
     /** 展示用 CLI php 路径（不探测，避免 disable_functions 限制；按服务器实际修改） */
