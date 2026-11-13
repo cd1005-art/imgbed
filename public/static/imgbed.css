@@ -10,6 +10,9 @@
   --accent: #2E6B4F;
   --accent-hover: #245740;
   --accent-soft: #E7F0EB;
+  --panel: #FFFFFF;
+  --r-lg: 12px;
+  --r-sm: 8px;
   --danger: #B3402A;
   --danger-soft: #F7E9E5;
   --code-bg: #F1EFEA;
@@ -329,7 +332,7 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 
 /* ---------- 弹窗 ---------- */
 .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 100; }
-.modal { width: min(420px, 92vw); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; }
+.modal { width: min(420px, 92vw); background: var(--panel, #fff); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; }
 .modal-title { font-size: 15px; margin: 0 0 8px; }
 .modal-textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); padding: 10px; font: 13px var(--font-sans); resize: vertical; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
