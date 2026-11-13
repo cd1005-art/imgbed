@@ -8,6 +8,13 @@ Route::get('/', 'UploadController/index');
 Route::post('upload/save', 'UploadController/save');
 
 // ---- 认证 ----
+// 邮箱验证 / 找回密码（具体路由在前）
+Route::get('verify/:token', 'Auth/verify');
+Route::get('forgot', 'Auth/forgotPage');
+Route::post('forgot', 'Auth/forgot');
+Route::get('reset/:token', 'Auth/resetPage');
+Route::post('reset/:token', 'Auth/reset');
+
 Route::get('login', 'Auth/loginPage');
 Route::post('login', 'Auth/login');
 Route::get('register', 'Auth/registerPage');
@@ -28,7 +35,8 @@ Route::group(function () {
     Route::get('gallery', 'Gallery/index');
     Route::post('gallery/delete/:id', 'Gallery/delete');
 
-    Route::get('console', 'Console/index');
+    Route::post('console/resend-verify', 'Console/resendVerify');
+Route::get('console', 'Console/index');
     Route::post('console/token/create', 'Console/tokenCreate');
     Route::post('console/token/delete/:id', 'Console/tokenDelete');
     Route::post('console/profile', 'Console/profile');

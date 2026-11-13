@@ -204,5 +204,20 @@ class PaymentService
             'update_time'     => time(),
         ]);
         Log::record('VIP 已生效：user=' . $user->id . ' 至 ' . date('Y-m-d', $expires) . ' 组=' . $plan->group_id, 'info');
+
+        // 交易通知：开通成功（用户 + 管理员）
+        try {
+            MailerService::sendTemplate(
+                (string)$user->email,
+                '会员开通成功 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                'vip_open',
+                ['amount' => (string)round((int)$order->amount / 100, 2), 'name' => (string)$plan->name, 'link' => date('Y-m-d', $expires)]
+            );
+            $adminTo = trim((string)Setting::get('admin_mail_to', ''));
+            if ($adminTo !== '') {
+                MailerService::send($adminTo, '【交易】新开通会员', '<p>用户 ' . htmlspecialchars((string)$user->email) . ' 开通 ' . htmlspecialchars((string)$plan->name) . '，金额 ' . round((int)$order->amount / 100, 2) . ' 元。</p>', 'vip_open_admin');
+            }
+        } catch (\Throwable $e) {
+        }
     }
 }

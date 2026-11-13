@@ -42,6 +42,8 @@ class Console extends Base
             'quota_pct'   => $quotaTotal > 0 ? min(100, (int)($used / $quotaTotal * 100)) : 0,
             'tokens'      => $tokens,
             'token_used'  => ApiToken::where('user_id', $user->id)->count(),
+            'email_verified' => (int)$user->email_verified === 1,
+            'verify_mode'    => (string)Setting::get('verify_mode', 'none'),
             'token_limit' => ($group && (int)$group->max_tokens > 0) ? (int)$group->max_tokens : 0,
             // 权益面板（与后台策略组同步展示）
             'rights' => [
@@ -54,6 +56,34 @@ class Console extends Base
                 'max_tokens'   => ($group && (int)$group->max_tokens < 0) ? '未开放'
                     : (($group && (int)$group->max_tokens > 0) ? ('最多 ' . (int)$group->max_tokens . ' 个') : '不限'),
             ],
+        ]);
+    }
+
+    /** 重发验证邮件 */
+    public function resendVerify()
+    {
+        $user = $this->currentUser();
+        if (!$user) {
+            return json(['status' => false, 'message' => '请先登录']);
+        }
+        if ((int)$user->email_verified === 1) {
+            return json(['status' => false, 'message' => '邮箱已验证，无需重发']);
+        }
+        $token = bin2hex(random_bytes(16));
+        $hours = max(1, (int)Setting::get('verify_expire', '24'));
+        Db::name('users')->where('id', $user->id)->update([
+            'verify_token'  => $token,
+            'verify_expire' => time() + $hours * 3600,
+        ]);
+        $ok = \app\common\service\MailerService::sendTemplate(
+            (string)$user->email,
+            '验证你的邮箱 · ' . (string)Setting::get('site_name', '逍遥图床'),
+            'verify',
+            ['name' => (string)$user->nickname, 'link' => $this->request->domain() . '/verify/' . $token]
+        );
+        return json([
+            'status'  => $ok,
+            'message' => $ok ? '验证邮件已发送，请查收（含垃圾箱）' : '发送失败：请检查后台 SMTP 配置',
         ]);
     }
 

@@ -1,0 +1,15 @@
+{extend name="common/layout"}
+
+{block name="content"}
+<section class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="auth-title">设置新密码</h1>
+    <form method="post" action="/reset/{$token}" class="auth-form">
+      <label>新密码（至少 8 位）</label>
+      <input type="password" name="password" required>
+      {if condition="isset($error)"}<p class="form-error">{$error}</p>{/if}
+      <button type="submit" class="btn btn-block">确认重置</button>
+    </form>
+  </div>
+</section>
+{/block}

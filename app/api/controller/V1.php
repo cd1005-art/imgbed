@@ -68,6 +68,11 @@ class V1 extends BaseController
         $this->token = $token;
         $this->user  = $user;
 
+        // 邮箱验证（lazy 模式）
+        if ((string)Setting::get('verify_mode', 'none') === 'lazy' && (int)($user->email_verified ?? 1) !== 1) {
+            $this->fail(403, '请先验证邮箱后再使用 API');
+        }
+
         // 调用统计：鉴权通过的每次 API 请求计 1 次（upload/info/list/delete 统一口径）
         Db::name('api_tokens')->where('id', $token->id)
             ->inc('request_count')

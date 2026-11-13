@@ -1,0 +1,12 @@
+{extend name="common/layout"}
+
+{block name="content"}
+<section class="auth-wrap">
+  <div class="auth-card" style="text-align:center">
+    <h1 class="auth-title">📮 验证邮件已发送</h1>
+    <p class="auth-sub">已发送到 <b>{$email}</b>，请点击邮件中的链接完成验证后再登录。</p>
+    <p class="auth-sub">没收到？检查垃圾箱，或稍后到登录页重试。</p>
+    <p style="margin-top:18px"><a class="btn-ghost-sm" href="/login">返回登录</a></p>
+  </div>
+</section>
+{/block}

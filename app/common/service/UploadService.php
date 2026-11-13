@@ -52,6 +52,13 @@ class UploadService
     /** 主流程（异常统一由 upload 包装记日志） */
     protected function process(UploadedFile $file, int $userId, StrategyGroup $group, string $ip, string $ua, int $now): array
     {
+        // 邮箱验证（lazy 模式：注册可登录，上传前必须验证）
+        if ($userId > 0 && (string)Setting::get('verify_mode', 'none') === 'lazy') {
+            $u = Db::name('users')->where('id', $userId)->find();
+            if ($u && (int)($u['email_verified'] ?? 1) !== 1) {
+                throw new UploadException('请先验证邮箱后再上传（个人中心可重发验证邮件）');
+            }
+        }
         // ---------- 1. 基础校验 ----------
         if (!$file->isValid()) {
             throw new UploadException('上传文件无效或已超过 PHP 限制');

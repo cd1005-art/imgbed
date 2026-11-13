@@ -1,0 +1,70 @@
+<?php
+declare (strict_types = 1);
+
+namespace app\admin\controller;
+
+use app\admin\controller\Base;
+use app\common\model\Setting;
+use app\common\service\MailerService;
+use think\facade\Db;
+
+/** 邮件设置：SMTP 配置 + 通知开关 + 阈值 + 测试发送 */
+class MailManage extends Base
+{
+    public function index()
+    {
+        $logs = Db::name('mail_logs')->order('id', 'desc')->limit(20)->select()->toArray();
+        $total = (int)Db::name('mail_logs')->count();
+
+        return $this->adminView('admin/mail', [
+            'page'     => 'mail',
+            'settings' => Setting::allSettings(),
+            'logs'     => $logs,
+            'total'    => $total,
+        ]);
+    }
+
+    public function save()
+    {
+        $keys = [
+            'smtp_host', 'smtp_port', 'smtp_secure', 'smtp_user', 'smtp_pass',
+            'smtp_from_name', 'smtp_from_addr', 'admin_mail_to', 'verify_mode',
+            'alert_disk_free_gb', 'alert_quota_left_pct', 'alert_space_left_pct',
+        ];
+        $all = $this->request->post();
+        $saved = 0;
+        foreach ($keys as $k) {
+            if (array_key_exists($k, $all)) {
+                Setting::saveKey($k, (string)$all[$k]);
+                $saved++;
+            }
+        }
+        // 通知开关矩阵（mail_events JSON）
+        if (isset($all['mail_events'])) {
+            Setting::saveKey('mail_events', json_encode($all['mail_events'], JSON_UNESCAPED_UNICODE));
+            $saved++;
+        }
+        return json(['status' => true, 'message' => "已保存 {$saved} 项"]);
+    }
+
+    /** 测试发送 */
+    public function test()
+    {
+        $to = trim((string)$this->request->post('to', ''));
+        if ($to === '') {
+            $to = trim((string)Setting::get('admin_mail_to', ''));
+        }
+        if ($to === '') {
+            return json(['status' => false, 'message' => '请填写测试收件地址']);
+        }
+        $ok = MailerService::send(
+            $to,
+            '【测试】' . (string)Setting::get('site_name', '逍遥图床') . ' 邮件配置验证',
+            '<p>这是一封测试邮件。</p><p>收到本邮件说明 SMTP 配置正确，通知功能可用。</p>',
+            'test'
+        );
+        return $ok
+            ? json(['status' => true, 'message' => '发送成功，请查收（含垃圾箱）'])
+            : json(['status' => false, 'message' => '发送失败，请到「发送日志」查看具体错误']);
+    }
+}

@@ -43,6 +43,10 @@ Route::group(function () {
     Route::post('payment/plan', 'PaymentManage/savePlan');
     Route::post('payment/plan/delete/:id', 'PaymentManage/deletePlan');
 
+    Route::post('mail/test', 'MailManage/test');
+    Route::post('mail/save', 'MailManage/save');
+    Route::get('mail', 'MailManage/index');
+
     Route::get('site', 'AdManage/site');
     Route::post('site/save', 'AdManage/siteSave');
     Route::get('ad', 'AdManage/index');

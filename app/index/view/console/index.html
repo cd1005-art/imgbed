@@ -7,6 +7,13 @@
   <h1 class="page-title">个人中心</h1>
 </div>
 
+{if condition="$verify_mode neq 'none' && !$email_verified"}
+<div class="hint-bar" id="verifyBar">
+  <span>📮 邮箱尚未验证：{if condition="$verify_mode eq 'lazy'"}上传与公开前需完成验证{else /}验证后才能登录使用{/if}。</span>
+  <button class="btn-ghost-sm" type="button" id="resendVerifyBtn">重发验证邮件</button>
+</div>
+{/if}
+
 <section class="panel">
   <h2 class="panel-title">配额</h2>
   <div class="quota-bar"><div class="quota-fill" style="width:{$quota_pct}%"></div></div>

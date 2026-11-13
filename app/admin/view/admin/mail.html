@@ -1,0 +1,75 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">邮件设置</h1>
+
+<section class="panel">
+  <h2 class="panel-title">SMTP 配置</h2>
+  <form class="form form-grid" id="mailForm">
+    <label class="field"><span class="field-label">SMTP 服务器</span><input type="text" name="smtp_host" value="{$settings.smtp_host|default=''}" placeholder="smtp.qq.com"></label>
+    <label class="field"><span class="field-label">端口</span><input type="text" name="smtp_port" value="{$settings.smtp_port|default='465'}" style="width:100px"></label>
+    <label class="field"><span class="field-label">加密方式</span>
+      <select name="smtp_secure">
+        <option value="ssl" {if condition="($settings['smtp_secure'] ?? 'ssl') eq 'ssl'"}selected{/if}>SSL（465）</option>
+        <option value="tls" {if condition="($settings['smtp_secure'] ?? '') eq 'tls'"}selected{/if}>STARTTLS（587）</option>
+        <option value="none" {if condition="($settings['smtp_secure'] ?? '') eq 'none'"}selected{/if}>无加密</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">SMTP 账号</span><input type="text" name="smtp_user" value="{$settings.smtp_user|default=''}" placeholder="你的邮箱"></label>
+    <label class="field"><span class="field-label">密码/授权码</span><input type="text" name="smtp_pass" value="{$settings.smtp_pass|default=''}"></label>
+    <label class="field"><span class="field-label">发件人名称</span><input type="text" name="smtp_from_name" value="{$settings.smtp_from_name|default='逍遥图床'}"></label>
+    <label class="field"><span class="field-label">发件人邮箱（留空=账号）</span><input type="text" name="smtp_from_addr" value="{$settings.smtp_from_addr|default=''}"></label>
+    <label class="field"><span class="field-label">管理员通知邮箱</span><input type="text" name="admin_mail_to" value="{$settings.admin_mail_to|default=''}" placeholder="接收告警与交易通知"></label>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存配置</button></div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2 class="panel-title">测试发送</h2>
+  <div class="model-inline-form">
+    <input type="text" id="testTo" placeholder="收件邮箱（留空用管理员邮箱）" style="width:280px">
+    <button class="btn btn-sm" type="button" id="mailTestBtn">发送测试邮件</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2 class="panel-title">邮箱验证与告警阈值</h2>
+  <form class="form form-grid" id="mailPolicyForm">
+    <label class="field"><span class="field-label">邮箱验证模式</span>
+      <select name="verify_mode">
+        <option value="none" {if condition="($settings['verify_mode'] ?? 'none') eq 'none'"}selected{/if}>不验证</option>
+        <option value="register" {if condition="($settings['verify_mode'] ?? '') eq 'register'"}selected{/if}>注册即须验证才能登录</option>
+        <option value="lazy" {if condition="($settings['verify_mode'] ?? '') eq 'lazy'"}selected{/if}>可登录，上传/公开前须验证</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">磁盘剩余告警（GB）</span><input type="number" name="alert_disk_free_gb" value="{$settings.alert_disk_free_gb|default=10}"></label>
+    <label class="field"><span class="field-label">配额剩余告警（%）</span><input type="number" name="alert_quota_left_pct" value="{$settings.alert_quota_left_pct|default=10}"></label>
+    <label class="field"><span class="field-label">网盘空间剩余告警（%）</span><input type="number" name="alert_space_left_pct" value="{$settings.alert_space_left_pct|default=10}"></label>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>
+  </form>
+</section>
+
+<section class="panel">
+  <h2 class="panel-title">发送日志 <span class="count">共 {$total} 条</span></h2>
+  <table class="table">
+    <thead><tr><th>ID</th><th>收件人</th><th>主题</th><th>模板</th><th>状态</th><th>错误</th><th>时间</th></tr></thead>
+    <tbody>
+      {volist name="logs" id="vo"}
+      <tr>
+        <td>{$vo.id}</td>
+        <td class="td-clip">{$vo.to_email}</td>
+        <td class="td-clip">{$vo.subject}</td>
+        <td class="mono">{$vo.template}</td>
+        <td>{if condition="$vo.status eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
+        <td class="td-clip" title="{$vo.error}">{$vo.error|default='-'}</td>
+        <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminMail');</script>
+{/block}

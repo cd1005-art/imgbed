@@ -11,6 +11,7 @@ use think\facade\Db;
 class Setting
 {
     protected static ?array $cache = null;
+    protected static int $cacheTime = 0;
 
     /** 取单项设置（全量缓存） */
     public static function get(string $key, $default = null)
@@ -22,8 +23,10 @@ class Setting
     /** 全量设置（key => value），单请求缓存 */
     public static function allSettings(): array
     {
-        if (self::$cache === null) {
+        // 60 秒 TTL：兼顾常驻 fpm 进程与"改配置即时生效"的预期
+        if (self::$cache === null || time() - self::$cacheTime > 60) {
             self::$cache = Db::name('settings')->column('svalue', 'skey');
+            self::$cacheTime = time();
         }
         return self::$cache;
     }
@@ -38,5 +41,6 @@ class Setting
             Db::name('settings')->insert(['skey' => $key, 'svalue' => $value, 'update_time' => time()]);
         }
         self::$cache = null;
+        self::$cacheTime = 0;
     }
 }

@@ -62,6 +62,10 @@ class Auth extends Base
         if ((int)$user->status !== 1) {
             return $this->authFail('账号已被禁用，联系站长');
         }
+        // 邮箱验证：register 模式必须验证后才能登录
+        if ((string)Setting::get('verify_mode', 'none') === 'register' && (int)$user->email_verified !== 1) {
+            return $this->authFail('请先完成邮箱验证（查看注册时收到的邮件，或联系站长重发）');
+        }
 
         // VIP 到期检查：过期自动回落注册组
         if ($user->vip_expire_time > 0 && $user->vip_expire_time < time()) {
@@ -125,25 +129,129 @@ class Auth extends Base
 
         try {
             User::create([
-                'email'       => $email,
-                'password'    => password_hash($password, PASSWORD_BCRYPT),
-                'nickname'    => mb_substr($nickname !== '' ? $nickname : explode('@', $email)[0], 0, 30),
-                'group_id'    => $regGroup,
-                'status'      => 1,
-                'create_time' => time(),
-                'update_time' => time(),
+                'email'          => $email,
+                'password'       => password_hash($password, PASSWORD_BCRYPT),
+                'nickname'       => mb_substr($nickname !== '' ? $nickname : explode('@', $email)[0], 0, 30),
+                'group_id'       => $regGroup,
+                'status'         => 1,
+                'email_verified' => 0,
+                'create_time'    => time(),
+                'update_time'    => time(),
             ]);
         } catch (\Throwable $e) {
             Log::record('注册失败: ' . $e->getMessage(), 'error');
             return $this->authFail('注册没写进数据库，稍后再试');
         }
 
-        // 注册即登录
         $new = User::where('email', $email)->find();
+
+        // 生成验证 token（不验证模式也生成，便于以后开通验证）
+        $token = bin2hex(random_bytes(16));
+        $hours = max(1, (int)Setting::get('verify_expire', '24'));
+        Db::name('users')->where('id', $new->id)->update([
+            'verify_token'  => $token,
+            'verify_expire' => time() + $hours * 3600,
+        ]);
+
+        $mode = (string)Setting::get('verify_mode', 'none');
+        if ($mode !== 'none') {
+            $link = $this->request->domain() . '/verify/' . $token;
+            \app\common\service\MailerService::sendTemplate(
+                $email,
+                '验证你的邮箱 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                'verify',
+                ['name' => (string)$new->nickname, 'link' => $link]
+            );
+        }
+
+        if ($mode === 'register') {
+            // 需验证后才能登录
+            return $this->siteView('auth/verify_sent', ['email' => $email]);
+        }
+
+        // none / lazy：注册即登录
         Session::regenerate();
         session('user_id', (int)$new->id);
-
         return redirect('/console');
+    }
+
+    /** 邮箱验证链接 */
+    public function verify(string $token)
+    {
+        $user = User::where('verify_token', $token)->find();
+        if (!$user || (int)$user->verify_expire < time()) {
+            return $this->siteView('auth/verify_result', [
+                'ok' => false, 'msg' => '验证链接无效或已过期，请到个人中心重新发送',
+            ]);
+        }
+        Db::name('users')->where('id', $user->id)->update([
+            'email_verified' => 1, 'verify_token' => '', 'verify_expire' => 0,
+        ]);
+        if (!session('user_id')) {
+            Session::regenerate();
+            session('user_id', (int)$user->id);
+        }
+        return $this->siteView('auth/verify_result', ['ok' => true, 'msg' => '邮箱验证成功，欢迎使用']);
+    }
+
+    /** 忘记密码页 */
+    public function forgotPage()
+    {
+        return $this->siteView('auth/forgot');
+    }
+
+    /** 发送重置邮件（防枚举：一律显示已发送） */
+    public function forgot()
+    {
+        $email = trim((string)$this->request->post('email', ''));
+        $user  = filter_var($email, FILTER_VALIDATE_EMAIL) ? User::where('email', $email)->find() : null;
+        if ($user) {
+            $token = bin2hex(random_bytes(16));
+            Db::name('users')->where('id', $user->id)->update([
+                'reset_token'  => $token,
+                'reset_expire' => time() + 3600,
+            ]);
+            $link = $this->request->domain() . '/reset/' . $token;
+            \app\common\service\MailerService::sendTemplate(
+                $email,
+                '重置密码 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                'reset',
+                ['name' => (string)$user->nickname, 'link' => $link]
+            );
+        }
+        return $this->siteView('auth/forgot', ['sent' => 1, 'email' => $email]);
+    }
+
+    /** 重置密码页 */
+    public function resetPage(string $token)
+    {
+        $user = User::where('reset_token', $token)->find();
+        if (!$user || (int)$user->reset_expire < time()) {
+            return $this->siteView('auth/verify_result', [
+                'ok' => false, 'msg' => '重置链接无效或已过期，请重新申请',
+            ]);
+        }
+        return $this->siteView('auth/reset', ['token' => $token]);
+    }
+
+    /** 提交新密码 */
+    public function reset(string $token)
+    {
+        $user = User::where('reset_token', $token)->find();
+        if (!$user || (int)$user->reset_expire < time()) {
+            return $this->siteView('auth/verify_result', ['ok' => false, 'msg' => '链接已失效，请重新申请']);
+        }
+        $password = (string)$this->request->post('password', '');
+        if (strlen($password) < 8) {
+            return $this->siteView('auth/reset', ['token' => $token, 'error' => '密码至少 8 位']);
+        }
+        Db::name('users')->where('id', $user->id)->update([
+            'password'     => password_hash($password, PASSWORD_BCRYPT),
+            'reset_token'  => '',
+            'reset_expire' => 0,
+            'update_time'  => time(),
+        ]);
+        return $this->siteView('auth/verify_result', ['ok' => true, 'msg' => '密码已重置，请用新密码登录']);
     }
 
     /** 登出 */
