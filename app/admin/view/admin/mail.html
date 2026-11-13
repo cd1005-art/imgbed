@@ -6,13 +6,11 @@
 <div id="mailTabs">
   <nav class="tabs-nav">
     <button class="tab-btn" type="button" data-tab="smtp">SMTP 配置</button>
-    <button class="tab-btn" type="button" data-tab="policy">邮箱验证与阈值</button>
     <button class="tab-btn" type="button" data-tab="events">通知开关</button>
-    <button class="tab-btn" type="button" data-tab="test">测试发送</button>
     <button class="tab-btn" type="button" data-tab="logs">发送日志 <span class="count">{$total}</span></button>
   </nav>
 
-  <!-- ===== Tab: SMTP 配置 ===== -->
+  <!-- ===== Tab: SMTP 配置（含测试发送）===== -->
   <div class="tab-pane" data-pane="smtp">
     <section class="panel">
       <h2 class="panel-title">SMTP 配置</h2>
@@ -35,10 +33,18 @@
       </form>
     </section>
 
+    <section class="panel">
+      <h2 class="panel-title">测试发送 <span class="count">保存配置后立即验证</span></h2>
+      <p class="panel-sub">填收件邮箱（留空用管理员邮箱），点发送验证 SMTP 是否可用；失败原因见「发送日志」。</p>
+      <div class="model-inline-form">
+        <input type="text" id="testTo" placeholder="收件邮箱（留空用管理员邮箱）" style="width:280px">
+        <button class="btn btn-sm" type="button" id="mailTestBtn">发送测试邮件</button>
+      </div>
+    </section>
   </div>
 
-  <!-- ===== Tab: 邮箱验证与阈值 ===== -->
-  <div class="tab-pane" data-pane="policy">
+  <!-- ===== Tab: 通知开关（含验证模式与阈值）===== -->
+  <div class="tab-pane" data-pane="events">
     <section class="panel">
       <h2 class="panel-title">邮箱验证与告警阈值</h2>
       <form class="form form-grid" id="mailPolicyForm">
@@ -55,10 +61,7 @@
         <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>
       </form>
     </section>
-  </div>
 
-  <!-- ===== Tab: 通知开关 ===== -->
-  <div class="tab-pane" data-pane="events">
     <section class="panel">
       <h2 class="panel-title">通知开关（勾选启用 · 全站事件覆盖）</h2>
       <p class="panel-sub">勾选的事件才会发邮件；「全不勾 = 全部关闭」，新功能上线会在此自动增加对应事件。</p>
@@ -91,18 +94,6 @@
           <button type="submit" class="btn btn-sm">保存通知开关</button>
         </div>
       </form>
-    </section>
-  </div>
-
-  <!-- ===== Tab: 测试发送 ===== -->
-  <div class="tab-pane" data-pane="test">
-    <section class="panel">
-      <h2 class="panel-title">测试发送</h2>
-      <p class="panel-sub">填收件邮箱（留空用管理员邮箱），点发送验证 SMTP 配置是否可用。</p>
-      <div class="model-inline-form">
-        <input type="text" id="testTo" placeholder="收件邮箱（留空用管理员邮箱）" style="width:280px">
-        <button class="btn btn-sm" type="button" id="mailTestBtn">发送测试邮件</button>
-      </div>
     </section>
   </div>
 
