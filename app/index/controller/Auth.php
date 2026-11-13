@@ -194,7 +194,8 @@ class Auth extends Base
     {
         $email = trim((string)$this->request->param('email', ''));
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return redirect('/register');
+            // 未带邮箱：显示"输入邮箱获取验证码"表单
+            return $this->siteView('auth/verify_request');
         }
         $user = User::where('email', $email)->find();
         if (!$user) {
@@ -207,6 +208,27 @@ class Auth extends Base
         $last = (int)($user->verify_sent_at ?? 0);
         $wait = ($last > 0 && time() - $last < $interval) ? ($interval - (time() - $last)) : 0;
         return $this->siteView('auth/verify_sent', ['email' => $email, 'resend_wait' => $wait]);
+    }
+
+    /** 输入邮箱后发送验证码（未登录自助） */
+    public function verifyRequest()
+    {
+        $email = trim((string)$this->request->post('email', ''));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->siteView('auth/verify_request', ['error' => '邮箱格式不对', 'email' => $email]);
+        }
+        $user = User::where('email', $email)->find();
+        if (!$user) {
+            return $this->siteView('auth/verify_request', ['error' => '该邮箱尚未注册', 'email' => $email]);
+        }
+        if ((int)$user->email_verified === 1) {
+            return $this->siteView('auth/verify_result', ['ok' => true, 'msg' => '该邮箱已完成验证，请直接登录']);
+        }
+        $r = self::sendVerifyCode($user);
+        if (!$r['ok'] && ($r['wait'] ?? 0) <= 0) {
+            return $this->siteView('auth/verify_request', ['error' => $r['message'], 'email' => $email]);
+        }
+        return redirect('/verify-sent?email=' . urlencode($email));
     }
 
     /** 6 位数字验证码 */

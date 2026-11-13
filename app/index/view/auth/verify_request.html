@@ -1,0 +1,18 @@
+{extend name="common/layout"}
+
+{block name="content"}
+<section class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="auth-title">重发验证码</h1>
+    <p class="auth-sub">输入注册邮箱，我们会发送一封包含 6 位验证码的纯文字邮件。</p>
+    <form method="post" action="/verify-sent" class="auth-form">
+      <label>注册邮箱</label>
+      <input type="email" name="email" value="{$email|default=''}" required placeholder="you@example.com">
+      {if condition="isset($error)"}<p class="form-error">{$error}</p>{/if}
+      <div style="height:10px"></div>
+      <button type="submit" class="btn btn-block">发送验证码</button>
+    </form>
+    <p class="auth-sub" style="margin-top:14px"><a href="/login">返回登录</a> · <a href="/register">注册新账号</a></p>
+  </div>
+</section>
+{/block}

@@ -12,6 +12,7 @@ Route::post('upload/save', 'UploadController/save');
 Route::post('verify-code', 'Auth/verifyCode');
 Route::post('resend-code', 'Auth/resendCode');
 Route::get('verify-sent', 'Auth/verifySentPage');
+Route::post('verify-sent', 'Auth/verifyRequest');
 Route::post('reset-code', 'Auth/resetByCode');
 Route::get('verify/:token', 'Auth/verify');
 Route::get('forgot', 'Auth/forgotPage');
