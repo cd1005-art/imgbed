@@ -340,3 +340,5 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
   background: rgba(13,17,23,.35); border-radius: var(--r-md); color: #fff;
 }
 .pay-mask p { margin: 0; font-size: 13px; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+
+.modal-mask[hidden] { display: none !important; }

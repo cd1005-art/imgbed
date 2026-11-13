@@ -6,6 +6,7 @@ namespace app\admin\controller;
 use app\admin\controller\Base;
 use app\common\model\Setting;
 use app\common\service\CronService;
+use think\facade\Db;
 
 /** 计划任务：状态灯 / 命令复制 / 立即执行 */
 class CronManage extends Base
