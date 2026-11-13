@@ -95,6 +95,13 @@ class UserManage extends Base
 
         try {
             Db::startTrans();
+            // 释放邮箱占用（加 #del{id} 后缀保留可追溯），否则原邮箱无法重新注册
+            $email = (string)$user->email;
+            if (strpos($email, '#del') === false) {
+                Db::name('users')->where('id', $id)->update([
+                    'email' => mb_substr($email, 0, 100) . '#del' . $id,
+                ]);
+            }
             Db::name('users')->where('id', $id)->update(['status' => 3, 'update_time' => time()]);
             // 立即踢下线：清该用户所有 token
             Db::name('api_tokens')->where('user_id', $id)->delete();
@@ -177,9 +184,19 @@ class UserManage extends Base
         }
 
         if ($action === 'delete') {
-            Db::name('users')->whereIn('id', $ids)->update(['status' => 3, 'update_time' => time()]);
+            foreach ($ids as $uid) {
+                $u = User::find($uid);
+                if (!$u) {
+                    continue;
+                }
+                $email = (string)$u->email;
+                if (strpos($email, '#del') === false) {
+                    Db::name('users')->where('id', $uid)->update(['email' => mb_substr($email, 0, 100) . '#del' . $uid]);
+                }
+                Db::name('users')->where('id', $uid)->update(['status' => 3, 'update_time' => time()]);
+            }
             Db::name('api_tokens')->whereIn('user_id', $ids)->delete();
-            return json(['status' => true, 'message' => '已删除 ' . count($ids) . ' 个用户（图片保留）']);
+            return json(['status' => true, 'message' => '已删除 ' . count($ids) . ' 个用户（图片保留，邮箱已释放）']);
         }
 
         if (!in_array($action, ['disable', 'enable'], true)) {
