@@ -168,3 +168,19 @@ git add -f public/static/admin.js public/static/imgbed.js public/static/admin.cs
 - 订单列表的类型下拉、补单逻辑（`PaymentService::manualComplete`）需同步支持新类型。
 
 **扩展方式**：`finance.html` 加 tab-pane + `FinanceManage::index` 补查询 + `adminFinance()` 补绑定，菜单不动。
+
+## 十二、后台可复制命令必须实测（★ 强制）
+
+**任何显示给用户"复制"的命令、配置片段，都必须自己先跑通再交付。**
+
+2026-11-14 事故：计划任务页的复制命令有三处错误——
+1. PHP 单引号里的 `\n` 不转义 → 注释头把命令整行注释掉；
+2. 路径用了 `sbin/php`（宝塔 CLI 在 `bin/php`，`sbin` 只有 `php-fpm`）；
+3. 缺少 `cd 项目根` 工作目录。
+
+结果：用户按页面提示配置后任务完全不执行；开源用户照抄同样踩坑。
+
+**规则**：
+- 生成命令时用**双引号真换行**、**绝对路径**、**显式 cd**；
+- 路径推导**不要依赖 `is_file/is_executable`**（宝塔 `open_basedir` 会让它们恒为 false）——用 `PHP_BINDIR` / `PHP_BINARY` 字符串推导，并处理 `sbin → bin` 差异；
+- 交付前把复制出来的**原文**贴到服务器执行一次，确认有预期输出。
