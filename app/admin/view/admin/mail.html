@@ -125,7 +125,8 @@
     <section class="panel">
       <h2 class="panel-title">发送日志 <span class="count">共 {$total} 条{if condition="$filtered neq $total"} · 筛选后 {$filtered} 条{/if}</span></h2>
 
-      <form class="search-bar" method="get" action="/admin/mail" style="flex-wrap:wrap;margin-bottom:12px">
+      <div class="page-toolbar">
+        <form class="search-bar" method="get" action="/admin/mail">
         <input type="hidden" name="tab" value="logs">
         <input type="text" name="lto" value="{$lto}" placeholder="收件人" style="width:180px">
         <select name="ltpl" class="filter-select">
@@ -143,13 +144,14 @@
         <span class="field-hint">至</span>
         <input type="date" name="ldto" value="{$ldto}" style="width:140px">
         <button class="btn btn-sm" type="submit">筛选</button>
-        <a class="btn-ghost-sm" href="/admin/mail#logs">重置</a>
-      </form>
+        </form>
+        <button class="btn-ghost-sm btn-danger-sm" type="button" id="mailLogClear">清空全部日志</button>
+      </div>
 
-      <div class="gallery-batch" style="margin-bottom:10px">
-        <button class="btn-ghost-sm" type="button" id="mailLogAll">全选</button>
-        <button class="btn-ghost-sm btn-danger-sm" type="button" id="mailLogDel">删除选中</button>
-        <button class="btn-ghost-sm btn-danger-sm" type="button" id="mailLogClear">清空全部</button>
+      <div class="batch-bar" id="mailLogBar" hidden>
+        <span id="mailLogCount">已选 0 条</span>
+        <button class="btn-ghost-sm btn-danger-sm" type="button" id="mailLogDel">批量删除</button>
+        <button class="btn-ghost-sm" type="button" id="mailLogClearSel">取消选择</button>
       </div>
 
       <table class="table">

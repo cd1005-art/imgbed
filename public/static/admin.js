@@ -724,30 +724,9 @@
       document.querySelectorAll('input[name="mail_events[]"]').forEach(function (c) { c.checked = false; });
     });
 
-    var ca = document.getElementById('mailLogCheckAll');
-    if (ca) ca.addEventListener('change', function () {
-      document.querySelectorAll('.ml-check').forEach(function (c) { c.checked = ca.checked; });
-    });
-    var la = document.getElementById('mailLogAll');
-    if (la) la.addEventListener('click', function () {
-      var boxes = document.querySelectorAll('.ml-check');
-      var on = la.textContent === '全选';
-      boxes.forEach(function (c) { c.checked = on; });
-      la.textContent = on ? '取消全选' : '全选';
-    });
-    var ld = document.getElementById('mailLogDel');
-    if (ld) ld.addEventListener('click', function () {
-      var ids = Array.prototype.map.call(document.querySelectorAll('.ml-check:checked'), function (c) { return c.value; });
-      if (!ids.length) { toast('先勾选日志'); return; }
-      armConfirm(ld, '删除选中的 ' + ids.length + ' 条日志?', function () {
-        fetch('/admin/mail/delete-logs', {
-          method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'ids=' + ids.join(',')
-        }).then(function (r) { return r.json(); }).then(function (d) {
-          toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 500);
-        });
-      });
-    });
+    bindBatchDelete({checkAll:'#mailLogCheckAll', checkbox:'.ml-check', batchBtn:'#mailLogDel',
+      api:'/admin/mail/delete-logs', label:'日志', batchBar:'#mailLogBar', barCount:'#mailLogCount',
+      clearBtn:'#mailLogClearSel', unit:'条'});
     var lc = document.getElementById('mailLogClear');
     if (lc) lc.addEventListener('click', function () {
       armConfirm(lc, '清空全部发送日志? 不可恢复', function () {
