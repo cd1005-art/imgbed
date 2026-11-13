@@ -33,7 +33,7 @@
 </div>
 
 <table class="table">
-  <thead><tr><th style="width:28px"><input type="checkbox" id="userCheckAll"></th><th>ID</th><th>邮箱</th><th>昵称</th><th>策略组</th><th>存储容量</th><th>Token 数</th><th>状态</th><th>注册IP</th><th>注册时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="userCheckAll"></th><th>ID</th><th>邮箱</th><th>昵称</th><th>策略组</th><th>存储容量</th><th>Token 数</th><th>站币</th><th>状态</th><th>注册IP</th><th>注册时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr data-uid="{$vo.id}">
@@ -50,11 +50,16 @@
       </td>
       <td>{$vo.quota_display}</td>
       <td>{$vo.token_display}</td>
+      <td>
+        <b>{$vo.credits}</b>
+        <br><span class="count">累计 {$vo.credits_total}</span>
+      </td>
       <td>{if condition="$vo.status eq 1"}<span class="ok">正常</span>{elseif condition="$vo.status eq 2"}<span class="danger">禁用</span>{else /}<span class="count">已删除</span>{/if}</td>
       <td class="mono">{$vo.last_login_ip}</td>
       <td>{:date('Y-m-d', ts($vo.create_time))}</td>
       <td class="td-actions">
         <button class="btn-ghost-sm" data-user-edit="{$vo.id}">编辑</button>
+        <button class="btn-ghost-sm" data-user-credits="{$vo.id}" data-balance="{$vo.credits}">站币</button>
         {if condition="$vo.email_verified neq 1 && $vo.status neq 3"}
         <button class="btn-ghost-sm" data-user-verify="{$vo.id}">标记已验证</button>
         {/if}

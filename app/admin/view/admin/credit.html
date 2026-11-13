@@ -1,0 +1,50 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<div class="page-toolbar">
+  <h1 class="page-title">站币流水
+    <span class="count">共 {$total} 条 · 收入 {$sum_in} / 支出 {$sum_out}</span>
+  </h1>
+  <form class="search-bar" method="get" action="/admin/credit">
+    <input type="text" name="uw" value="{$uw}" placeholder="用户ID/邮箱/昵称" style="width:200px">
+    <select name="type" class="filter-select">
+      <option value="">全部类型</option>
+      {volist name="types" id="tn"}
+      <option value="{$key}" {if condition="$type eq $key"}selected{/if}>{$tn}</option>
+      {/volist}
+    </select>
+    <input type="date" name="dfrom" value="{$dfrom}" class="filter-select">
+    <input type="date" name="dto" value="{$dto}" class="filter-select">
+    <button class="btn btn-sm" type="submit">筛选</button>
+  </form>
+</div>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>用户</th><th>类型</th><th>变动</th><th>变动后余额</th><th>备注</th><th>时间</th></tr></thead>
+  <tbody>
+    {volist name="list" id="vo"}
+    <tr>
+      <td>{$vo.id}</td>
+      <td class="td-clip">{$user_map[$vo.user_id] ?? ('#' . $vo.user_id)}</td>
+      <td>{$types[$vo.type] ?? $vo.type}</td>
+      <td>{if condition="$vo.amount gt 0"}<span class="ok">+{$vo.amount}</span>{else /}<span class="danger">{$vo.amount}</span>{/if}</td>
+      <td>{$vo.balance_after}</td>
+      <td class="td-clip" title="{$vo.remark}">{$vo.remark|default='-'}</td>
+      <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+    </tr>
+    {/volist}
+  </tbody>
+</table>
+
+{if condition="$pages gt 1"}
+<div class="pager">
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&uw={$uw}&type={$type}&dfrom={$dfrom}&dto={$dto}">上一页</a>{/if}
+  <span class="field-hint">第 {$page_no} / {$pages} 页</span>
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&uw={$uw}&type={$type}&dfrom={$dfrom}&dto={$dto}">下一页</a>{/if}
+</div>
+{/if}
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminNone');</script>
+{/block}

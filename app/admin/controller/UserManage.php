@@ -155,6 +155,31 @@ class UserManage extends Base
         ]);
     }
 
+    /** 调整站币（管理员加/减，写入流水） */
+    public function adjustCredits(int $id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return json(['status' => false, 'message' => '用户不存在']);
+        }
+        $amount = (int)$this->request->post('amount', 0);
+        $remark = mb_substr(trim((string)$this->request->post('remark', '')), 0, 100);
+        if ($amount === 0) {
+            return json(['status' => false, 'message' => '请输入变动数量（正数增加，负数扣减）']);
+        }
+        try {
+            $balance = \app\common\service\CreditsService::change(
+                $id, $amount, 'admin_adjust', 0, $remark !== '' ? $remark : '管理员调整'
+            );
+        } catch (\Throwable $e) {
+            return json(['status' => false, 'message' => $e->getMessage()]);
+        }
+        return json([
+            'status'  => true,
+            'message' => ($amount > 0 ? "已增加 {$amount}" : '已扣减 ' . abs($amount)) . "，当前余额 {$balance}",
+        ]);
+    }
+
     /** 管理员手动标记邮箱已验证（收不到验证码时的兜底） */
     public function verifyEmail(int $id)
     {

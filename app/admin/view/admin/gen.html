@@ -121,7 +121,7 @@
       </div>
 
       <table class="table">
-        <thead><tr><th style="width:28px"><input type="checkbox" id="genLogCheckAll"></th><th>任务</th><th>生成/成功/失败</th><th>明细</th><th>时间</th></tr></thead>
+        <thead><tr><th style="width:28px"><input type="checkbox" id="genLogCheckAll"></th><th>任务</th><th>生成/成功/失败</th><th>明细</th><th>时间</th><th>操作</th></tr></thead>
         <tbody>
           {volist name="logs" id="lg"}
           <tr>
@@ -130,6 +130,7 @@
             <td>{$lg.gen_count} / {$lg.success_count} / {$lg.fail_count}</td>
             <td class="td-clip" title="{$lg.detail}">{$lg.detail}</td>
             <td>{:date('m-d H:i', ts($lg.create_time))}</td>
+            <td class="td-actions"><button class="btn-ghost-sm btn-danger-sm" data-row-del="{$lg.id}">删除</button></td>
           </tr>
           {/volist}
         </tbody>

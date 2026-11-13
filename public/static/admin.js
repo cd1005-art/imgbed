@@ -9,7 +9,7 @@
       adminImage: adminImage, adminUser: adminUser, adminGroup: adminGroup,
       adminStorage: adminStorage, adminPayment: adminPayment,
       adminAd: adminAd, adminToken: adminToken, adminSite: adminSite, adminAudit: adminAudit,
-      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav
+      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminNone: function () {}
     };
     if (map[page]) map[page]();
   };
@@ -49,6 +49,26 @@
       method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body
     }).then(function (r) { return r.json(); });
   }
+
+  /* 用户站币调整：全局委托 */
+  document.addEventListener('click', function (e) {
+    var btn = e.target && e.target.closest ? e.target.closest('[data-user-credits]') : null;
+    if (!btn) { return; }
+    var id = btn.dataset.userCredits;
+    var bal = btn.dataset.balance || '0';
+    var amount = prompt('调整站币（当前余额 ' + bal + '）\n\n正数增加，负数扣减，例如 100 或 -50：');
+    if (amount === null) { return; }
+    amount = parseInt(amount, 10);
+    if (isNaN(amount) || amount === 0) { toast('请输入非零整数'); return; }
+    var remark = prompt('备注（可选，如：活动补偿 / 违规扣减）：') || '';
+    toast('处理中…');
+    fetch('/admin/user/credits/' + id, {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'amount=' + amount + '&remark=' + encodeURIComponent(remark)
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 700);
+    }).catch(function () { toast('操作失败：网络错误'); });
+  });
 
   /* 造图-单日上限保存：全局委托（不依赖页面初始化，避免绑定被异常中断） */
   document.addEventListener('click', function (e) {

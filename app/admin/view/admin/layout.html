@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$page_title|default='后台'} · {$site_name}</title>
 <link rel="stylesheet" href="/static/imgbed.css?v=24">
-<link rel="stylesheet" href="/static/admin.css?v=42">
+<link rel="stylesheet" href="/static/admin.css?v=43">
 </head>
 <body class="admin-body">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -32,6 +32,7 @@
     <a href="/admin/cron" class="{if condition="$page eq 'cron'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 计划任务</a>
     <a href="/admin/image" class="{if condition="$page eq 'image'"}active{/if}"><svg class="ic"><use href="#i-image"/></svg> 图片管理</a>
     <a href="/admin/user" class="{if condition="$page eq 'user'"}active{/if}"><svg class="ic"><use href="#i-user"/></svg> 用户管理</a>
+    <a href="/admin/credit" class="{if condition="$page eq 'credit'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 站币流水</a>
     <a href="/admin/group" class="{if condition="$page eq 'group'"}active{/if}"><svg class="ic"><use href="#i-group"/></svg> 策略组</a>
     <a href="/admin/storage" class="{if condition="$page eq 'storage'"}active{/if}"><svg class="ic"><use href="#i-storage"/></svg> 存储管理</a>
     <a href="/admin/payment" class="{if condition="$page eq 'payment'"}active{/if}"><svg class="ic"><use href="#i-pay"/></svg> 支付管理</a>
@@ -57,7 +58,7 @@
 
 <div id="toast" class="toast" hidden></div>
 <script src="/static/imgbed.js?v=24"></script>
-<script src="/static/admin.js?v=42"></script>
+<script src="/static/admin.js?v=43"></script>
 {block name="script"}{/block}
 </body>
 </html>

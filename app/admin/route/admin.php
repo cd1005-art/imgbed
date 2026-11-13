@@ -45,6 +45,8 @@ Route::group(function () {
 
     Route::post('user/delete/:id', 'UserManage/delete');
     Route::post('user/verify-email/:id', 'UserManage/verifyEmail');
+    Route::post('user/credits/:id', 'UserManage/adjustCredits');
+    Route::get('credit', 'CreditManage/index');
     Route::get('user', 'UserManage/index');
     Route::post('user/save/:id', 'UserManage/save');
     Route::post('user/batch', 'UserManage/batch');
