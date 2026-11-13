@@ -2,7 +2,6 @@
 
 {block name="content"}
 <div class="page-toolbar">
-<div class="page-toolbar">
   <h1 class="page-title">标签管理 <span class="count">{$total} 个</span></h1>
   <form class="search-bar" method="get" action="/admin/tag">
     <input type="text" name="kw" value="{$kw}" placeholder="标签名关键词">
@@ -11,7 +10,7 @@
       <option value="1" {if condition="$tstatus eq '1'"}selected{/if}>启用</option>
       <option value="0" {if condition="$tstatus eq '0'"}selected{/if}>停用</option>
     </select>
-    <input type="number" name="min_use" value="{$min_use|default=0}" placeholder="最少使用次数" style="width:130px">
+    <input type="number" name="min_use" value="{$min_use|default=0}" placeholder="最少使用次数" style="width:120px">
     <select name="torder" class="filter-select">
       <option value="use_desc" {if condition="$torder eq 'use_desc'"}selected{/if}>使用次数降序</option>
       <option value="use_asc" {if condition="$torder eq 'use_asc'"}selected{/if}>使用次数升序</option>
@@ -26,20 +25,14 @@
   <button class="btn-ghost-sm btn-danger-sm" type="button" id="tagBatchDel">批量删除</button>
   <button class="btn-ghost-sm" type="button" id="tagBatchClear">取消选择</button>
 </div>
-  <form class="search-bar" method="get" action="/admin/tag">
-    <input type="text" name="kw" value="{$kw}" placeholder="标签名搜索">
-    <button class="btn btn-sm" type="submit">搜索</button>
-  </form>
-</div>
 
-<section class="panel">
+<section class="panel" style="margin-bottom:12px">
   <h2 class="panel-title">合并标签</h2>
   <div class="model-inline-form" id="mergeForm">
-    <input type="text" name="from" placeholder="要合并掉的标签名" style="width:200px">
-    <input type="number" name="to_id" placeholder="目标标签 ID" style="width:140px">
+    <input type="text" name="from" placeholder="来源标签名" style="width:150px">
+    <input type="text" name="to_id" placeholder="目标标签 ID" style="width:120px">
     <button class="btn btn-sm" type="button" id="mergeBtn">合并</button>
   </div>
-  <p class="panel-sub" style="margin:8px 0 0">来源标签的图片关联迁移到目标标签，来源词转为别名（AI 以后自动归并到目标）。</p>
 </section>
 
 <table class="table">

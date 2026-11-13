@@ -2,7 +2,6 @@
 
 {block name="content"}
 <div class="page-toolbar">
-<div class="page-toolbar">
   <h1 class="page-title">提现管理 <span class="count">{$total} 条</span></h1>
   <form class="search-bar" method="get" action="/admin/withdraw">
     <input type="text" name="uw" value="{$uw}" placeholder="用户ID/邮箱/昵称" style="width:200px">
@@ -23,17 +22,6 @@
   <span id="wdBatchCount">已选 0 条</span>
   <button class="btn-ghost-sm btn-danger-sm" type="button" id="wdBatchDel">批量删除</button>
   <button class="btn-ghost-sm" type="button" id="wdBatchClear">取消选择</button>
-</div>
-  <form class="search-bar" method="get" action="/admin/withdraw">
-    <select name="status" class="filter-select">
-      <option value="">全部状态</option>
-      <option value="pending" {if condition="$status eq 'pending'"}selected{/if}>待审核</option>
-      <option value="approved" {if condition="$status eq 'approved'"}selected{/if}>待打款</option>
-      <option value="paid" {if condition="$status eq 'paid'"}selected{/if}>已打款</option>
-      <option value="rejected" {if condition="$status eq 'rejected'"}selected{/if}>已驳回</option>
-    </select>
-    <button class="btn btn-sm" type="submit">筛选</button>
-  </form>
 </div>
 
 <table class="table">
