@@ -71,6 +71,7 @@ class GenManage extends Base
         if (!$arr) {
             return json(['status' => false, 'message' => '至少填一条提示词']);
         }
+        $dropped = count($arr) > 2000 ? count($arr) - 2000 : 0;
 
         // 目标账号：输入框（用户ID / 邮箱 / 昵称 模糊），不用下拉（用户量大时下拉不实用）
         $targetInput = trim((string)$this->request->post('target_user_input', ''));
@@ -102,7 +103,7 @@ class GenManage extends Base
 
         $data = [
             'name'            => mb_substr(trim((string)$this->request->post('name', '')), 0, 60) ?: '造图任务',
-            'prompts'         => json_encode(array_slice($arr, 0, 50), JSON_UNESCAPED_UNICODE),
+            'prompts'         => json_encode(array_slice($arr, 0, 2000), JSON_UNESCAPED_UNICODE),
             'category'        => mb_substr(trim((string)$this->request->post('category', '')), 0, 30),
             'count_per_run'   => max(1, min(20, (int)$this->request->post('count_per_run', 1))),
             'interval_minutes' => max(5, min(1440, (int)$this->request->post('interval_minutes', 60))),
@@ -119,7 +120,11 @@ class GenManage extends Base
             $data['create_time'] = time();
             Db::name('gen_tasks')->insert($data);
         }
-        return json(['status' => true, 'message' => '已保存（目标账号：' . ($target['nickname'] ?: $target['email']) . '）']);
+        $msg = '已保存 ' . min(count($arr), 2000) . ' 条提示词（目标账号：' . ($target['nickname'] ?: $target['email']) . '）';
+        if ($dropped > 0) {
+            $msg .= "；超出上限的 {$dropped} 条未保存（单任务最多 2000 条）";
+        }
+        return json(['status' => true, 'message' => $msg]);
     }
 
     /** 立即执行一次指定任务（测试用，忽略调度时间） */
