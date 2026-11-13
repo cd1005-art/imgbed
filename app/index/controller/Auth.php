@@ -118,7 +118,18 @@ class Auth extends Base
             return $this->authFail('今天这个 IP 注册次数到顶了，明天再来');
         }
 
-        if (User::where('email', $email)->find()) {
+        $exist = User::where('email', $email)->find();
+        if ($exist) {
+            // 已注册但未验证 → 允许"重发验证码"并进入验证页（避免死锁：无法登录、无法重注册、无重发入口）
+            if ((int)$exist->email_verified !== 1 && (int)$exist->status === 1) {
+                $r = self::sendVerifyCode($exist);
+                $wait = (int)($r['wait'] ?? 60);
+                return $this->siteView('auth/verify_sent', [
+                    'email'       => $email,
+                    'resend_wait' => $wait,
+                    'notice'      => $r['message'],
+                ]);
+            }
             return $this->authFail('这个邮箱已经注册过，直接登录');
         }
 
@@ -176,6 +187,26 @@ class Auth extends Base
         Session::regenerate();
         session('user_id', (int)$new->id);
         return redirect('/console');
+    }
+
+    /** 验证页（未登录可访问，用于重发/输码） */
+    public function verifySentPage()
+    {
+        $email = trim((string)$this->request->param('email', ''));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return redirect('/register');
+        }
+        $user = User::where('email', $email)->find();
+        if (!$user) {
+            return redirect('/register');
+        }
+        if ((int)$user->email_verified === 1) {
+            return $this->siteView('auth/verify_result', ['ok' => true, 'msg' => '该邮箱已完成验证，请直接登录']);
+        }
+        $interval = max(30, (int)Setting::get('resend_interval', 60));
+        $last = (int)($user->verify_sent_at ?? 0);
+        $wait = ($last > 0 && time() - $last < $interval) ? ($interval - (time() - $last)) : 0;
+        return $this->siteView('auth/verify_sent', ['email' => $email, 'resend_wait' => $wait]);
     }
 
     /** 6 位数字验证码 */

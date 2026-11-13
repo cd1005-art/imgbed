@@ -55,6 +55,9 @@
       <td>{:date('Y-m-d', ts($vo.create_time))}</td>
       <td class="td-actions">
         <button class="btn-ghost-sm" data-user-edit="{$vo.id}">编辑</button>
+        {if condition="$vo.email_verified neq 1 && $vo.status neq 3"}
+        <button class="btn-ghost-sm" data-user-verify="{$vo.id}">标记已验证</button>
+        {/if}
         {if condition="$vo.status neq 3"}
         <button class="btn-ghost-sm btn-danger-sm" data-user-del="{$vo.id}" data-imgs="{$vo.img_count}" data-name="{$vo.nickname}">删除</button>
         {/if}

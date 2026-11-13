@@ -4,6 +4,7 @@
 <section class="auth-wrap">
   <div class="auth-card">
     <h1 class="auth-title">📮 验证码已发送</h1>
+    {if condition="isset($notice) && $notice"}<p class="form-error" style="color:var(--ink-2)">{$notice}</p>{/if}
     <p class="auth-sub">验证码已发送到 <b>{$email}</b>（纯文字邮件，请检查收件箱与垃圾箱）。</p>
     <form class="auth-form" id="codeForm">
       <input type="hidden" name="email" value="{$email}">

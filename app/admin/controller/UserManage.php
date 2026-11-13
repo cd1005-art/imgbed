@@ -155,6 +155,19 @@ class UserManage extends Base
         ]);
     }
 
+    /** 管理员手动标记邮箱已验证（收不到验证码时的兜底） */
+    public function verifyEmail(int $id)
+    {
+        $u = User::find($id);
+        if (!$u) {
+            return json(['status' => false, 'message' => '用户不存在']);
+        }
+        Db::name('users')->where('id', $id)->update([
+            'email_verified' => 1, 'verify_token' => '', 'verify_tries' => 0, 'update_time' => time(),
+        ]);
+        return json(['status' => true, 'message' => '已标记邮箱为已验证']);
+    }
+
     public function save(int $id)
     {
         $user = User::find($id);

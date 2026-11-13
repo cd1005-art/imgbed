@@ -11,6 +11,7 @@ Route::post('upload/save', 'UploadController/save');
 // 邮箱验证 / 找回密码（具体路由在前）
 Route::post('verify-code', 'Auth/verifyCode');
 Route::post('resend-code', 'Auth/resendCode');
+Route::get('verify-sent', 'Auth/verifySentPage');
 Route::post('reset-code', 'Auth/resetByCode');
 Route::get('verify/:token', 'Auth/verify');
 Route::get('forgot', 'Auth/forgotPage');

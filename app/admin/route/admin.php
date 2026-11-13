@@ -37,6 +37,7 @@ Route::group(function () {
     Route::post('image/batch', 'ImageManage/batch');
 
     Route::post('user/delete/:id', 'UserManage/delete');
+    Route::post('user/verify-email/:id', 'UserManage/verifyEmail');
     Route::get('user', 'UserManage/index');
     Route::post('user/save/:id', 'UserManage/save');
     Route::post('user/batch', 'UserManage/batch');
