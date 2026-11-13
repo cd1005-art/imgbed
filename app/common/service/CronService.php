@@ -660,6 +660,8 @@ class CronService
             $dir = dirname($bin);
             // fpm/cgi 不能用于 CLI，取同目录的 php
             if (stripos($bin, 'fpm') !== false || stripos($bin, 'cgi') !== false) {
+                // 宝塔：php-fpm 在 sbin、CLI 在 bin → 同版本 bin/php
+                $dir = str_replace('/sbin', '/bin', $dir);
                 return rtrim($dir, '/') . '/php';
             }
             return $bin;
