@@ -69,7 +69,8 @@
 
   <div class="model-inline-form" style="margin-top:16px">
     <span class="field-hint">访问密钥：</span>
-    <code class="inline-code" style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle" title="{$key}">{$key}</code>
+    <input type="text" id="cronKeyInput" value="{$key}" readonly
+           style="flex:0 0 auto;width:340px;max-width:100%;padding:6px 10px;border:1px solid #E4E1DB;border-radius:8px;background:#FAF9F7;color:#1C1B18;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace">
     <button class="btn-ghost-sm" type="button" id="cronKeyCopy">复制密钥</button>
     <button class="btn-ghost-sm btn-danger-sm" type="button" id="cronRotate">重置密钥</button>
   </div>
