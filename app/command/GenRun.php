@@ -64,6 +64,10 @@ class GenRun extends Command
                 [$prompt, $cursor] = \app\common\service\CronService::pickPrompt($prompts, $cursor);
                 $tmp = sys_get_temp_dir() . '/gen_' . uniqid() . '.jpg';
                 $made = $this->generate((int)$task['model_id'], $prompt, $tmp);
+                if (!$made && (int)($task['retry_on_fail'] ?? 0) === 1) {
+                    $detail[] = '首次失败，自动重试';
+                    $made = $this->generate((int)$task['model_id'], $prompt, $tmp);
+                }
                 if (!$made) {
                     $fail++;
                     $detail[] = "生成失败：{$prompt}";
@@ -89,6 +93,7 @@ class GenRun extends Command
                     }
                     $ok++;
                     $detail[] = "OK #{$img->id} {$prompt}";
+                    \app\common\service\CronService::applyAutoTags($task, (int)$img->id);
                 } catch (\Throwable $e) {
                     $fail++;
                     $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);

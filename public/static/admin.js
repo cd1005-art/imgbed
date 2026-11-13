@@ -774,6 +774,8 @@
         nf.querySelector('[name=count_per_run]').value = t.count_per_run;
         nf.querySelector('[name=interval_minutes]').value = t.interval_minutes;
         nf.querySelector('[name=auto_public]').value = t.auto_public;
+        if (nf.querySelector('[name=retry_on_fail]')) nf.querySelector('[name=retry_on_fail]').value = t.retry_on_fail;
+        if (nf.querySelector('[name=auto_tag]')) nf.querySelector('[name=auto_tag]').value = t.auto_tag;
         var ps = [];
         try { ps = JSON.parse(t.prompts) || []; } catch (e2) {}
         nf.querySelector('[name=prompts]').value = ps.join('\n');

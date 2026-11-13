@@ -37,6 +37,12 @@
         <label class="field"><span class="field-label">自动公开</span>
           <select name="auto_public"><option value="1">是</option><option value="0">否</option></select>
         </label>
+        <label class="field"><span class="field-label">失败自动重试一次</span>
+          <select name="retry_on_fail"><option value="0">否</option><option value="1">是</option></select>
+        </label>
+        <label class="field"><span class="field-label">自动打标签（分类 + 审核描述）</span>
+          <select name="auto_tag"><option value="0">否</option><option value="1">是</option></select>
+        </label>
         <label class="field field-wide">
           <span class="field-label">提示词池（每行一条，随机轮换，最多 2000 行）</span>
           <textarea name="prompts" rows="10" class="modal-textarea" placeholder="抽象渐变背景&#10;极简几何图案&#10;森林晨雾风景&#10;&#10;可直接粘贴上千行，每行一条完整提示词（逗号、句号随便用）"></textarea>

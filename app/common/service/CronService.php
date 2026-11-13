@@ -460,6 +460,32 @@ class CronService
         return $flat >= 2;   // 至少两个通道几乎无变化
     }
 
+    /** 自动打标签：任务分类 + 审核描述首段（需任务开启 auto_tag） */
+    public static function applyAutoTags(array $task, int $imageId): void
+    {
+        if ((int)($task['auto_tag'] ?? 0) !== 1) {
+            return;
+        }
+        $tags = [];
+        $cat  = trim((string)($task['category'] ?? ''));
+        if ($cat !== '') {
+            $tags[] = $cat;
+        }
+        $detail = (string)Db::name('audit_logs')->where('image_id', $imageId)->value('detail');
+        if ($detail !== '') {
+            $first = trim((string)(preg_split('/[，,。；;]/u', $detail)[0] ?? ''));
+            if (mb_strlen($first) >= 2 && mb_strlen($first) <= 16) {
+                $tags[] = $first;
+            }
+        }
+        if ($tags) {
+            try {
+                \app\common\service\TagService::attach($imageId, array_values(array_unique($tags)), 'auto');
+            } catch (\Throwable $e) {
+            }
+        }
+    }
+
     /** 调用图像生成模型（OpenAI 兼容 /images/generations）；无模型或失败时回退 GD 占位图 */
     protected static function generateImage(int $modelId, string $prompt, string $outFile): string
     {
@@ -603,6 +629,10 @@ class CronService
                 $tmp = sys_get_temp_dir() . '/gen_' . uniqid() . '.jpg';
 
                 $made = self::generateImage((int)$task['model_id'], $prompt, $tmp);
+                if ($made === '' && (int)($task['retry_on_fail'] ?? 0) === 1) {
+                    $detail[] = '首次失败，自动重试';
+                    $made = self::generateImage((int)$task['model_id'], $prompt, $tmp);
+                }
                 if ($made === '') {
                     $fail++;
                     $detail[] = '生成失败：' . mb_substr($prompt, 0, 20);
@@ -620,6 +650,7 @@ class CronService
                     }
                     $ok++;
                     $detail[] = "OK #{$r['image']->id} " . mb_substr($prompt, 0, 20) . ($made === 'placeholder' ? '（占位图）' : '');
+                    self::applyAutoTags($task, (int)$r['image']->id);
                 } catch (\Throwable $e) {
                     $fail++;
                     $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);

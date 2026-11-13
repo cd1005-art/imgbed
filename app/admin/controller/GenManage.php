@@ -115,6 +115,8 @@ class GenManage extends Base
             'model_id'        => $mid,
             'target_user_id'  => (int)$target['id'],
             'auto_public'     => (int)$this->request->post('auto_public', 1) === 1 ? 1 : 0,
+            'retry_on_fail'   => (int)$this->request->post('retry_on_fail', 0) === 1 ? 1 : 0,
+            'auto_tag'        => (int)$this->request->post('auto_tag', 0) === 1 ? 1 : 0,
             'status'          => (int)$this->request->post('status', 1) === 1 ? 1 : 0,
             'update_time'     => time(),
         ];
