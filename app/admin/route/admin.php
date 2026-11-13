@@ -59,6 +59,8 @@ Route::group(function () {
     Route::post('payment/plan/delete/:id', 'PaymentManage/deletePlan');
 
     Route::post('mail/test', 'MailManage/test');
+    Route::post('mail/delete-logs', 'MailManage/deleteLogs');
+    Route::post('mail/clear-logs', 'MailManage/clearLogs');
     Route::post('mail/save', 'MailManage/save');
     Route::post('cron/run/:task', 'CronManage/run');
     Route::get('cron/log/:task', 'CronManage/log');

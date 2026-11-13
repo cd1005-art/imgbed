@@ -13,8 +13,24 @@ class MailManage extends Base
 {
     public function index()
     {
-        $logs = Db::name('mail_logs')->order('id', 'desc')->limit(20)->select()->toArray();
+        // 日志筛选：收件人 / 事件模板 / 状态 / 日期范围
+        $lto      = trim((string)$this->request->param('lto', ''));
+        $ltpl     = trim((string)$this->request->param('ltpl', ''));
+        $lstatus  = (string)$this->request->param('lstatus', '');
+        $ldfrom   = trim((string)$this->request->param('ldfrom', ''));
+        $ldto     = trim((string)$this->request->param('ldto', ''));
+
+        $q = Db::name('mail_logs');
+        if ($lto !== '')    { $q->where('to_email', 'like', '%' . $lto . '%'); }
+        if ($ltpl !== '')   { $q->where('template', $ltpl); }
+        if ($lstatus !== '') { $q->where('status', (int)$lstatus); }
+        if ($ldfrom !== '') { $q->where('create_time', '>=', strtotime($ldfrom . ' 00:00:00')); }
+        if ($ldto !== '')   { $q->where('create_time', '<=', strtotime($ldto . ' 23:59:59')); }
+
+        $logs  = $q->order('id', 'desc')->limit(100)->select()->toArray();
         $total = (int)Db::name('mail_logs')->count();
+        $filtered = count($logs);
+        $templates = Db::name('mail_logs')->distinct(true)->column('template');
 
         $raw = (string)Setting::get('mail_events', '');
         $enabled = $raw === '' ? null : (json_decode($raw, true) ?: []);
@@ -37,6 +53,10 @@ class MailManage extends Base
             'total'    => $total,
             'events'   => $allEvents,
             'enabled_events' => $enabled,
+            'lto' => $lto, 'ltpl' => $ltpl, 'lstatus' => $lstatus,
+            'ldfrom' => $ldfrom, 'ldto' => $ldto,
+            'templates' => array_values(array_filter($templates)),
+            'filtered'  => $filtered,
         ]);
     }
 
@@ -64,6 +84,24 @@ class MailManage extends Base
             $saved++;
         }
         return json(['status' => true, 'message' => "已保存 {$saved} 项"]);
+    }
+
+    /** 删除日志（单条或批量，ids 逗号分隔） */
+    public function deleteLogs()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择记录']);
+        }
+        $n = Db::name('mail_logs')->whereIn('id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 条"]);
+    }
+
+    /** 清空全部日志 */
+    public function clearLogs()
+    {
+        $n = Db::name('mail_logs')->where('id', '>', 0)->delete();
+        return json(['status' => true, 'message' => "已清空 {$n} 条"]);
     }
 
     /** 测试发送 */

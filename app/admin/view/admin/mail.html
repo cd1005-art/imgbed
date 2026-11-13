@@ -3,105 +3,161 @@
 {block name="content"}
 <h1 class="page-title">邮件设置</h1>
 
-<section class="panel">
-  <h2 class="panel-title">SMTP 配置</h2>
-  <form class="form form-grid" id="mailForm">
-    <label class="field"><span class="field-label">SMTP 服务器</span><input type="text" name="smtp_host" value="{$settings.smtp_host|default=''}" placeholder="smtp.qq.com"></label>
-    <label class="field"><span class="field-label">端口</span><input type="text" name="smtp_port" value="{$settings.smtp_port|default='465'}" style="width:100px"></label>
-    <label class="field"><span class="field-label">加密方式</span>
-      <select name="smtp_secure">
-        <option value="ssl" {if condition="($settings['smtp_secure'] ?? 'ssl') eq 'ssl'"}selected{/if}>SSL（465）</option>
-        <option value="tls" {if condition="($settings['smtp_secure'] ?? '') eq 'tls'"}selected{/if}>STARTTLS（587）</option>
-        <option value="none" {if condition="($settings['smtp_secure'] ?? '') eq 'none'"}selected{/if}>无加密</option>
-      </select>
-    </label>
-    <label class="field"><span class="field-label">SMTP 账号</span><input type="text" name="smtp_user" value="{$settings.smtp_user|default=''}" placeholder="你的邮箱"></label>
-    <label class="field"><span class="field-label">密码/授权码</span><input type="text" name="smtp_pass" value="{$settings.smtp_pass|default=''}"></label>
-    <label class="field"><span class="field-label">发件人名称</span><input type="text" name="smtp_from_name" value="{$settings.smtp_from_name|default='逍遥图床'}"></label>
-    <label class="field"><span class="field-label">发件人邮箱（留空=账号）</span><input type="text" name="smtp_from_addr" value="{$settings.smtp_from_addr|default=''}"></label>
-    <label class="field"><span class="field-label">管理员通知邮箱</span><input type="text" name="admin_mail_to" value="{$settings.admin_mail_to|default=''}" placeholder="接收告警与交易通知"></label>
-    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存配置</button></div>
-  </form>
-</section>
+<div id="mailTabs">
+  <nav class="tabs-nav">
+    <button class="tab-btn" type="button" data-tab="smtp">SMTP 配置</button>
+    <button class="tab-btn" type="button" data-tab="policy">邮箱验证与阈值</button>
+    <button class="tab-btn" type="button" data-tab="events">通知开关</button>
+    <button class="tab-btn" type="button" data-tab="test">测试发送</button>
+    <button class="tab-btn" type="button" data-tab="logs">发送日志 <span class="count">{$total}</span></button>
+  </nav>
 
-<section class="panel">
-  <h2 class="panel-title">通知开关（勾选启用 · 全站事件覆盖）</h2>
-  <p class="panel-sub">勾选的事件才会发邮件；「全不勾 = 全部关闭」，新功能上线会在此自动增加对应事件。</p>
-  <form id="eventsForm" class="notify-matrix">
-    <input type="hidden" name="events_form" value="1">
-    {volist name="events" id="group"}
-    <div class="notify-group">
-      <div class="notify-group-title">
-        {switch name="$key"}
-          {case value="system"}系统与运维{/case}
-          {case value="account"}账号与内容{/case}
-          {case value="trade"}交易与收益{/case}
-          {case value="report"}举报{/case}
-          {case value="ops"}运营{/case}
-        {/switch}
-      </div>
-      <div class="notify-items">
-        {volist name="group" id="label"}
-        <label class="notify-item">
-          <input type="checkbox" name="mail_events[]" value="{$key}" {if condition="in_array($key, $enabled_events)"}checked{/if}>
-          <span>{$label}</span>
+  <!-- ===== Tab: SMTP 配置 ===== -->
+  <div class="tab-pane" data-pane="smtp">
+    <section class="panel">
+      <h2 class="panel-title">SMTP 配置</h2>
+      <form class="form form-grid" id="mailForm">
+        <label class="field"><span class="field-label">SMTP 服务器</span><input type="text" name="smtp_host" value="{$settings.smtp_host|default=''}" placeholder="smtp.qq.com"></label>
+        <label class="field"><span class="field-label">端口</span><input type="text" name="smtp_port" value="{$settings.smtp_port|default='465'}" style="width:100px"></label>
+        <label class="field"><span class="field-label">加密方式</span>
+          <select name="smtp_secure">
+            <option value="ssl" {if condition="($settings['smtp_secure'] ?? 'ssl') eq 'ssl'"}selected{/if}>SSL（465）</option>
+            <option value="tls" {if condition="($settings['smtp_secure'] ?? '') eq 'tls'"}selected{/if}>STARTTLS（587）</option>
+            <option value="none" {if condition="($settings['smtp_secure'] ?? '') eq 'none'"}selected{/if}>无加密</option>
+          </select>
         </label>
-        {/volist}
-      </div>
-    </div>
-    {/volist}
-    <div class="notify-actions">
-      <button type="button" class="btn-ghost-sm" id="evAll">全选</button>
-      <button type="button" class="btn-ghost-sm" id="evNone">全不选</button>
-      <button type="submit" class="btn btn-sm">保存通知开关</button>
-    </div>
-  </form>
-</section>
+        <label class="field"><span class="field-label">SMTP 账号</span><input type="text" name="smtp_user" value="{$settings.smtp_user|default=''}" placeholder="你的邮箱"></label>
+        <label class="field"><span class="field-label">密码/授权码</span><input type="text" name="smtp_pass" value="{$settings.smtp_pass|default=''}"></label>
+        <label class="field"><span class="field-label">发件人名称</span><input type="text" name="smtp_from_name" value="{$settings.smtp_from_name|default='逍遥图床'}"></label>
+        <label class="field"><span class="field-label">发件人邮箱（留空=账号）</span><input type="text" name="smtp_from_addr" value="{$settings.smtp_from_addr|default=''}"></label>
+        <label class="field"><span class="field-label">管理员通知邮箱</span><input type="text" name="admin_mail_to" value="{$settings.admin_mail_to|default=''}" placeholder="接收告警与交易通知"></label>
+        <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存配置</button></div>
+      </form>
+    </section>
 
-<section class="panel">
-  <h2 class="panel-title">测试发送</h2>
-  <div class="model-inline-form">
-    <input type="text" id="testTo" placeholder="收件邮箱（留空用管理员邮箱）" style="width:280px">
-    <button class="btn btn-sm" type="button" id="mailTestBtn">发送测试邮件</button>
   </div>
-</section>
 
-<section class="panel">
-  <h2 class="panel-title">邮箱验证与告警阈值</h2>
-  <form class="form form-grid" id="mailPolicyForm">
-    <label class="field"><span class="field-label">邮箱验证模式</span>
-      <select name="verify_mode">
-        <option value="none" {if condition="($settings['verify_mode'] ?? 'none') eq 'none'"}selected{/if}>不验证</option>
-        <option value="register" {if condition="($settings['verify_mode'] ?? '') eq 'register'"}selected{/if}>注册即须验证才能登录</option>
-        <option value="lazy" {if condition="($settings['verify_mode'] ?? '') eq 'lazy'"}selected{/if}>可登录，上传/公开前须验证</option>
-      </select>
-    </label>
-    <label class="field"><span class="field-label">磁盘剩余告警（GB）</span><input type="number" name="alert_disk_free_gb" value="{$settings.alert_disk_free_gb|default=10}"></label>
-    <label class="field"><span class="field-label">配额剩余告警（%）</span><input type="number" name="alert_quota_left_pct" value="{$settings.alert_quota_left_pct|default=10}"></label>
-    <label class="field"><span class="field-label">网盘空间剩余告警（%）</span><input type="number" name="alert_space_left_pct" value="{$settings.alert_space_left_pct|default=10}"></label>
-    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>
-  </form>
-</section>
+  <!-- ===== Tab: 邮箱验证与阈值 ===== -->
+  <div class="tab-pane" data-pane="policy">
+    <section class="panel">
+      <h2 class="panel-title">邮箱验证与告警阈值</h2>
+      <form class="form form-grid" id="mailPolicyForm">
+        <label class="field"><span class="field-label">邮箱验证模式</span>
+          <select name="verify_mode">
+            <option value="none" {if condition="($settings['verify_mode'] ?? 'none') eq 'none'"}selected{/if}>不验证</option>
+            <option value="register" {if condition="($settings['verify_mode'] ?? '') eq 'register'"}selected{/if}>注册即须验证才能登录</option>
+            <option value="lazy" {if condition="($settings['verify_mode'] ?? '') eq 'lazy'"}selected{/if}>可登录，上传/公开前须验证</option>
+          </select>
+        </label>
+        <label class="field"><span class="field-label">磁盘剩余告警（GB）</span><input type="number" name="alert_disk_free_gb" value="{$settings.alert_disk_free_gb|default=10}"></label>
+        <label class="field"><span class="field-label">配额剩余告警（%）</span><input type="number" name="alert_quota_left_pct" value="{$settings.alert_quota_left_pct|default=10}"></label>
+        <label class="field"><span class="field-label">网盘空间剩余告警（%）</span><input type="number" name="alert_space_left_pct" value="{$settings.alert_space_left_pct|default=10}"></label>
+        <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>
+      </form>
+    </section>
+  </div>
 
-<section class="panel">
-  <h2 class="panel-title">发送日志 <span class="count">共 {$total} 条</span></h2>
-  <table class="table">
-    <thead><tr><th>ID</th><th>收件人</th><th>主题</th><th>模板</th><th>状态</th><th>错误</th><th>时间</th></tr></thead>
-    <tbody>
-      {volist name="logs" id="vo"}
-      <tr>
-        <td>{$vo.id}</td>
-        <td class="td-clip">{$vo.to_email}</td>
-        <td class="td-clip">{$vo.subject}</td>
-        <td class="mono">{$vo.template}</td>
-        <td>{if condition="$vo.status eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
-        <td class="td-clip" title="{$vo.error}">{$vo.error|default='-'}</td>
-        <td>{:date('m-d H:i', ts($vo.create_time))}</td>
-      </tr>
-      {/volist}
-    </tbody>
-  </table>
-</section>
+  <!-- ===== Tab: 通知开关 ===== -->
+  <div class="tab-pane" data-pane="events">
+    <section class="panel">
+      <h2 class="panel-title">通知开关（勾选启用 · 全站事件覆盖）</h2>
+      <p class="panel-sub">勾选的事件才会发邮件；「全不勾 = 全部关闭」，新功能上线会在此自动增加对应事件。</p>
+      <form id="eventsForm" class="notify-matrix">
+        <input type="hidden" name="events_form" value="1">
+        {volist name="events" id="group"}
+        <div class="notify-group">
+          <div class="notify-group-title">
+            {switch name="$key"}
+              {case value="system"}系统与运维{/case}
+              {case value="account"}账号与内容{/case}
+              {case value="trade"}交易与收益{/case}
+              {case value="report"}举报{/case}
+              {case value="ops"}运营{/case}
+            {/switch}
+          </div>
+          <div class="notify-items">
+            {volist name="group" id="label"}
+            <label class="notify-item">
+              <input type="checkbox" name="mail_events[]" value="{$key}" {if condition="in_array($key, $enabled_events)"}checked{/if}>
+              <span>{$label}</span>
+            </label>
+            {/volist}
+          </div>
+        </div>
+        {/volist}
+        <div class="notify-actions">
+          <button type="button" class="btn-ghost-sm" id="evAll">全选</button>
+          <button type="button" class="btn-ghost-sm" id="evNone">全不选</button>
+          <button type="submit" class="btn btn-sm">保存通知开关</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <!-- ===== Tab: 测试发送 ===== -->
+  <div class="tab-pane" data-pane="test">
+    <section class="panel">
+      <h2 class="panel-title">测试发送</h2>
+      <p class="panel-sub">填收件邮箱（留空用管理员邮箱），点发送验证 SMTP 配置是否可用。</p>
+      <div class="model-inline-form">
+        <input type="text" id="testTo" placeholder="收件邮箱（留空用管理员邮箱）" style="width:280px">
+        <button class="btn btn-sm" type="button" id="mailTestBtn">发送测试邮件</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===== Tab: 发送日志 ===== -->
+  <div class="tab-pane" data-pane="logs">
+    <section class="panel">
+      <h2 class="panel-title">发送日志 <span class="count">共 {$total} 条{if condition="$filtered neq $total"} · 筛选后 {$filtered} 条{/if}</span></h2>
+
+      <form class="search-bar" method="get" action="/admin/mail" style="flex-wrap:wrap;margin-bottom:12px">
+        <input type="hidden" name="tab" value="logs">
+        <input type="text" name="lto" value="{$lto}" placeholder="收件人" style="width:180px">
+        <select name="ltpl" class="filter-select">
+          <option value="">全部事件</option>
+          {volist name="templates" id="tpl"}
+          <option value="{$tpl}" {if condition="$ltpl eq $tpl"}selected{/if}>{$tpl}</option>
+          {/volist}
+        </select>
+        <select name="lstatus" class="filter-select">
+          <option value="">全部状态</option>
+          <option value="1" {if condition="$lstatus eq '1'"}selected{/if}>成功</option>
+          <option value="0" {if condition="$lstatus eq '0'"}selected{/if}>失败</option>
+        </select>
+        <input type="date" name="ldfrom" value="{$ldfrom}" style="width:140px">
+        <span class="field-hint">至</span>
+        <input type="date" name="ldto" value="{$ldto}" style="width:140px">
+        <button class="btn btn-sm" type="submit">筛选</button>
+        <a class="btn-ghost-sm" href="/admin/mail#logs">重置</a>
+      </form>
+
+      <div class="gallery-batch" style="margin-bottom:10px">
+        <button class="btn-ghost-sm" type="button" id="mailLogAll">全选</button>
+        <button class="btn-ghost-sm btn-danger-sm" type="button" id="mailLogDel">删除选中</button>
+        <button class="btn-ghost-sm btn-danger-sm" type="button" id="mailLogClear">清空全部</button>
+      </div>
+
+      <table class="table">
+        <thead><tr><th style="width:28px"><input type="checkbox" id="mailLogCheckAll"></th><th>ID</th><th>收件人</th><th>主题</th><th>事件</th><th>状态</th><th>错误</th><th>时间</th></tr></thead>
+        <tbody>
+          {volist name="logs" id="vo"}
+          <tr>
+            <td><input type="checkbox" class="ml-check" value="{$vo.id}"></td>
+            <td>{$vo.id}</td>
+            <td class="td-clip">{$vo.to_email}</td>
+            <td class="td-clip">{$vo.subject}</td>
+            <td class="mono">{$vo.template}</td>
+            <td>{if condition="$vo.status eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
+            <td class="td-clip" title="{$vo.error}">{$vo.error|default='-'}</td>
+            <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+          </tr>
+          {/volist}
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
 {/block}
 
 {block name="script"}
