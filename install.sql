@@ -407,3 +407,15 @@ CREATE TABLE IF NOT EXISTS `img_mail_logs` (
 
 -- 注：新列已并入上方基础表结构定义（MySQL 5.7 不支持 ADD COLUMN IF NOT EXISTS）
 
+CREATE TABLE IF NOT EXISTS `img_cron_heartbeats` (
+  `task_key` varchar(40) NOT NULL DEFAULT '',
+  `last_run` int unsigned NOT NULL DEFAULT '0',
+  `last_result` varchar(200) NOT NULL DEFAULT '',
+  `run_count` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`task_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='计划任务心跳';
+
+INSERT IGNORE INTO `img_settings` (`skey`,`svalue`,`remark`,`update_time`) VALUES
+('cron_key','','计划任务访问密钥',UNIX_TIMESTAMP()),
+('gen_daily_limit','100','造图机器人单日上限',UNIX_TIMESTAMP()),
+('credits_per_yuan','10','1元兑换站币数',UNIX_TIMESTAMP());

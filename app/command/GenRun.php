@@ -26,6 +26,7 @@ class GenRun extends Command
 
     protected function execute(Input $input, Output $output)
     {
+        \app\common\service\CronService::beat('gen', 'started');
         $now = time();
         // 单日上限
         $dailyLimit = (int)Setting::get('gen_daily_limit', 100);
@@ -110,6 +111,7 @@ class GenRun extends Command
             $this->logTask((int)$task['id'], $gen, $ok, $fail, implode('; ', array_slice($detail, 0, 10)));
             $output->writeln("任务 #{$task['id']} {$task['name']}：生成 {$gen}，成功 {$ok}，失败 {$fail}");
         }
+        \app\common\service\CronService::beat('gen', 'done');
         return 0;
     }
 
@@ -195,7 +197,7 @@ class GenRun extends Command
                 $cfg = json_decode((string)$row['config'], true) ?: [];
                 $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
                 $local = rtrim(public_path(), '/\\') . '/' . $rootRel . '/' . ltrim((string)$path, '/');
-                if (is_file($local) && FingerprintService::distance($ah, FingerprintService::ahash($local)) <= 6) {
+                if (@is_file($local) && FingerprintService::distance($ah, FingerprintService::ahash($local)) <= 6) {
                     return true;
                 }
             } catch (\Throwable $e) {

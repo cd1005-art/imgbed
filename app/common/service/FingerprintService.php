@@ -120,7 +120,7 @@ class FingerprintService
             if ($row && $row['driver'] === 'local') {
                 $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
                 $local = rtrim(public_path(), '/\\') . '/' . $rootRel . '/' . ltrim((string)$img['path'], '/');
-                if (is_file($local)) {
+                if (@is_file($local)) {
                     $fp = self::compute($local);
                     $sha1 = $fp['sha1'] ?: $sha1;
                     $phash = $fp['ahash'];

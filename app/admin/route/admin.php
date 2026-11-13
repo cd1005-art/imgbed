@@ -60,6 +60,9 @@ Route::group(function () {
 
     Route::post('mail/test', 'MailManage/test');
     Route::post('mail/save', 'MailManage/save');
+    Route::post('cron/run/:task', 'CronManage/run');
+    Route::post('cron/rotate', 'CronManage/rotateKey');
+    Route::get('cron', 'CronManage/index');
     Route::get('mail', 'MailManage/index');
 
     Route::get('site', 'AdManage/site');

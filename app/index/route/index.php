@@ -26,6 +26,9 @@ Route::get('p/:id', 'Photo/show');
 Route::get('tag', 'Photo/tag');
 Route::get('explore', 'Explore/index');
 
+// ---- 计划任务 URL 触发（key 校验，无需登录） ----
+Route::get('cron/:task', 'Cron/run');
+
 // ---- VIP 购买（具体规则在前，避免被 vip 短规则抢占） ----
 Route::get('vip/buy/:id', 'Vip/buy');
 Route::get('vip', 'Vip/index');

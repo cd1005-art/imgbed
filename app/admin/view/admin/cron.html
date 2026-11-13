@@ -1,0 +1,55 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">计划任务 <span class="count">状态灯：绿=正常 · 灰=未接入 · 红=超期/异常</span></h1>
+
+<section class="panel">
+  <h2 class="panel-title">任务状态</h2>
+  <table class="table">
+    <thead><tr><th style="width:56px">状态</th><th>任务</th><th>建议频率</th><th>最后执行</th><th>次数</th><th>最近结果</th><th>操作</th></tr></thead>
+    <tbody>
+      {volist name="tasks" id="t"}
+      <tr>
+        <td><span class="dot dot-{$t.status}" title="{$t.status}"></span></td>
+        <td><b>{$t.name}</b><br><span class="count">{$t.why}</span></td>
+        <td>{$t.desc}</td>
+        <td>{if condition="$t.last_run gt 0"}{:date('m-d H:i:s', ts($t.last_run))}{else /}-{/if}</td>
+        <td>{$t.run_count}</td>
+        <td class="td-clip" title="{$t.last_result}">{$t.last_result|default='-'}</td>
+        <td class="td-actions">
+          <button class="btn-ghost-sm" data-cron-run="{$t.key}">立即执行</button>
+          <button class="btn-ghost-sm" data-copy-text="{$t.cli}">复制命令</button>
+        </td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+  <p class="panel-sub" style="margin-top:12px">「立即执行」在服务器后台异步运行；若无反应说明 CLI php 路径不可用，请直接用下方命令配置计划任务。</p>
+</section>
+
+<section class="panel">
+  <h2 class="panel-title">配置方式（二选一）</h2>
+
+  <h3 style="font-size:14px;margin:14px 0 6px">方式 A：宝塔 Shell 脚本（推荐）</h3>
+  <p class="panel-sub">宝塔 → 计划任务 → 添加任务 → Shell 脚本，按对应频率填：</p>
+  {volist name="cli_list" id="c"}
+  <div class="cron-line"><pre class="url-text" style="white-space:pre-wrap;flex:1;margin:0">{$c}</pre><button class="btn-ghost-sm" type="button" data-copy-text="{$c}">复制</button></div>
+  {/volist}
+
+  <h3 style="font-size:14px;margin:18px 0 6px">方式 B：宝塔 访问URL（免 CLI）</h3>
+  <p class="panel-sub">把下列地址填进宝塔「访问URL」计划任务（频率同上）：</p>
+  {volist name="url_list" id="u"}
+  <div class="cron-line"><pre class="url-text" style="white-space:pre-wrap;flex:1;margin:0">{$u}</pre><button class="btn-ghost-sm" type="button" data-copy-text="{$u}">复制</button></div>
+  {/volist}
+
+  <div class="model-inline-form" style="margin-top:16px">
+    <span class="field-hint">访问密钥：</span>
+    <code class="inline-code">{$key}</code>
+    <button class="btn-ghost-sm" type="button" id="cronRotate">重置密钥</button>
+  </div>
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminCron');</script>
+{/block}

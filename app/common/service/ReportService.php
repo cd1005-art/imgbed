@@ -51,7 +51,7 @@ class ReportService
             if ($row && $row['driver'] === 'local') {
                 $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
                 $p = rtrim(public_path(), '/\\') . '/' . $rootRel . '/' . ltrim((string)$img->path, '/');
-                if (is_file($p)) {
+                if (@is_file($p)) {
                     $local = $p;
                 }
             }

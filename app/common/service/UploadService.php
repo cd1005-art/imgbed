@@ -150,7 +150,7 @@ class UploadService
                 if ($storageRow['driver'] === 'local') {
                     $rootRel = trim(str_replace('\\', '/', (string)($storageCfg['root'] ?? 'storage/images')), '/');
                     $localRoot = rtrim(public_path(), '/\\') . '/' . $rootRel;
-                    $free = @disk_free_space(is_dir($localRoot) ? $localRoot : public_path());
+                    $free = @disk_free_space(@is_dir($localRoot) ? $localRoot : public_path());
                     if ($free !== false && $free < (int)$file->getSize() * 2) {
                         throw new UploadException('服务器磁盘空间不足，暂停上传');
                     }

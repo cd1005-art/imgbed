@@ -23,6 +23,7 @@ class VipNotice extends Command
 
     protected function execute(Input $input, Output $output)
     {
+        \app\common\service\CronService::beat('vip', 'started');
         $now = time();
         $end = $now + 3 * 86400;
 
@@ -54,6 +55,7 @@ class VipNotice extends Command
             }
         }
         $output->writeln("检查 {$users} 个即将到期用户，发送 {$sent} 封提醒");
+        \app\common\service\CronService::beat('vip', 'done');
         return 0;
     }
 }

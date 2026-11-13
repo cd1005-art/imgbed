@@ -25,6 +25,7 @@ class StorageAlert extends Command
 
     protected function execute(Input $input, Output $output)
     {
+        \app\common\service\CronService::beat('storage', 'started');
         $to = trim((string)Setting::get('admin_mail_to', ''));
         $diskTh  = (int)Setting::get('alert_disk_free_gb', 10);
         $quotaTh = (int)Setting::get('alert_quota_left_pct', 10);
@@ -41,7 +42,7 @@ class StorageAlert extends Command
             if ($s['driver'] === 'local') {
                 $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
                 $root = rtrim(public_path(), '/\\') . '/' . $rootRel;
-                $free = @disk_free_space(is_dir($root) ? $root : public_path());
+                $free = @disk_free_space(@is_dir($root) ? $root : public_path());
                 if ($free !== false) {
                     $freeGb = $free / 1073741824;
                     if ($freeGb < $diskTh) {
@@ -101,6 +102,7 @@ class StorageAlert extends Command
             ['reason' => implode('<br>', array_map('htmlspecialchars', $fresh))]
         );
         $output->writeln($ok ? '告警邮件已发送' : '告警邮件发送失败（检查 SMTP 与日志）');
+        \app\common\service\CronService::beat('storage', 'done');
         return 0;
     }
 }
