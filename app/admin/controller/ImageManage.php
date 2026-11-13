@@ -62,6 +62,7 @@ class ImageManage extends Base
             $item['audit_model'] = '';
             $item['tag_list'] = json_decode((string)($item['tags'] ?? '[]'), true) ?: [];
             $item['tag_text'] = implode(' / ', $item['tag_list']);
+            $item['file_base'] = basename((string)$item['path']);   // 存储文件名（标题用 name）
             if ($log && preg_match('/^\[([^\]]+)\]/u', (string)$log['detail'], $mm)) {
                 $item['audit_model'] = trim($mm[1]);
             }

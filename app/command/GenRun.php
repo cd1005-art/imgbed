@@ -100,6 +100,7 @@ class GenRun extends Command
                     }
                     $detail[] = "OK #{$img->id} {$prompt}｜审核:{$auditTxt}{$pubTxt}";
                     \app\common\service\CronService::applyAutoTags($task, (int)$img->id);
+                    \app\common\service\CronService::applyAuditTitle((int)$img->id);
                 } catch (\Throwable $e) {
                     $fail++;
                     $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);

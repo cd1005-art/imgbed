@@ -51,7 +51,7 @@
       <td><input type="checkbox" class="row-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td><a href="/i/{$vo.path}" target="_blank"><img class="thumb" src="/i/{$vo.path}" alt=""></a></td>
-      <td class="td-clip" title="{$vo.name}">{$vo.name}</td>
+      <td class="td-clip" title="{$vo.name}">{$vo.file_base}<br><span class="count" title="{$vo.name}">{$vo.name|mb_substr=0,20}…</span></td>
       <td class="td-clip" title="{$vo.tag_text}">{$vo.tag_list[0]|default='-'}{if condition="count($vo.tag_list) gt 1"}<span class="count"> +{:count($vo.tag_list)-1}</span>{/if}</td>
       <td class="td-clip">{$vo.user_display}</td>
       <td>{:round($vo.size / 1024, 1)} KB</td>

@@ -460,6 +460,52 @@ class CronService
         return $flat >= 2;   // 至少两个通道几乎无变化
     }
 
+    /** 清洗审核描述，转成可读标题（去模型前缀/审核套话/限长 60） */
+    public static function cleanAuditTitle(string $detail): string
+    {
+        $s = trim($detail);
+        if ($s === '') {
+            return '';
+        }
+        // 过滤非法 UTF-8 字节（模型返回偶有残缺字符，直接入库会报 Incorrect string value）
+        $s = (string)@iconv('UTF-8', 'UTF-8//IGNORE', $s);
+        $s = (string)preg_replace('/^\[[^\]]*\]\s*/u', '', $s);
+
+        // 按标点切段，丢弃"审核套话"片段
+        $parts = preg_split('/[，,。；;！!、]+/u', $s) ?: [];
+        $keep = [];
+        $banned = '/违规|审核|托管|内容正常|正常内容|未发现|无异常|可通过|予以通过/u';
+        foreach ($parts as $p) {
+            $p = trim($p);
+            if ($p === '' || mb_strlen($p) < 2) {
+                continue;
+            }
+            if (preg_match($banned, $p)) {
+                continue;
+            }
+            $keep[] = $p;
+        }
+        $out = trim(implode('，', $keep), " \t\n\r，,。;；!！");
+        if (mb_strlen($out) > 60) {
+            $out = mb_substr($out, 0, 60);
+        }
+        // 最后兜底：非法 UTF-8 直接放弃（保留原文件名，避免入库报错）
+        if (!mb_check_encoding($out, 'UTF-8')) {
+            return '';
+        }
+        return $out;
+    }
+
+    /** 用审核描述覆盖生成图的标题（仅 gen_bot 图，不动用户上传的图） */
+    public static function applyAuditTitle(int $imageId): void
+    {
+        $detail = (string)Db::name('audit_logs')->where('image_id', $imageId)->order('id', 'desc')->value('detail');
+        $title  = self::cleanAuditTitle($detail);
+        if ($title !== '') {
+            Db::name('images')->where('id', $imageId)->update(['name' => $title]);
+        }
+    }
+
     /** 自动打标签：任务分类 + 审核描述首段（需任务开启 auto_tag） */
     public static function applyAutoTags(array $task, int $imageId): void
     {
@@ -652,6 +698,7 @@ class CronService
                         . ($made === 'placeholder' ? '（占位图）' : '')
                         . '｜审核:' . $auditTxt . $pubTxt;
                     self::applyAutoTags($task, (int)$r['image']->id);
+                    self::applyAuditTitle((int)$r['image']->id);
                 } catch (\Throwable $e) {
                     $fail++;
                     $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);
