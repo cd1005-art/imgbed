@@ -71,6 +71,9 @@ Route::group(function () {
     Route::get('cron', 'CronManage/index');
     Route::get('mail', 'MailManage/index');
 
+    Route::post('nav/save', 'NavManage/save');
+    Route::post('nav/reset', 'NavManage/reset');
+    Route::get('nav', 'NavManage/index');
     Route::get('site', 'AdManage/site');
     Route::post('site/save', 'AdManage/siteSave');
     Route::get('ad', 'AdManage/index');

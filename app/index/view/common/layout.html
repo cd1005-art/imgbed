@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$site_name|default='逍遥图床'}{block name="title"}{/block}</title>
-<link rel="stylesheet" href="/static/imgbed.css?v=30">
+<link rel="stylesheet" href="/static/imgbed.css?v=31">
 </head>
 <body>
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -21,19 +21,16 @@
 <header class="topbar">
   <div class="wrap topbar-in">
     <a class="brand" href="/">{$site_name|default='逍遥图床'}</a>
-    <a class="brand-link" href="/explore" title="浏览全站公开图片">图片广场</a>
+    {volist name="nav_left" id="nl"}
+    <a class="brand-link" href="{$nl.url}"{if condition="$nl.blank eq 1"} target="_blank" rel="noopener"{/if}>{$nl.name}</a>
+    {/volist}
     <nav class="nav">
-      {if condition="$user ?? null"}
-        <a href="/gallery">我的图片</a>
-        <a href="/vip">VIP</a>
-        <a href="/console">个人中心</a>
+      {volist name="nav_right" id="nr"}
+        {if condition="$nr.url eq '/logout' && isset($user) && $user"}
         <span class="nav-user"><svg class="ic"><use href="#i-user"/></svg>{$user.nickname}</span>
-        <a href="/logout" class="nav-logout">退出</a>
-      {else /}
-        <a href="/vip">VIP</a>
-        <a href="/login">登录</a>
-        <a href="/register" class="btn btn-sm">注册</a>
-      {/if}
+        {/if}
+        <a href="{$nr.url}"{if condition="$nr.blank eq 1"} target="_blank" rel="noopener"{/if} class="{if condition="$nr.url eq '/logout'"}nav-logout{elseif condition="$nr.url eq '/register'"}btn btn-sm{/if}">{$nr.name}</a>
+      {/volist}
     </nav>
   </div>
 </header>
@@ -61,7 +58,7 @@
 </footer>
 
 <div id="toast" class="toast" hidden></div>
-<script src="/static/imgbed.js?v=30"></script>
+<script src="/static/imgbed.js?v=31"></script>
 {block name="script"}{/block}
 </body>
 </html>

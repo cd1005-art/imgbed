@@ -1,0 +1,62 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<div class="page-toolbar">
+  <h1 class="page-title">导航管理 <span class="count">前台导航栏可自由增删改</span></h1>
+  <div class="gallery-batch">
+    <button class="btn-ghost-sm" type="button" id="navAdd">+ 添加导航项</button>
+    <button class="btn-ghost-sm" type="button" id="navReset">恢复默认</button>
+    <button class="btn btn-sm" type="button" id="navSave">保存</button>
+  </div>
+</div>
+
+<section class="panel">
+  <p class="panel-sub">
+    「位置」决定显示在哪：<b>站名右侧</b>（如 图片广场）或 <b>右侧导航</b>（如 我的图片 / VIP）；
+    「显示条件」控制谁能看到；排序数字越小越靠前。<b>注意</b>：删除「退出」会导致用户无法退出登录，「注册/登录」也请保留其一。
+  </p>
+  <table class="table" id="navTable">
+    <thead>
+      <tr>
+        <th style="width:150px">名称</th>
+        <th>链接</th>
+        <th style="width:130px">位置</th>
+        <th style="width:130px">显示条件</th>
+        <th style="width:80px">新窗口</th>
+        <th style="width:80px">排序</th>
+        <th style="width:70px">启用</th>
+        <th style="width:70px">操作</th>
+      </tr>
+    </thead>
+    <tbody id="navBody">
+      {volist name="links" id="l"}
+      <tr class="nav-row">
+        <td><input type="text" class="nav-name" value="{$l.name}" style="width:100%"></td>
+        <td><input type="text" class="nav-url" value="{$l.url}" style="width:100%"></td>
+        <td>
+          <select class="nav-pos filter-select">
+            <option value="left" {if condition="$l.pos eq 'left'"}selected{/if}>站名右侧</option>
+            <option value="right" {if condition="$l.pos eq 'right'"}selected{/if}>右侧导航</option>
+          </select>
+        </td>
+        <td>
+          <select class="nav-auth filter-select">
+            <option value="all" {if condition="$l.auth eq 'all'"}selected{/if}>所有人</option>
+            <option value="login" {if condition="$l.auth eq 'login'"}selected{/if}>仅登录</option>
+            <option value="guest" {if condition="$l.auth eq 'guest'"}selected{/if}>仅未登录</option>
+          </select>
+        </td>
+        <td style="text-align:center"><input type="checkbox" class="nav-blank" {if condition="$l.blank eq 1"}checked{/if}></td>
+        <td><input type="number" class="nav-sort" value="{$l.sort}" style="width:64px"></td>
+        <td style="text-align:center"><input type="checkbox" class="nav-enabled" {if condition="$l.enabled eq 1"}checked{/if}></td>
+        <td><button class="btn-ghost-sm btn-danger-sm" type="button" onclick="this.closest('tr').remove()">删除</button></td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminNav');</script>
+{/block}

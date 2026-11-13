@@ -23,6 +23,11 @@ class Base extends \app\BaseController
         $vars['ads_home_header'] = $vars['ads_home_header'] ?? self::adContent('home_header');
         $vars['ads_home_footer'] = $vars['ads_home_footer'] ?? self::adContent('home_footer');
 
+        // 导航栏（后台「导航管理」可配置）
+        $logged = $uid > 0;
+        $vars['nav_left']  = $vars['nav_left']  ?? \app\common\service\NavService::forPage($logged)['left'];
+        $vars['nav_right'] = $vars['nav_right'] ?? \app\common\service\NavService::forPage($logged)['right'];
+
         return view($template, $vars);
     }
 
