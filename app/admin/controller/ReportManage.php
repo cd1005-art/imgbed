@@ -101,6 +101,9 @@ class ReportManage extends Base
         if (!$rep) {
             return json(['status' => false, 'message' => '举报不存在']);
         }
+        if ((string)$rep['status'] !== 'pending') {
+            return json(['status' => false, 'message' => '仅「待处理」记录可驳回']);
+        }
         Db::name('reports')->where('id', $id)->update([
             'status' => 'closed', 'handled_by' => (int)session('admin_id'), 'update_time' => time(),
         ]);

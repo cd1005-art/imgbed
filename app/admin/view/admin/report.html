@@ -49,8 +49,11 @@
       </td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>
       <td class="td-actions">
-        {if condition="$vo.status eq 'pending' || $vo.status eq 'ai_rejected' || $vo.status eq 'closed'"}
+        {if condition="$vo.status eq 'pending'"}
         <button class="btn-ghost-sm" data-rep-confirm="{$vo.id}">下架</button>
+        {/if}
+        {if condition="$vo.status eq 'ai_rejected' || $vo.status eq 'closed'"}
+        <button class="btn-ghost-sm" data-rep-confirm="{$vo.id}" title="覆盖当前判定，人工下架该图片">人工下架</button>
         {/if}
         {if condition="$vo.status eq 'pending'"}
         <button class="btn-ghost-sm" data-rep-reject="{$vo.id}">驳回</button>
