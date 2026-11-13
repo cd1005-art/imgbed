@@ -32,6 +32,16 @@ class MailManage extends Base
         $filtered = count($logs);
         $templates = Db::name('mail_logs')->distinct(true)->column('template');
 
+        $labels = MailerService::eventLabels();
+        foreach ($logs as &$lg) {
+            $lg['template_label'] = $labels[$lg['template']] ?? ($lg['template'] === '' ? '（无）' : $lg['template']);
+        }
+        unset($lg);
+        $templateOptions = [];
+        foreach (array_values(array_filter($templates)) as $tpl) {
+            $templateOptions[] = ['key' => $tpl, 'label' => $labels[$tpl] ?? $tpl];
+        }
+
         $raw = (string)Setting::get('mail_events', '');
         $enabled = $raw === '' ? null : (json_decode($raw, true) ?: []);
         $allEvents = MailerService::eventOptions();
@@ -56,6 +66,7 @@ class MailManage extends Base
             'lto' => $lto, 'ltpl' => $ltpl, 'lstatus' => $lstatus,
             'ldfrom' => $ldfrom, 'ldto' => $ldto,
             'templates' => array_values(array_filter($templates)),
+            'template_options' => $templateOptions,
             'filtered'  => $filtered,
         ]);
     }

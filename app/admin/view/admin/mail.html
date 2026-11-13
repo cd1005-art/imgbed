@@ -130,8 +130,8 @@
         <input type="text" name="lto" value="{$lto}" placeholder="收件人" style="width:180px">
         <select name="ltpl" class="filter-select">
           <option value="">全部事件</option>
-          {volist name="templates" id="tpl"}
-          <option value="{$tpl}" {if condition="$ltpl eq $tpl"}selected{/if}>{$tpl}</option>
+          {volist name="template_options" id="tpl"}
+          <option value="{$tpl.key}" {if condition="$ltpl eq $tpl.key"}selected{/if}>{$tpl.label}</option>
           {/volist}
         </select>
         <select name="lstatus" class="filter-select">
@@ -161,7 +161,7 @@
             <td>{$vo.id}</td>
             <td class="td-clip">{$vo.to_email}</td>
             <td class="td-clip">{$vo.subject}</td>
-            <td class="mono">{$vo.template}</td>
+            <td>{$vo.template_label}</td>
             <td>{if condition="$vo.status eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
             <td class="td-clip" title="{$vo.error}">{$vo.error|default='-'}</td>
             <td>{:date('m-d H:i', ts($vo.create_time))}</td>

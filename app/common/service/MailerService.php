@@ -84,6 +84,21 @@ class MailerService
         return self::send($to, $subject, self::render($template, $vars), $event);
     }
 
+    /** 事件 key → 中文名（日志/筛选展示用，含测试等非业务事件） */
+    public static function eventLabels(): array
+    {
+        $map = [
+            'test'  => '配置测试',
+            'probe' => '调试探针',
+        ];
+        foreach (self::EVENTS as $items) {
+            foreach ($items as $k => $label) {
+                $map[$k] = $label;
+            }
+        }
+        return $map;
+    }
+
     /** 事件扁平列表（后台勾选面板用） */
     public static function eventOptions(): array
     {
