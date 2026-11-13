@@ -34,7 +34,10 @@
           <select name="auto_public"><option value="1">是</option><option value="0">否</option></select>
         </label>
         <label class="field field-wide"><span class="field-label">提示词池（每行一条，随机轮换）</span><textarea name="prompts" rows="3" class="modal-textarea" placeholder="抽象渐变背景&#10;极简几何图案&#10;森林晨雾风景"></textarea></label>
-        <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">+ 创建任务</button></div>
+        <div class="field" style="justify-content:flex-end">
+          <button type="button" class="btn-ghost-sm" id="genFormReset">清空/新建</button>
+          <button type="submit" class="btn">保存任务</button>
+        </div>
       </form>
 
       <div class="hint-bar" style="margin-top:14px">
@@ -89,6 +92,7 @@
             <td>{if condition="$vo.next_run gt 0"}{:date('m-d H:i', ts($vo.next_run))}{else /}-{/if}</td>
             <td class="td-actions">
               <button class="btn-ghost-sm" data-gen-toggle="{$vo.id}">{if condition="$vo.status eq 1"}暂停{else /}启用{/if}</button>
+              <button class="btn-ghost-sm" data-gen-edit="{$vo.id}">编辑</button>
               <button class="btn-ghost-sm btn-danger-sm" data-gen-del="{$vo.id}">删除</button>
             </td>
           </tr>
@@ -151,5 +155,6 @@
 {/block}
 
 {block name="script"}
-<script>pageBoot('adminGen');</script>
+<script>window.__genTasks = {:json_encode($list)};
+pageBoot('adminGen');</script>
 {/block}

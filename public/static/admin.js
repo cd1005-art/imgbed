@@ -704,6 +704,35 @@
   /* ---------- 造图任务 ---------- */
   function adminGen() {
     initTabs('#genTabs');
+    // 新建 / 编辑任务
+    var nf = document.getElementById('genNewForm');
+    if (nf) nf.addEventListener('submit', function (e) {
+      e.preventDefault();
+      postForm('/admin/gen/save', nf).then(function (d) {
+        toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 800);
+      });
+    });
+    document.querySelectorAll('[data-gen-edit]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var t = (window.__genTasks || []).filter(function (x) { return String(x.id) === b.dataset.genEdit; })[0];
+        if (!t || !nf) { return; }
+        nf.querySelector('[name=id]').value = t.id;
+        nf.querySelector('[name=name]').value = t.name;
+        nf.querySelector('[name=model_id]').value = t.model_id;
+        nf.querySelector('[name=target_user_input]').value = t.target_user_id;
+        nf.querySelector('[name=count_per_run]').value = t.count_per_run;
+        nf.querySelector('[name=interval_minutes]').value = t.interval_minutes;
+        nf.querySelector('[name=auto_public]').value = t.auto_public;
+        var ps = [];
+        try { ps = JSON.parse(t.prompts) || []; } catch (e2) {}
+        nf.querySelector('[name=prompts]').value = ps.join('\n');
+        var tabBtn = document.querySelector('[data-tab="new"]');
+        if (tabBtn) tabBtn.click();
+        nf.scrollIntoView({ behavior: 'smooth' });
+        toast('已载入任务 #' + t.id + '，修改后点「保存任务」');
+      });
+    });
+
     // 任务列表批量（启用/暂停/删除）
     var tsAll = document.getElementById('genTaskCheckAll');
     var tsBar = document.getElementById('genTaskBar');
