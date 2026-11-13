@@ -169,7 +169,7 @@ class CronService
                     $msg = self::taskVip();
                     break;
                 case 'gen':
-                    $msg = self::taskGen(1); // web 触发每次限 1 张，避免超时
+                    $msg = self::taskGen(2); // web 手动触发限 2 张（防 nginx 超时）；定时任务走 CLI 跑全量
                     break;
                 case 'site':
                     $msg = self::taskSite();
@@ -483,8 +483,10 @@ class CronService
      * 仅执行「到期」任务，执行后推进 next_run（上次执行 + 间隔），并写日志、计失败
      * @param int $limit 单任务单次最多生成张数
      */
-    public static function taskGen(int $limit = 1): string
+    public static function taskGen(int $limit = 0): string
     {
+        // web 触发时可能生成多张（每张约 10 秒），放宽执行时间限制
+        @set_time_limit(300);
         $now = time();
 
         // 单日上限（0 = 不限）
@@ -517,7 +519,9 @@ class CronService
             }
 
             $prompts = json_decode((string)$task['prompts'], true) ?: ['abstract gradient'];
-            $times   = min(max(1, $limit), max(1, (int)$task['count_per_run']));
+            // $limit > 0 时作为单次上限（手动触发可限制），否则按任务配置张数
+            $perRun  = max(1, (int)$task['count_per_run']);
+            $times   = $limit > 0 ? min($limit, $perRun) : $perRun;
 
             for ($i = 0; $i < $times; $i++) {
                 $prompt = $prompts[array_rand($prompts)];
