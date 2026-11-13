@@ -345,7 +345,11 @@ class CronService
         if ($domain === '') {
             $domain = (string)request()->domain();
         }
-        $host = parse_url($domain, PHP_URL_HOST) ?: '127.0.0.1';
+        // 兼容设置里不带协议前缀（如 "oddpp.com"）
+        $host = parse_url($domain, PHP_URL_HOST) ?: trim($domain);
+        if ($host === '' || filter_var($host, FILTER_VALIDATE_IP)) {
+            $host = $host !== '' ? $host : '127.0.0.1';
+        }
         $msgs = [];
         $bad = false;
 
@@ -396,12 +400,64 @@ class CronService
             $msgs[] = '证书读取失败';
         }
 
+        // 3) 域名到期检查（RDAP，剩余 < 30 天告警）
+        try {
+            $rootDomain = self::rootDomain($host);
+            if ($rootDomain !== '') {
+                $rdap = '';
+                $ch = @curl_init('https://rdap.org/domain/' . $rootDomain);
+                if ($ch) {
+                    @curl_setopt_array($ch, [
+                        CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_FOLLOWLOCATION => true,
+                        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_USERAGENT => 'imgbed-monitor',
+                    ]);
+                    $rdap = (string)@curl_exec($ch);
+                    @curl_close($ch);
+                }
+                if ($rdap !== '') {
+                    $jd = json_decode($rdap, true);
+                    $exp = null;
+                    foreach (($jd['events'] ?? []) as $ev) {
+                        if (($ev['eventAction'] ?? '') === 'expiration') {
+                            $exp = strtotime((string)$ev['eventDate']);
+                        }
+                    }
+                    if ($exp) {
+                        $days = (int)floor(($exp - time()) / 86400);
+                        $msgs[] = "域名剩余 {$days} 天";
+                        if ($days < 30) {
+                            $bad = true;
+                            $msgs[] = '⚠ 域名即将到期，请立即续费';
+                            self::notifyAdmin('domain_expire', '【域名即将到期】' . $rootDomain, 'domain_expire',
+                                ['name' => $rootDomain, 'reason' => $days . ' 天']);
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+
         $text = implode('；', $msgs);
         if ($bad) {
             self::notifyAdmin('site_down', '【站点巡检异常】' . $host, 'storage_alert', ['reason' => $text]);
             return 'fail: ' . $text;
         }
         return $text;
+    }
+
+    /** 取主域名（xxx.yyy.com → yyy.com，支持常见二级后缀） */
+    protected static function rootDomain(string $host): string
+    {
+        $parts = array_values(array_filter(explode('.', strtolower(trim($host)))));
+        if (count($parts) < 2) {
+            return '';
+        }
+        $twoLevel = ['com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn', 'co.uk', 'com.hk', 'com.tw'];
+        $last2 = $parts[count($parts) - 2] . '.' . $parts[count($parts) - 1];
+        if (in_array($last2, $twoLevel, true) && count($parts) >= 3) {
+            return $parts[count($parts) - 3] . '.' . $last2;
+        }
+        return $last2;
     }
 
     /** 展示用 CLI php 路径（不探测，避免 disable_functions 限制；按服务器实际修改） */

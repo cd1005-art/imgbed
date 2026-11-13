@@ -26,6 +26,7 @@ class MailerService
             'cron_fail'      => '计划任务连续失败',
             'site_down'      => '站点不可用',
             'cert_expire'    => 'HTTPS 证书即将到期',
+            'domain_expire'  => '域名即将到期',
         ],
         'account' => [
             'verify'         => '注册邮箱验证',
@@ -193,6 +194,7 @@ class MailerService
             'recharge' => '<p>充值成功：{{amount}} 元，当前余额 {{name}} 站币。</p>',
             'cron_fail' => '<p>计划任务「{{name}}」连续失败。</p><p>{{reason}}</p><p>请检查宝塔计划任务与 runtime 日志。</p>',
             'cron_recover' => '<p>计划任务「{{name}}」已恢复正常执行。</p>',
+            'domain_expire' => '<p>域名 {{name}} 将在 {{reason}} 内到期，请尽快续费。</p><p>到期后网站、邮件、所有子域名将全部失效。</p>',
             'report_received' => '<p>你的举报已受理，我们将在复核后通过邮件告知结果。</p><p>举报理由：{{reason}}</p>',
             'report_result' => '<p>举报处理结果：{{name}}</p><p>{{reason}}</p>',
             'ban_public' => '<p>你的图片「{{name}}」因{{reason}}已被下架，不能再设为公开。</p>',
