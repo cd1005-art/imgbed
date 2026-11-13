@@ -20,7 +20,7 @@
     <div class="auth-resend">
       <span class="field-hint">没收到验证码？</span>
       <button class="btn-ghost-sm" type="button" id="resendCodeBtn" {if condition="$resend_wait gt 0"}disabled{/if}>
-        {$resend_wait gt 0 ? '重新发送（' . $resend_wait . 's）' : '重新发送验证码'}
+        {if condition="$resend_wait gt 0"}重新发送（{$resend_wait}s）{else /}重新发送验证码{/if}
       </button>
     </div>
 
