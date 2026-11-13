@@ -50,6 +50,25 @@
     }).then(function (r) { return r.json(); });
   }
 
+  /* 造图-单日上限保存：全局委托（不依赖页面初始化，避免绑定被异常中断） */
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t || t.id !== 'genDailySave') { return; }
+    var input = document.getElementById('genDailyLimit');
+    var v = parseInt(input ? input.value : '', 10);
+    if (isNaN(v) || v < 0) { toast('请输入 0 或正整数'); return; }
+    toast('保存中…');
+    fetch('/admin/gen/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'gen_daily_limit=' + v
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      toast(d.message);
+    }).catch(function () {
+      toast('保存失败：网络或接口错误');
+    });
+  });
+
   /** 通用：全选/单条删除/批量删除（cfg: checkAll, checkbox, batchBtn, api, label） */
   function bindBatchDelete(cfg) {
     var bar = cfg.batchBar ? document.querySelector(cfg.batchBar) : null;
@@ -630,15 +649,6 @@
   /* ---------- 造图任务 ---------- */
   function adminGen() {
     initTabs('#genTabs');
-    var ds = document.getElementById('genDailySave');
-    if (ds) ds.addEventListener('click', function () {
-      var v = parseInt((document.getElementById('genDailyLimit') || {}).value, 10);
-      if (isNaN(v) || v < 0) { toast('请输入 0 或正整数'); return; }
-      postBody('/admin/gen/settings', 'gen_daily_limit=' + v).then(function (d) {
-        toast(d.message);
-      });
-    });
-
     bindBatchDelete({checkAll:'#genLogCheckAll', checkbox:'.genlog-check', batchBtn:'#genLogDel',
       api:'/admin/gen/delete-logs', label:'日志', batchBar:'#genLogBar', barCount:'#genLogCount',
       clearBtn:'#genLogClearSel', unit:'条'});
