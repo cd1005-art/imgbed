@@ -2,9 +2,10 @@
 
 {block name="content"}
 <div class="page-toolbar">
+<div class="page-toolbar">
   <h1 class="page-title">标签管理 <span class="count">{$total} 个</span></h1>
-  <form class="search-bar" method="get" action="/admin/tag" style="flex-wrap:wrap;margin:10px 0">
-    <input type="text" name="kw" value="{$kw}" placeholder="标签名关键词" style="width:180px">
+  <form class="search-bar" method="get" action="/admin/tag">
+    <input type="text" name="kw" value="{$kw}" placeholder="标签名关键词">
     <select name="tstatus" class="filter-select">
       <option value="">全部状态</option>
       <option value="1" {if condition="$tstatus eq '1'"}selected{/if}>启用</option>
@@ -17,8 +18,14 @@
       <option value="name" {if condition="$torder eq 'name'"}selected{/if}>名称 A-Z</option>
     </select>
     <button class="btn btn-sm" type="submit">筛选</button>
-    <a class="btn-ghost-sm" href="/admin/tag">重置</a>
   </form>
+</div>
+
+<div class="batch-bar" id="tagBatchBar" hidden>
+  <span id="tagBatchCount">已选 0 个</span>
+  <button class="btn-ghost-sm btn-danger-sm" type="button" id="tagBatchDel">批量删除</button>
+  <button class="btn-ghost-sm" type="button" id="tagBatchClear">取消选择</button>
+</div>
   <form class="search-bar" method="get" action="/admin/tag">
     <input type="text" name="kw" value="{$kw}" placeholder="标签名搜索">
     <button class="btn btn-sm" type="submit">搜索</button>
@@ -35,9 +42,6 @@
   <p class="panel-sub" style="margin:8px 0 0">来源标签的图片关联迁移到目标标签，来源词转为别名（AI 以后自动归并到目标）。</p>
 </section>
 
-<div class="gallery-batch" style="margin-bottom:10px">
-  <button class="btn-ghost-sm btn-danger-sm" type="button" id="tagBatchDel">删除选中</button>
-</div>
 <table class="table">
   <thead><tr><th style="width:28px"><input type="checkbox" id="tagCheckAll"></th><th>ID</th><th>标签</th><th>分类</th><th>来源</th><th>使用次数</th><th>状态</th><th>操作</th></tr></thead>
   <tbody>

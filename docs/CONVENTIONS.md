@@ -59,3 +59,49 @@
   - 邮箱验证 / 密码重置 → 6 位数字验证码（纯文字），用户在站内输入
   - 其他通知 → 只描述结果与站内位置，不给可点击入口
 - 代码层：`MailerService::render()` 模板中禁止出现 `<a href>`；模板变量统一为 `{{site}} {{expire_at}} {{reason}} {{amount}} {{name}} {{code}}`。
+
+## 六、UI 一致性（★ 强制）
+
+**任何新增/修改的界面，动手前必须先看已有页面的同类实现，沿用同一套结构，不允许自创样式。**
+
+### 标准列表页结构（以「图片管理」为基准）
+
+```html
+<div class="page-toolbar">
+  <h1 class="page-title">标题 <span class="count">N 条</span></h1>
+  <form class="search-bar" method="get" action="/admin/xxx">
+    <input type="text" name="kw" ...>
+    <select name="status" class="filter-select">...</select>
+    <input type="date" name="dfrom" class="filter-select">
+    <button class="btn btn-sm" type="submit">筛选</button>
+  </form>
+</div>
+
+<div class="batch-bar" id="xxxBatchBar" hidden>
+  <span id="xxxBatchCount">已选 0 条</span>
+  <button class="btn-ghost-sm btn-danger-sm" id="xxxBatchDel">批量删除</button>
+  <button class="btn-ghost-sm" id="xxxBatchClear">取消选择</button>
+</div>
+
+<table class="table">...</table>
+```
+
+- 筛选控件**与标题同一行**（`.page-toolbar` 内），行内用 `.filter-select` 统一高度
+- 批量操作条 `.batch-bar` **默认隐藏**，勾选后显示并显示数量，含「批量操作 / 取消选择」
+- 行内操作按钮用 `.btn-ghost-sm`（危险操作用 `.btn-danger-sm`）
+- 表格首列统一为勾选框（`<th style="width:28px">`）
+- JS 统一用 `bindBatchDelete(cfg)`（admin.js），不重复手写勾选逻辑
+
+### 不确定时先问
+
+样式/交互有疑问、或与现有页面存在多种可能做法时，**先给用户 2-3 个选项并说明差异，由用户确认后再动手**，不自行拍板。
+
+## 七、静态资源必须入仓库
+
+`public/static/` 下有 `.gitignore`（`*` 全忽略）。手写资源必须强制跟踪：
+
+```bash
+git add -f public/static/admin.js public/static/imgbed.js public/static/admin.css public/static/imgbed.css
+```
+
+否则仓库缺失资源，换会话/换机器部署会不一致。

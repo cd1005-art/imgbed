@@ -83,30 +83,31 @@
     <section class="panel">
       <h2 class="panel-title">执行日志 <span class="count">共 {$logs_total} 条</span></h2>
 
-      <form class="search-bar" method="get" action="/admin/gen" style="flex-wrap:wrap;margin-bottom:12px">
-        <input type="hidden" name="tab" value="logs">
-        <select name="lg_task" class="filter-select">
-          <option value="0">全部任务</option>
-          {volist name="list" id="t"}
-          <option value="{$t.id}" {if condition="$lg_task eq $t.id"}selected{/if}>#{$t.id} {$t.name}</option>
-          {/volist}
-        </select>
-        <select name="lg_ok" class="filter-select">
-          <option value="">全部结果</option>
-          <option value="1" {if condition="$lg_ok eq '1'"}selected{/if}>全部成功</option>
-          <option value="0" {if condition="$lg_ok eq '0'"}selected{/if}>存在失败</option>
-        </select>
-        <input type="date" name="lg_from" value="{$lg_from}" style="width:140px">
-        <span class="field-hint">至</span>
-        <input type="date" name="lg_to" value="{$lg_to}" style="width:140px">
-        <button class="btn btn-sm" type="submit">筛选</button>
-        <a class="btn-ghost-sm" href="/admin/gen#logs">重置</a>
-      </form>
+      <div class="page-toolbar">
+        <form class="search-bar" method="get" action="/admin/gen">
+          <input type="hidden" name="tab" value="logs">
+          <select name="lg_task" class="filter-select">
+            <option value="0">全部任务</option>
+            {volist name="list" id="t"}
+            <option value="{$t.id}" {if condition="$lg_task eq $t.id"}selected{/if}>#{$t.id} {$t.name}</option>
+            {/volist}
+          </select>
+          <select name="lg_ok" class="filter-select">
+            <option value="">全部结果</option>
+            <option value="1" {if condition="$lg_ok eq '1'"}selected{/if}>全部成功</option>
+            <option value="0" {if condition="$lg_ok eq '0'"}selected{/if}>存在失败</option>
+          </select>
+          <input type="date" name="lg_from" value="{$lg_from}" class="filter-select">
+          <input type="date" name="lg_to" value="{$lg_to}" class="filter-select">
+          <button class="btn btn-sm" type="submit">筛选</button>
+        </form>
+        <button class="btn-ghost-sm btn-danger-sm" type="button" id="genLogClear">清空全部日志</button>
+      </div>
 
-      <div class="gallery-batch" style="margin-bottom:10px">
-        <button class="btn-ghost-sm" type="button" id="genLogAll">全选</button>
-        <button class="btn-ghost-sm btn-danger-sm" type="button" id="genLogDel">删除选中</button>
-        <button class="btn-ghost-sm btn-danger-sm" type="button" id="genLogClear">清空全部</button>
+      <div class="batch-bar" id="genLogBar" hidden>
+        <span id="genLogCount">已选 0 条</span>
+        <button class="btn-ghost-sm btn-danger-sm" type="button" id="genLogDel">批量删除</button>
+        <button class="btn-ghost-sm" type="button" id="genLogClearSel">取消选择</button>
       </div>
 
       <table class="table">

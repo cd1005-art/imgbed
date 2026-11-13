@@ -2,9 +2,10 @@
 
 {block name="content"}
 <div class="page-toolbar">
+<div class="page-toolbar">
   <h1 class="page-title">举报管理 <span class="count">{$total} 条</span></h1>
-  <form class="search-bar" method="get" action="/admin/report" style="flex-wrap:wrap;margin:10px 0">
-    <input type="text" name="kw" value="{$kw}" placeholder="理由关键词 / 图片ID / 举报人ID" style="width:240px">
+  <form class="search-bar" method="get" action="/admin/report">
+    <input type="text" name="kw" value="{$kw}" placeholder="理由/图片ID/举报人ID" style="width:220px">
     <select name="status" class="filter-select">
       <option value="">全部状态</option>
       <option value="pending" {if condition="$status eq 'pending'"}selected{/if}>待处理</option>
@@ -12,15 +13,17 @@
       <option value="closed" {if condition="$status eq 'closed'"}selected{/if}>已驳回</option>
       <option value="ai_rejected" {if condition="$status eq 'ai_rejected'"}selected{/if}>AI 驳回</option>
     </select>
-    <input type="date" name="dfrom" value="{$dfrom}" style="width:140px">
-    <span class="field-hint">至</span>
-    <input type="date" name="dto" value="{$dto}" style="width:140px">
+    <input type="date" name="dfrom" value="{$dfrom}" class="filter-select">
+    <input type="date" name="dto" value="{$dto}" class="filter-select">
     <button class="btn btn-sm" type="submit">筛选</button>
-    <a class="btn-ghost-sm" href="/admin/report">重置</a>
   </form>
-  <div class="gallery-batch" style="margin-bottom:10px">
-    <button class="btn-ghost-sm btn-danger-sm" type="button" id="reportBatchDel">删除选中</button>
-  </div>
+</div>
+
+<div class="batch-bar" id="reportBatchBar" hidden>
+  <span id="reportBatchCount">已选 0 条</span>
+  <button class="btn-ghost-sm btn-danger-sm" type="button" id="reportBatchDel">批量删除</button>
+  <button class="btn-ghost-sm" type="button" id="reportBatchClear">取消选择</button>
+</div>
   <form class="search-bar" method="get" action="/admin/report">
     <select name="status" class="filter-select">
       <option value="">全部状态</option>
