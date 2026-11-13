@@ -6,14 +6,18 @@
  */
 declare(strict_types=1);
 
-$ROOT      = dirname(__DIR__);   // 站点根（.env / install.sql / install.lock 所在）
-$LOCK      = $ROOT . '/install.lock';
+$ROOT      = dirname(__DIR__);   // 站点根（.env / install.sql 所在）
+// install.lock 双路径检测（部分环境 open_basedir 只允许 public 目录）
+$LOCK_CANDIDATES = [$ROOT . '/install.lock', __DIR__ . '/install.lock'];
 $ENV_FILE  = $ROOT . '/.env';
 $SQL_FILE  = $ROOT . '/install.sql';
 
 function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 
-$installed = file_exists($LOCK);
+$installed = false;
+foreach ($LOCK_CANDIDATES as $lk) {
+    if (@file_exists($lk)) { $installed = true; break; }
+}
 $errors    = [];
 $done      = false;
 
@@ -105,8 +109,10 @@ if (!$installed && ($_SERVER['REQUEST_METHOD'] === 'POST')) {
                 throw new RuntimeException('.env 写入失败，请检查站点根目录写权限');
             }
 
-            // 6) 锁定
-            file_put_contents($LOCK, date('Y-m-d H:i:s') . " installed\n");
+            // 6) 锁定（根 + public 双写，兼容 open_basedir 限制）
+            foreach ($LOCK_CANDIDATES as $lk) {
+                @file_put_contents($lk, date('Y-m-d H:i:s') . " installed\n");
+            }
             // 尝试隐藏自身（失败不影响）
             @rename(__FILE__, __FILE__ . '.installed');
 
