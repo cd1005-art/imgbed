@@ -7,6 +7,7 @@ use app\BaseController;
 use app\common\exception\UploadException;
 use app\common\model\ApiToken;
 use app\common\model\Image;
+use app\common\model\Setting;
 use app\common\model\StrategyGroup;
 use app\common\model\User;
 use app\common\service\UploadService;
