@@ -185,9 +185,22 @@ class GenManage extends Base
         if (!$task) {
             return json(['status' => false, 'message' => '任务不存在']);
         }
-        $imgs = Db::name('images')->where('origin', 'gen_bot')
-            ->where('user_id', (int)$task['target_user_id'])
-            ->order('id', 'desc')->limit(6)->field('id,path,audit_status,is_public,create_time')->select()->toArray();
+        // 只取属于该任务的图：优先 gen_task_id；历史图回退到日志里解析出的图片 ID
+        $imgIds = Db::name('images')->where('gen_task_id', $id)
+            ->order('id', 'desc')->limit(6)->column('id');
+        if (!$imgIds) {
+            $logs = Db::name('gen_task_logs')->where('task_id', $id)
+                ->order('id', 'desc')->limit(50)->column('detail');
+            $txt = implode("\n", array_map('strval', $logs));
+            if (preg_match_all('/OK #(\d+)/', $txt, $mm)) {
+                $imgIds = array_slice(array_values(array_unique(array_reverse($mm[1]))), 0, 6);
+            }
+        }
+        $imgs = [];
+        if ($imgIds) {
+            $imgs = Db::name('images')->whereIn('id', $imgIds)
+                ->order('id', 'desc')->field('id,path,audit_status,is_public,create_time')->select()->toArray();
+        }
         $auditMap = [0 => '待审', 1 => '通过', 2 => '拒绝', 3 => '人工'];
         foreach ($imgs as &$im) {
             $im['url'] = '/i/' . $im['path'];

@@ -643,7 +643,9 @@ class CronService
                 try {
                     $f = new \think\file\UploadedFile($tmp, 'gen_' . date('YmdHis') . '_' . $i . '.jpg', 'image/jpeg', null, true);
                     $r = (new \app\common\service\UploadService())->upload($f, (int)$user->id, $group, '127.0.0.1', 'gen-bot');
-                    \think\facade\Db::name('images')->where('id', $r['image']->id)->update(['origin' => 'gen_bot']);
+                    \think\facade\Db::name('images')->where('id', $r['image']->id)->update([
+                        'origin' => 'gen_bot', 'gen_task_id' => (int)$task['id'],
+                    ]);
                     $fresh = \think\facade\Db::name('images')->where('id', $r['image']->id)->find();
                     if ((int)$task['auto_public'] === 1 && $fresh && (int)$fresh['audit_status'] === 1) {
                         \think\facade\Db::name('images')->where('id', $r['image']->id)->update(['is_public' => 1]);

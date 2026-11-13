@@ -86,7 +86,7 @@ class GenRun extends Command
                     $f = new \think\file\UploadedFile($tmp, 'gen_' . date('YmdHis') . '_' . $i . '.jpg', 'image/jpeg', null, true);
                     $r = (new UploadService())->upload($f, (int)$user->id, $group, '127.0.0.1', 'gen-bot');
                     $img = $r['image'];
-                    Db::name('images')->where('id', $img->id)->update(['origin' => 'gen_bot']);
+                    Db::name('images')->where('id', $img->id)->update(['origin' => 'gen_bot', 'gen_task_id' => (int)$task['id']]);
                     $fresh = Db::name('images')->where('id', $img->id)->find();
                     if ((int)$task['auto_public'] === 1 && $fresh && (int)$fresh['audit_status'] === 1) {
                         Db::name('images')->where('id', $img->id)->update(['is_public' => 1]);
