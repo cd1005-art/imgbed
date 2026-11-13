@@ -346,3 +346,16 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 /* ---------- 验证码页：重发行 ---------- */
 .auth-resend { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line); }
 .auth-resend .btn-ghost-sm[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* ---------- 通用 Tabs（前台） ---------- */
+.tabs-nav { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin: 0 0 16px; }
+.tab-btn {
+  appearance: none; background: transparent; border: none; cursor: pointer;
+  padding: 9px 16px; font-size: 13.5px; color: var(--ink-2);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit;
+}
+.tab-btn:hover { color: var(--ink); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.tab-pane > .panel:first-child { margin-top: 0; }
