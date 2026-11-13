@@ -44,8 +44,13 @@ Route::post('gallery/auto-public', 'Gallery/autoPublic');
 Route::get('gallery', 'Gallery/index');
 
     Route::post('gallery/delete/:id', 'Gallery/delete');
+    Route::post('gallery/price/:id', 'Gallery/price');
+    Route::post('report/:id', 'Photo/report');
+    Route::post('unlock/:id', 'Photo/unlock');
 
     Route::post('console/resend-verify', 'Console/resendVerify');
+    Route::post('console/recharge', 'Console/recharge');
+    Route::post('console/withdraw', 'Console/withdraw');
 Route::get('console', 'Console/index');
     Route::post('console/token/create', 'Console/tokenCreate');
     Route::post('console/token/delete/:id', 'Console/tokenDelete');

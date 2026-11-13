@@ -34,6 +34,41 @@
 </section>
 
 <section class="panel">
+  <h2 class="panel-title">收益与站币 <span class="count">余额 {$credits} 币 · 累计收益 {$credits_total} 币</span></h2>
+  <p class="panel-sub">1 元 = {$credits_rate} 站币。站币可用于解锁他人付费图片；作者收益可提现到支付宝。</p>
+
+  <div class="model-inline-form" style="margin:10px 0 16px">
+    <span class="field-hint">充值：</span>
+    <button class="btn-ghost-sm" type="button" data-recharge="10">10 元</button>
+    <button class="btn-ghost-sm" type="button" data-recharge="50">50 元</button>
+    <button class="btn-ghost-sm" type="button" data-recharge="100">100 元</button>
+  </div>
+
+  <form class="form form-grid" id="withdrawForm">
+    <label class="field"><span class="field-label">提现金额（元，最低 {$min_withdraw}）</span><input type="number" name="amount" value="{$min_withdraw}"></label>
+    <label class="field"><span class="field-label">支付宝姓名</span><input type="text" name="alipay_name" value="{$user.alipay_name|default=''}"></label>
+    <label class="field"><span class="field-label">支付宝账号</span><input type="text" name="alipay_account" value="{$user.alipay_account|default=''}"></label>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">申请提现</button></div>
+  </form>
+
+  {if condition="$withdraws"}
+  <table class="table" style="margin-top:14px">
+    <thead><tr><th>金额</th><th>实得</th><th>状态</th><th>时间</th></tr></thead>
+    <tbody>
+      {volist name="withdraws" id="w"}
+      <tr>
+        <td>{$w.amount} 元</td>
+        <td>{$w.real_amount} 元</td>
+        <td>{if condition="$w.status eq 'pending'"}<span class="count">待审核</span>{elseif condition="$w.status eq 'approved'"}已通过{elseif condition="$w.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
+        <td>{:date('m-d H:i', ts($w.create_time))}</td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+  {/if}
+</section>
+
+<section class="panel">
   <h2 class="panel-title">API Token</h2>
   <p class="panel-sub">给 PicGo / ShareX / Typora 或自家程序用。请求头 <code class="inline-code">X-API-TOKEN</code>，上传地址 <code class="inline-code">/api/v1/upload</code>。</p>
   <p class="panel-sub">Token 数量：<b>已用 {$token_used} 个</b> / {if condition="$token_limit gt 0"}上限 {$token_limit} 个{else /}不限{/if}</p>

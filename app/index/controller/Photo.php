@@ -58,6 +58,9 @@ class Photo extends Base
             'tags'     => $tags,
             'related'  => $related,
             'is_owner' => $isOwner,
+            'can_report' => $this->canReport(),
+            'unlocked'   => (int)$img->price_credits <= 0 || \app\common\service\CreditsService::unlocked((int)$img->id, $uid),
+            'my_credits' => $uid > 0 ? (int)(\think\facade\Db::name('users')->where('id', $uid)->value('credits') ?: 0) : 0,
             'notfound' => false,
             'protect'  => [
                 'right_click' => (string)Setting::get('block_right_click', '1') === '1',
@@ -65,6 +68,52 @@ class Photo extends Base
                 'long_press'  => (string)Setting::get('block_long_press', '1') === '1',
             ],
         ]);
+    }
+
+    /** 解锁付费图 */
+    public function unlock(int $id)
+    {
+        $uid = (int)(session('user_id') ?: 0);
+        if ($uid <= 0) {
+            return json(['status' => false, 'message' => '请先登录']);
+        }
+        $r = \app\common\service\CreditsService::unlock($id, $uid);
+        return json(['status' => $r['ok'], 'message' => $r['message']]);
+    }
+
+    /** 举报提交（登录用户） */
+    public function report(int $id)
+    {
+        $uid = (int)(session('user_id') ?: 0);
+        if ($uid <= 0) {
+            return json(['status' => false, 'message' => '请先登录']);
+        }
+        $user  = \app\common\model\User::find($uid);
+        $group = \app\common\model\StrategyGroup::find((int)$user->group_id);
+        if (!$group || (int)$group->can_report !== 1) {
+            return json(['status' => false, 'message' => '当前策略组未开放举报功能']);
+        }
+        $reason = trim((string)$this->request->post('reason', ''));
+        if ($reason === '') {
+            return json(['status' => false, 'message' => '请填写举报理由']);
+        }
+        $r = \app\common\service\ReportService::submit($id, $uid, $reason);
+        return json($r);
+    }
+
+    /** 当前访客是否可举报 */
+    protected function canReport(): bool
+    {
+        $uid = (int)(session('user_id') ?: 0);
+        if ($uid <= 0) {
+            return false;
+        }
+        $user = \app\common\model\User::find($uid);
+        if (!$user) {
+            return false;
+        }
+        $group = \app\common\model\StrategyGroup::find((int)$user->group_id);
+        return $group && (int)$group->can_report === 1;
     }
 
     /** 按标签聚合页 /tag/{name} */

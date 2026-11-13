@@ -12,7 +12,17 @@
 {else /}
 <div class="photo-wrap">
   <div class="photo-main">
-    <img id="photoImg" src="/i/{$image.path}" alt="{$image.name}" draggable="false">
+    <div style="position:relative">
+      <img id="photoImg" src="/i/{$image.path}" alt="{$image.name}" draggable="false"
+        {if condition="$image.price_credits gt 0 && !$unlocked"}style="filter:blur(18px);pointer-events:none"{/if}>
+      {if condition="$image.price_credits gt 0 && !$unlocked"}
+      <div class="pay-mask">
+        <p>付费图片 · 需解锁查看原图</p>
+        <button class="btn" type="button" data-unlock="{$image.id}">解锁（{$image.price_credits} 站币）</button>
+        <p class="field-hint">当前余额 {$my_credits} 站币</p>
+      </div>
+      {/if}
+    </div>
   </div>
   <div class="photo-side">
     <h1 class="photo-title">{$image.name}</h1>
@@ -39,6 +49,9 @@
     <div class="photo-actions">
       <button class="btn btn-sm" type="button" data-copy-url="/i/{$image.path}">复制外链</button>
       {if condition="$is_owner"}<a class="btn-ghost-sm" href="/gallery">管理我的图片</a>{/if}
+      {if condition="$can_report"}
+      <button class="btn-ghost-sm" type="button" data-report="{$image.id}">举报</button>
+      {/if}
     </div>
     <p class="field-hint" style="margin-top:14px">请尊重作者版权，未经许可请勿用于商业用途。</p>
   </div>
@@ -57,10 +70,48 @@
 {/if}
 {/block}
 
+<div class="modal-mask" id="reportModal" hidden>
+  <div class="modal">
+    <h3 class="modal-title">举报图片</h3>
+    <p class="field-hint">请说明举报理由（色情低俗 / 暴力血腥 / 侵权 / 其他）。恶意举报会被记录。</p>
+    <textarea id="reportReason" rows="4" class="modal-textarea" placeholder="填写理由…"></textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost-sm" type="button" id="reportCancel">取消</button>
+      <button class="btn btn-sm" type="button" id="reportSubmit">提交举报</button>
+    </div>
+  </div>
+</div>
+
 {block name="script"}
 <script>
 pageBoot('gallery');
 (function () {
+  var ub = document.querySelector('[data-unlock]');
+  if (ub) ub.addEventListener('click', function () {
+    if (!confirm('确认花 ' + ub.textContent.match(/\d+/) + ' 站币解锁？')) return;
+    fetch('/unlock/' + ub.getAttribute('data-unlock'), { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { alert(d.message); if (d.status) setTimeout(function () { location.reload(); }, 800); })
+      .catch(function () { alert('网络错误'); });
+  });
+  var rb = document.querySelector('[data-report]');
+  var rm = document.getElementById('reportModal');
+  var curId = 0;
+  if (rb && rm) {
+    rb.addEventListener('click', function () { curId = rb.getAttribute('data-report'); rm.hidden = false; });
+    document.getElementById('reportCancel').onclick = function () { rm.hidden = true; };
+    document.getElementById('reportSubmit').onclick = function () {
+      var reason = (document.getElementById('reportReason').value || '').trim();
+      if (!reason) { alert('请填写理由'); return; }
+      fetch('/report/' + curId, {
+        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'reason=' + encodeURIComponent(reason)
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        alert(d.message); rm.hidden = true;
+        if (d.status) setTimeout(function () { location.reload(); }, 800);
+      }).catch(function () { alert('网络错误'); });
+    };
+  }
   {if condition="$protect.right_click"}document.getElementById('photoImg').addEventListener('contextmenu', function (e) { e.preventDefault(); });{/if}
   {if condition="$protect.drag"}document.getElementById('photoImg').addEventListener('dragstart', function (e) { e.preventDefault(); });{/if}
   {if condition="$protect.long_press"}document.getElementById('photoImg').addEventListener('touchstart', function (e) { if (e.touches.length > 1) e.preventDefault(); });{/if}

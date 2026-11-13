@@ -18,6 +18,18 @@ Route::group(function () {
     Route::get('image/export', 'ImageManage/export');
     Route::post('tag/toggle/:id', 'TagManage/toggle');
     Route::post('tag/merge', 'TagManage/merge');
+    Route::post('report/confirm/:id', 'ReportManage/confirm');
+    Route::post('report/reject/:id', 'ReportManage/reject');
+    Route::post('report/unban/:imageId', 'ReportManage/unbanImage');
+    Route::post('withdraw/approve/:id', 'WithdrawManage/approve');
+    Route::post('withdraw/paid/:id', 'WithdrawManage/paid');
+    Route::post('withdraw/reject/:id', 'WithdrawManage/reject');
+    Route::post('gen/save', 'GenManage/save');
+    Route::post('gen/toggle/:id', 'GenManage/toggle');
+    Route::post('gen/delete/:id', 'GenManage/delete');
+    Route::get('gen', 'GenManage/index');
+    Route::get('withdraw', 'WithdrawManage/index');
+    Route::get('report', 'ReportManage/index');
     Route::get('tag', 'TagManage/index');
     Route::get('image', 'ImageManage/index');
     Route::post('image/toggle/:id', 'ImageManage/toggle');

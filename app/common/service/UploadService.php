@@ -52,6 +52,25 @@ class UploadService
     /** 主流程（异常统一由 upload 包装记日志） */
     protected function process(UploadedFile $file, int $userId, StrategyGroup $group, string $ip, string $ua, int $now): array
     {
+        // 违规指纹前置匹配（sha1 精确 + ahash 近似）
+        try {
+            $hit = FingerprintService::match($file->getPathname());
+            if ($hit) {
+                if ($userId > 0) {
+                    Db::name('users')->where('id', $userId)->inc('violation_count')->update();
+                    $u = Db::name('users')->where('id', $userId)->find();
+                    $limit = max(1, (int)Setting::get('violation_autoban', 3));
+                    if ($u && (int)$u['violation_count'] >= $limit && (int)$u['status'] === 1) {
+                        Db::name('users')->where('id', $userId)->update(['status' => 2, 'update_time' => time()]);
+                    }
+                }
+                throw new UploadException('该图片与违规样本库匹配，禁止上传');
+            }
+        } catch (UploadException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+        }
+
         // 邮箱验证（lazy 模式：注册可登录，上传前必须验证）
         if ($userId > 0 && (string)Setting::get('verify_mode', 'none') === 'lazy') {
             $u = Db::name('users')->where('id', $userId)->find();

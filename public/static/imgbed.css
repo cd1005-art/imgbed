@@ -325,3 +325,18 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 .photo-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
 .tag-chip { display: inline-block; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12.5px; }
 .photo-actions { display: flex; gap: 10px; margin-top: 14px; }
+
+/* ---------- 弹窗 ---------- */
+.modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { width: min(420px, 92vw); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; }
+.modal-title { font-size: 15px; margin: 0 0 8px; }
+.modal-textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); padding: 10px; font: 13px var(--font-sans); resize: vertical; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+
+/* ---------- 付费遮罩 ---------- */
+.pay-mask {
+  position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px; text-align: center;
+  background: rgba(13,17,23,.35); border-radius: var(--r-md); color: #fff;
+}
+.pay-mask p { margin: 0; font-size: 13px; text-shadow: 0 1px 4px rgba(0,0,0,.6); }

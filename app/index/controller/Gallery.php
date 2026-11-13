@@ -149,6 +149,19 @@ class Gallery extends Base
         return json(['status' => true, 'message' => $on ? '已开启：新上传且过审的图片自动公开' : '已关闭自动公开']);
     }
 
+    /** 设置图片解锁价格（站币，0=免费） */
+    public function price(int $id)
+    {
+        $user  = $this->request->loginUser;
+        $image = Image::where('id', $id)->where('user_id', $user->id)->find();
+        if (!$image) {
+            return json(['status' => false, 'message' => '图片不存在']);
+        }
+        $price = max(0, min(100000, (int)$this->request->post('price', 0)));
+        Db::name('images')->where('id', $id)->update(['price_credits' => $price, 'update_time' => time()]);
+        return json(['status' => true, 'message' => $price > 0 ? "已设置解锁价 {$price} 站币" : '已设为免费']);
+    }
+
     /** 公开前置校验 */
     protected function checkCanPublic($user, $image, bool $needPass = true): string
     {

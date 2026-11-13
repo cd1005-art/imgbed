@@ -54,6 +54,9 @@
         <svg class="ic"><use href="#i-check"/></svg>
       </button>
       {/if}
+      {if condition="$vo.is_public eq 1"}
+      <button class="icon-btn" type="button" data-price="{$vo.id}" data-cur="{$vo.price_credits}" title="解锁价（当前 {$vo.price_credits} 币）"><svg class="ic"><use href="#i-key"/></svg></button>
+      {/if}
       <button class="icon-btn" type="button" data-copy-url="/i/{$vo.path}" title="复制外链"><svg class="ic"><use href="#i-copy"/></svg></button>
       <button class="icon-btn icon-danger" type="button" data-del="{$vo.id}" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>
     </div>

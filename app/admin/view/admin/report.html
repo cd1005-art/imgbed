@@ -1,0 +1,64 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<div class="page-toolbar">
+  <h1 class="page-title">举报管理 <span class="count">{$total} 条</span></h1>
+  <form class="search-bar" method="get" action="/admin/report">
+    <select name="status" class="filter-select">
+      <option value="">全部状态</option>
+      <option value="pending" {if condition="$status eq 'pending'"}selected{/if}>待人工复核</option>
+      <option value="ai_confirmed" {if condition="$status eq 'ai_confirmed'"}selected{/if}>AI 已确认下架</option>
+      <option value="ai_rejected" {if condition="$status eq 'ai_rejected'"}selected{/if}>AI 已驳回</option>
+      <option value="manual" {if condition="$status eq 'manual'"}selected{/if}>人工下架</option>
+      <option value="closed" {if condition="$status eq 'closed'"}selected{/if}>已关闭</option>
+    </select>
+    <button class="btn btn-sm" type="submit">筛选</button>
+  </form>
+</div>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>图片</th><th>举报人</th><th>理由</th><th>AI 判定</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
+  <tbody>
+    {volist name="list" id="vo"}
+    <tr>
+      <td>{$vo.id}</td>
+      <td class="td-clip">
+        {if condition="$vo.image_path"}<a href="/p/{$vo.image_id}" target="_blank">{$vo.image_name|default='图'}</a>{else /}已删除{/if}
+        {if condition="$vo.ban_public eq 1"}<span class="badge badge-banned">已禁公开</span>{/if}
+      </td>
+      <td class="td-clip">{$vo.reporter_email|default='-'}</td>
+      <td class="td-clip" title="{$vo.reason}">{$vo.reason}</td>
+      <td class="td-clip" title="{$vo.ai_detail}">{$vo.ai_verdict|default='-'}</td>
+      <td>
+        {if condition="$vo.status eq 'pending'"}<span class="badge badge-pending">待复核</span>
+        {elseif condition="$vo.status eq 'ai_confirmed'"}<span class="danger">AI已下架</span>
+        {elseif condition="$vo.status eq 'ai_rejected'"}<span class="ok">AI已驳回</span>
+        {elseif condition="$vo.status eq 'manual'"}<span class="danger">人工下架</span>
+        {else /}已关闭{/if}
+      </td>
+      <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+      <td class="td-actions">
+        {if condition="$vo.status eq 'pending'"}
+        <button class="btn-ghost-sm" data-rep-confirm="{$vo.id}">下架</button>
+        <button class="btn-ghost-sm" data-rep-reject="{$vo.id}">驳回</button>
+        {elseif condition="$vo.ban_public eq 1"}
+        <button class="btn-ghost-sm" data-rep-unban="{$vo.image_id}">解除禁公开</button>
+        {/if}
+      </td>
+    </tr>
+    {/volist}
+  </tbody>
+</table>
+
+{if condition="$pages gt 1"}
+<nav class="pager">
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&status={$status}">上一页</a>{/if}
+  <span class="pager-info">{$page_no} / {$pages}</span>
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&status={$status}">下一页</a>{/if}
+</nav>
+{/if}
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminReport');</script>
+{/block}

@@ -1,0 +1,79 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<h1 class="page-title">造图任务 <span class="count">定时生成 → 审核 → 自动公开</span></h1>
+
+<section class="panel">
+  <h2 class="panel-title">新建任务</h2>
+  <form class="form form-grid" id="genNewForm">
+    <input type="hidden" name="id" value="0">
+    <label class="field"><span class="field-label">任务名</span><input type="text" name="name" placeholder="如：每日壁纸"></label>
+    <label class="field"><span class="field-label">生成模型</span>
+      <select name="model_id">
+        <option value="0">GD 占位图（无模型时测试用）</option>
+        {volist name="models" id="m"}
+        <option value="{$m.id}">{$m.name}（{$m.model_name}）</option>
+        {/volist}
+      </select>
+    </label>
+    <label class="field"><span class="field-label">目标上传账号</span>
+      <select name="target_user_id">
+        {volist name="users" id="u"}
+        <option value="{$u.id}">{$u.nickname}（{$u.email}）</option>
+        {/volist}
+      </select>
+    </label>
+    <label class="field"><span class="field-label">每次生成数量</span><input type="number" name="count_per_run" value="1"></label>
+    <label class="field"><span class="field-label">间隔（分钟）</span><input type="number" name="interval_minutes" value="60"></label>
+    <label class="field"><span class="field-label">自动公开</span>
+      <select name="auto_public"><option value="1">是</option><option value="0">否</option></select>
+    </label>
+    <label class="field field-wide"><span class="field-label">提示词池（每行一条，随机轮换）</span><textarea name="prompts" rows="3" class="modal-textarea" placeholder="抽象渐变背景&#10;极简几何图案&#10;森林晨雾风景"></textarea></label>
+    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">+ 创建任务</button></div>
+  </form>
+  <p class="panel-sub">执行方式：服务器计划任务每 5 分钟跑 <code class="inline-code">php think gen:run</code>（宝塔：计划任务 → Shell 脚本）。单日总量上限见设置项 gen_daily_limit（默认 100）。</p>
+</section>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>任务</th><th>模型/账号</th><th>频率</th><th>累计</th><th>状态</th><th>下次执行</th><th>操作</th></tr></thead>
+  <tbody>
+    {volist name="list" id="vo"}
+    <tr>
+      <td>{$vo.id}</td>
+      <td>{$vo.name}</td>
+      <td>#{$vo.model_id} / 用户 {$vo.target_user_id}</td>
+      <td>每 {$vo.interval_minutes} 分钟 × {$vo.count_per_run}</td>
+      <td>{$vo.total_generated}</td>
+      <td>{if condition="$vo.status eq 1"}<span class="ok">运行中</span>{else /}<span class="danger">暂停</span>{/if}
+        {if condition="$vo.fail_streak gt 0"}<span class="count">连续失败 {$vo.fail_streak}</span>{/if}</td>
+      <td>{if condition="$vo.next_run gt 0"}{:date('m-d H:i', ts($vo.next_run))}{else /}-{/if}</td>
+      <td class="td-actions">
+        <button class="btn-ghost-sm" data-gen-toggle="{$vo.id}">{if condition="$vo.status eq 1"}暂停{else /}启用{/if}</button>
+        <button class="btn-ghost-sm btn-danger-sm" data-gen-del="{$vo.id}">删除</button>
+      </td>
+    </tr>
+    {/volist}
+  </tbody>
+</table>
+
+<section class="panel" style="margin-top:16px">
+  <h2 class="panel-title">最近执行日志</h2>
+  <table class="table">
+    <thead><tr><th>任务</th><th>生成/成功/失败</th><th>明细</th><th>时间</th></tr></thead>
+    <tbody>
+      {volist name="logs" id="lg"}
+      <tr>
+        <td>#{$lg.task_id}</td>
+        <td>{$lg.gen_count} / {$lg.success_count} / {$lg.fail_count}</td>
+        <td class="td-clip" title="{$lg.detail}">{$lg.detail}</td>
+        <td>{:date('m-d H:i', ts($lg.create_time))}</td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+</section>
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminGen');</script>
+{/block}

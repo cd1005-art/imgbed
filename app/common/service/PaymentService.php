@@ -129,6 +129,36 @@ class PaymentService
      * 异步回调处理：验签 → 状态 → 金额 → VIP 生效
      * 幂等：已支付订单重复回调直接返回 true
      */
+    /** 站币充值订单（type=credits，amount 单位分） */
+    public function createCreditsOrder(User $user, int $yuan, string $payChannel = 'alipay'): array
+    {
+        $yuan = max(1, min(10000, $yuan));
+        $order = Order::create([
+            'order_no'    => date('YmdHis') . mt_rand(1000, 9999),
+            'user_id'     => (int)$user->id,
+            'plan_id'     => 0,
+            'type'        => 'credits',
+            'amount'      => $yuan * 100,
+            'status'      => Order::ST_PENDING,
+            'pay_channel' => $payChannel,
+            'create_time' => time(),
+            'update_time' => time(),
+        ]);
+        $submitUrl = $this->resolveSubmitUrl();
+        $params = [
+            'pid'          => (string)Setting::get('epay_pid', ''),
+            'type'         => $payChannel,
+            'out_trade_no' => $order->order_no,
+            'notify_url'   => request()->domain() . '/pay/notify',
+            'return_url'   => request()->domain() . '/console',
+            'name'         => '站币充值 ' . $yuan . ' 元',
+            'money'        => number_format($yuan, 2, '.', ''),
+        ];
+        $params['sign']        = $this->generateSign($params);
+        $params['sign_type']   = 'MD5';
+        return ['order' => $order, 'submit_url' => $submitUrl . '?' . http_build_query($params)];
+    }
+
     public function handleNotify(array $params): bool
     {
         if (!$this->verifySign($params)) {
@@ -172,10 +202,14 @@ class PaymentService
                 'update_time'=> time(),
             ]);
 
-            $this->activateVip($order);
+            if ((string)$order->type === 'credits') {
+                CreditsService::recharge((int)$order->user_id, (int)round((int)$order->amount / 100), (int)$order->id);
+            } else {
+                $this->activateVip($order);
+            }
 
             Db::commit();
-            Log::record('VIP 订单支付成功：' . $order->order_no, 'info');
+            Log::record('订单支付成功：' . $order->order_no . ' type=' . $order->type, 'info');
             return true;
         } catch (\Throwable $e) {
             Db::rollback();

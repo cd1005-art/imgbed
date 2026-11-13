@@ -43,6 +43,11 @@ class Console extends Base
             'tokens'      => $tokens,
             'token_used'  => ApiToken::where('user_id', $user->id)->count(),
             'email_verified' => (int)$user->email_verified === 1,
+            'credits'        => (int)$user->credits,
+            'credits_total'  => (int)$user->credits_total,
+            'credits_rate'   => max(1, (int)Setting::get('credits_per_yuan', 10)),
+            'min_withdraw'   => (int)Setting::get('min_withdraw', 50),
+            'withdraws'      => Db::name('withdrawals')->where('user_id', $user->id)->order('id', 'desc')->limit(5)->select(),
             'verify_mode'    => (string)Setting::get('verify_mode', 'none'),
             'token_limit' => ($group && (int)$group->max_tokens > 0) ? (int)$group->max_tokens : 0,
             // 权益面板（与后台策略组同步展示）
@@ -57,6 +62,73 @@ class Console extends Base
                     : (($group && (int)$group->max_tokens > 0) ? ('最多 ' . (int)$group->max_tokens . ' 个') : '不限'),
             ],
         ]);
+    }
+
+    /** 站币充值（创建支付订单并跳转收银台） */
+    public function recharge()
+    {
+        $user = $this->currentUser();
+        if (!$user) {
+            return redirect('/login');
+        }
+        $yuan = max(1, min(10000, (int)$this->request->post('yuan', 10)));
+        try {
+            $svc = new \app\common\service\PaymentService();
+            $r = $svc->createCreditsOrder($user, $yuan, 'alipay');
+            return redirect($r['submit_url']);
+        } catch (\Throwable $e) {
+            return json(['status' => false, 'message' => '创建订单失败：' . $e->getMessage()]);
+        }
+    }
+
+    /** 提现申请 */
+    public function withdraw()
+    {
+        $user = $this->currentUser();
+        if (!$user) {
+            return json(['status' => false, 'message' => '请先登录']);
+        }
+        $amount = (int)$this->request->post('amount', 0);
+        $name   = trim((string)$this->request->post('alipay_name', ''));
+        $acct   = trim((string)$this->request->post('alipay_account', ''));
+
+        $min = (int)Setting::get('min_withdraw', 50);
+        if ($amount < $min) {
+            return json(['status' => false, 'message' => "最低提现 {$min} 元"]);
+        }
+        if ($name === '' || $acct === '') {
+            return json(['status' => false, 'message' => '请填写支付宝姓名与账号']);
+        }
+        $rate = max(1, (int)Setting::get('credits_per_yuan', 10));
+        $need = $amount * $rate;
+        if ((int)$user->credits < $need) {
+            return json(['status' => false, 'message' => "余额不足（需 {$need} 站币）"]);
+        }
+        $monthly = (int)Setting::get('withdraw_monthly_limit', 2);
+        $cnt = Db::name('withdrawals')->where('user_id', $user->id)
+            ->where('create_time', '>', strtotime(date('Y-m-01')))->count();
+        if ($monthly > 0 && $cnt >= $monthly) {
+            return json(['status' => false, 'message' => "本月提现次数已达上限（{$monthly} 次）"]);
+        }
+
+        $feePct = (int)Setting::get('withdraw_fee_pct', 0);
+        $fee = (int)floor($amount * $feePct / 100);
+
+        try {
+            Db::startTrans();
+            $wid = (int)Db::name('withdrawals')->insertGetId([
+                'user_id' => (int)$user->id, 'amount' => $amount, 'fee' => $fee,
+                'real_amount' => $amount - $fee, 'alipay_name' => $name, 'alipay_account' => $acct,
+                'status' => 'pending', 'create_time' => time(), 'update_time' => time(),
+            ]);
+            \app\common\service\CreditsService::change((int)$user->id, -$need, 'withdraw', $wid, '提现申请冻结（' . $amount . ' 元）');
+            Db::name('users')->where('id', $user->id)->update(['alipay_name' => $name, 'alipay_account' => $acct]);
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            return json(['status' => false, 'message' => $e->getMessage()]);
+        }
+        return json(['status' => true, 'message' => '提现申请已提交，等待审核打款']);
     }
 
     /** 重发验证邮件 */
