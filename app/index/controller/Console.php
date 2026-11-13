@@ -47,6 +47,7 @@ class Console extends Base
             'credits'        => (int)$user->credits,
             'credits_total'  => (int)$user->credits_total,
             'credits_rate'   => max(1, (int)Setting::get('credits_per_yuan', 10)),
+            'pay_available'  => (new \app\common\service\PaymentService())->isAvailable(),
             'min_withdraw'   => (int)Setting::get('min_withdraw', 50),
             'withdraws'      => Db::name('withdrawals')->where('user_id', $user->id)->order('id', 'desc')->limit(5)->select(),
             'verify_mode'    => (string)Setting::get('verify_mode', 'none'),
@@ -78,7 +79,7 @@ class Console extends Base
             $r = $svc->createCreditsOrder($user, $yuan, 'alipay');
             return redirect($r['submit_url']);
         } catch (\Throwable $e) {
-            return json(['status' => false, 'message' => '创建订单失败：' . $e->getMessage()]);
+            return json(['status' => false, 'message' => $e->getMessage()]);
         }
     }
 

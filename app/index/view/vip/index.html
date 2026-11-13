@@ -14,6 +14,9 @@ document.querySelectorAll('.buy-btn').forEach(function (b) {
 {/block}
 
 {block name="content"}
+{if condition="isset($pay_available) && !$pay_available"}
+<div class="hint-bar">💳 支付通道维护中：当前无法下单购买，已有会员权益不受影响。恢复后可正常购买。</div>
+{/if}
 <h1 class="page-title">VIP 套餐</h1>
 
 {if condition="!empty($msg)"}<p class="form-error" style="background:var(--accent-soft);color:var(--accent)">{$msg}</p>{/if}

@@ -46,7 +46,10 @@ class Vip extends Base
             }
         }
 
+        $payAvailable = (new \app\common\service\PaymentService())->isAvailable();
+
         return $this->siteView('vip/index', [
+            'pay_available' => $payAvailable,
             'page_title'    => 'VIP 套餐',
             'plans'         => $planList,
             'channels'      => $channels,

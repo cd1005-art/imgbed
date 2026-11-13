@@ -132,6 +132,9 @@ class PaymentService
     /** 站币充值订单（type=credits，amount 单位分） */
     public function createCreditsOrder(User $user, int $yuan, string $payChannel = 'alipay'): array
     {
+        if (!$this->isAvailable()) {
+            throw new \RuntimeException('支付通道未开启，暂时无法充值');
+        }
         $yuan = max(1, min(10000, $yuan));
         $order = Order::create([
             'order_no'    => date('YmdHis') . mt_rand(1000, 9999),

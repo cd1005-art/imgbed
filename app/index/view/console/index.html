@@ -39,9 +39,13 @@
 
   <div class="model-inline-form" style="margin:10px 0 16px">
     <span class="field-hint">充值：</span>
+    {if condition="isset($pay_available) && $pay_available"}
     <button class="btn-ghost-sm" type="button" data-recharge="10">10 元</button>
     <button class="btn-ghost-sm" type="button" data-recharge="50">50 元</button>
     <button class="btn-ghost-sm" type="button" data-recharge="100">100 元</button>
+    {else /}
+    <span class="field-hint" style="color:#d29922">支付通道维护中，暂时无法充值</span>
+    {/if}
   </div>
 
   <form class="form form-grid" id="withdrawForm">
