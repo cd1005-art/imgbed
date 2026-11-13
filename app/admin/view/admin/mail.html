@@ -46,12 +46,20 @@
   <!-- ===== Tab: 通知开关（含验证模式与阈值）===== -->
   <div class="tab-pane" data-pane="events">
     <section class="panel">
-      <h2 class="panel-title">告警阈值</h2>
-      <p class="panel-sub">三种阈值统一按<b>剩余百分比</b>判断（低于阈值即告警）；告警邮件会附带剩余容量绝对值，方便判断严重程度。</p>
+      <h2 class="panel-title">告警阈值
+        <span class="inline-select">
+          判断口径
+          <select name="alert_unit" id="alertUnit" form="mailPolicyForm">
+            <option value="pct" {if condition="($settings['alert_unit'] ?? 'pct') eq 'pct'"}selected{/if}>剩余百分比（%）</option>
+            <option value="gb" {if condition="($settings['alert_unit'] ?? '') eq 'gb'"}selected{/if}>剩余容量（GB）</option>
+          </select>
+        </span>
+      </h2>
+      <p class="panel-sub">下方三种阈值统一按所选口径判断（低于阈值即告警）；切换口径后请按新单位确认数值。告警邮件会同时附带百分比与绝对值。</p>
       <form class="form form-grid" id="mailPolicyForm">
-        <label class="field"><span class="field-label">磁盘剩余告警（%）</span><input type="number" name="alert_disk_left_pct" value="{$settings.alert_disk_left_pct|default=10}"></label>
-        <label class="field"><span class="field-label">配额剩余告警（%）</span><input type="number" name="alert_quota_left_pct" value="{$settings.alert_quota_left_pct|default=10}"></label>
-        <label class="field"><span class="field-label">网盘空间剩余告警（%）</span><input type="number" name="alert_space_left_pct" value="{$settings.alert_space_left_pct|default=10}"></label>
+        <label class="field"><span class="field-label">磁盘剩余告警（<span class="unit-label">{if condition="($settings['alert_unit'] ?? 'pct') eq 'gb'"}GB{else /}%{/if}</span>）</span><input type="number" step="0.1" name="alert_disk_left_pct" value="{$settings.alert_disk_left_pct|default=10}"></label>
+        <label class="field"><span class="field-label">配额剩余告警（<span class="unit-label">{if condition="($settings['alert_unit'] ?? 'pct') eq 'gb'"}GB{else /}%{/if}</span>）</span><input type="number" step="0.1" name="alert_quota_left_pct" value="{$settings.alert_quota_left_pct|default=10}"></label>
+        <label class="field"><span class="field-label">网盘空间剩余告警（<span class="unit-label">{if condition="($settings['alert_unit'] ?? 'pct') eq 'gb'"}GB{else /}%{/if}</span>）</span><input type="number" step="0.1" name="alert_space_left_pct" value="{$settings.alert_space_left_pct|default=10}"></label>
         <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>
       </form>
     </section>

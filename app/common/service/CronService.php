@@ -189,10 +189,11 @@ class CronService
     public static function taskStorage(): string
     {
         $to = trim((string)\app\common\model\Setting::get('admin_mail_to', ''));
-        // 统一按「剩余百分比」判断（磁盘/配额/网盘同一口径）
-        $diskTh  = (int)\app\common\model\Setting::get('alert_disk_left_pct', 10);
-        $quotaTh = (int)\app\common\model\Setting::get('alert_quota_left_pct', 10);
-        $spaceTh = (int)\app\common\model\Setting::get('alert_space_left_pct', 10);
+        // 统一口径：alert_unit = pct（剩余百分比）或 gb（剩余容量）
+        $unit    = (string)\app\common\model\Setting::get('alert_unit', 'pct');
+        $diskTh  = (float)\app\common\model\Setting::get('alert_disk_left_pct', 10);
+        $quotaTh = (float)\app\common\model\Setting::get('alert_quota_left_pct', 10);
+        $spaceTh = (float)\app\common\model\Setting::get('alert_space_left_pct', 10);
 
         $storages = Db::name('storage_configs')->where('status', 1)->select()->toArray();
         $alerts = [];
@@ -208,24 +209,33 @@ class CronService
                 $totalDisk = @disk_total_space($probe);
                 if ($free !== false && $totalDisk !== false && $totalDisk > 0) {
                     $leftPct = $free / $totalDisk * 100;
-                    if ($leftPct < $diskTh) {
-                        $alerts[] = sprintf('【磁盘】%s 剩余 %.1f%%（%.1f GB / 共 %.1f GB，阈值 %d%%）',
-                            $name, $leftPct, $free / 1073741824, $totalDisk / 1073741824, $diskTh);
+                    $leftGb  = $free / 1073741824;
+                    $leftVal = $unit === 'gb' ? $leftGb : $leftPct;
+                    if ($leftVal < $diskTh) {
+                        $alerts[] = sprintf('【磁盘】%s 剩余 %.1f%%（%.1f GB / 共 %.1f GB，阈值 %s %s）',
+                            $name, $leftPct, $leftGb, $totalDisk / 1073741824,
+                            $unit === 'gb' ? number_format($diskTh, 1) : (string)(int)$diskTh, $unit === 'gb' ? 'GB' : '%');
                     }
                 }
             }
             $quotaGb = (int)($cfg['quota_gb'] ?? 0);
             if ($quotaGb > 0) {
-                $left = ($quotaGb * 1073741824 - $used) / ($quotaGb * 1073741824) * 100;
-                if ($left < $quotaTh) {
-                    $alerts[] = sprintf('【配额】%s 剩余 %.1f%%（阈值 %d%%）', $name, max(0, $left), $quotaTh);
+                $leftBytes = max(0, $quotaGb * 1073741824 - $used);
+                $left = $leftBytes / ($quotaGb * 1073741824) * 100;
+                $leftVal = $unit === 'gb' ? $leftBytes / 1073741824 : $left;
+                if ($leftVal < $quotaTh) {
+                    $alerts[] = sprintf('【配额】%s 剩余 %.1f%%（%.1f GB，阈值 %s %s）', $name, $left,
+                        $leftBytes / 1073741824, $unit === 'gb' ? number_format($quotaTh, 1) : (string)(int)$quotaTh, $unit === 'gb' ? 'GB' : '%');
                 }
             }
             $spaceGb = (int)($cfg['space_gb'] ?? 0);
             if ($spaceGb > 0) {
-                $left = ($spaceGb * 1073741824 - $used) / ($spaceGb * 1073741824) * 100;
-                if ($left < $spaceTh) {
-                    $alerts[] = sprintf('【网盘空间】%s 剩余 %.1f%%（阈值 %d%%）', $name, max(0, $left), $spaceTh);
+                $leftBytes = max(0, $spaceGb * 1073741824 - $used);
+                $left = $leftBytes / ($spaceGb * 1073741824) * 100;
+                $leftVal = $unit === 'gb' ? $leftBytes / 1073741824 : $left;
+                if ($leftVal < $spaceTh) {
+                    $alerts[] = sprintf('【网盘空间】%s 剩余 %.1f%%（%.1f GB，阈值 %s %s）', $name, $left,
+                        $leftBytes / 1073741824, $unit === 'gb' ? number_format($spaceTh, 1) : (string)(int)$spaceTh, $unit === 'gb' ? 'GB' : '%');
                 }
             }
         }
