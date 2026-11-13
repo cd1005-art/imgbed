@@ -145,27 +145,28 @@ class Auth extends Base
 
         $new = User::where('email', $email)->find();
 
-        // 生成验证 token（不验证模式也生成，便于以后开通验证）
-        $token = bin2hex(random_bytes(16));
+        // 生成 6 位数字验证码（纯文字邮件，避免链接被风控）
+        $code  = self::makeCode();
         $hours = max(1, (int)Setting::get('verify_expire', '24'));
         Db::name('users')->where('id', $new->id)->update([
-            'verify_token'  => $token,
+            'verify_token'  => $code,
             'verify_expire' => time() + $hours * 3600,
+            'verify_tries'  => 0,
         ]);
 
         $mode = (string)Setting::get('verify_mode', 'none');
         if ($mode !== 'none') {
-            $link = $this->request->domain() . '/verify/' . $token;
-            \app\common\service\MailerService::sendTemplate(
-                $email,
-                '验证你的邮箱 · ' . (string)Setting::get('site_name', '逍遥图床'),
+            \app\common\service\MailerService::notify(
                 'verify',
-                ['name' => (string)$new->nickname, 'link' => $link]
+                $email,
+                '邮箱验证码 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                'verify',
+                ['name' => (string)$new->nickname, 'code' => $code]
             );
         }
 
         if ($mode === 'register') {
-            // 需验证后才能登录
+            // 需验证后才能登录：注册成功页内嵌验证码输入
             return $this->siteView('auth/verify_sent', ['email' => $email]);
         }
 
@@ -173,6 +174,50 @@ class Auth extends Base
         Session::regenerate();
         session('user_id', (int)$new->id);
         return redirect('/console');
+    }
+
+    /** 6 位数字验证码 */
+    public static function makeCode(): string
+    {
+        return str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    /** 验证码校验（注册验证，无需登录；凭 邮箱+验证码） */
+    public function verifyCode()
+    {
+        $email = trim((string)$this->request->post('email', ''));
+        $code  = trim((string)$this->request->post('code', ''));
+        // 登录态可不传 email（个人中心内验证）
+        if ($email === '' && session('user_id')) {
+            $email = (string)(User::where('id', (int)session('user_id'))->value('email') ?: '');
+        }
+        $user  = User::where('email', $email)->find();
+
+        if (!$user) {
+            return json(['status' => false, 'message' => '邮箱不存在']);
+        }
+        if ((int)$user->email_verified === 1) {
+            return json(['status' => true, 'message' => '邮箱已验证，无需重复操作']);
+        }
+        if ((string)$user->verify_token === '' || (int)$user->verify_expire < time()) {
+            return json(['status' => false, 'message' => '验证码已过期，请重新获取']);
+        }
+        if ((int)$user->verify_tries >= 5) {
+            return json(['status' => false, 'message' => '尝试次数过多，请重新获取验证码']);
+        }
+        if (!hash_equals((string)$user->verify_token, $code)) {
+            Db::name('users')->where('id', $user->id)->inc('verify_tries')->update();
+            return json(['status' => false, 'message' => '验证码不正确（剩余 ' . max(0, 4 - (int)$user->verify_tries) . ' 次）']);
+        }
+
+        Db::name('users')->where('id', $user->id)->update([
+            'email_verified' => 1, 'verify_token' => '', 'verify_expire' => 0, 'verify_tries' => 0,
+        ]);
+        if (!session('user_id')) {
+            Session::regenerate();
+            session('user_id', (int)$user->id);
+        }
+        return json(['status' => true, 'message' => '邮箱验证成功']);
     }
 
     /** 邮箱验证链接 */
@@ -206,20 +251,51 @@ class Auth extends Base
         $email = trim((string)$this->request->post('email', ''));
         $user  = filter_var($email, FILTER_VALIDATE_EMAIL) ? User::where('email', $email)->find() : null;
         if ($user) {
-            $token = bin2hex(random_bytes(16));
+            $code = self::makeCode();
             Db::name('users')->where('id', $user->id)->update([
-                'reset_token'  => $token,
+                'reset_token'  => $code,
                 'reset_expire' => time() + 3600,
+                'reset_tries'  => 0,
             ]);
-            $link = $this->request->domain() . '/reset/' . $token;
-            \app\common\service\MailerService::sendTemplate(
-                $email,
-                '重置密码 · ' . (string)Setting::get('site_name', '逍遥图床'),
+            \app\common\service\MailerService::notify(
                 'reset',
-                ['name' => (string)$user->nickname, 'link' => $link]
+                $email,
+                '密码重置验证码 · ' . (string)Setting::get('site_name', '逍遥图床'),
+                'reset',
+                ['name' => (string)$user->nickname, 'code' => $code]
             );
         }
-        return $this->siteView('auth/forgot', ['sent' => 1, 'email' => $email]);
+        return $this->siteView('auth/forgot', ['stage' => 2, 'email' => $email]);
+    }
+
+    /** 验证码重置密码（email + code + password） */
+    public function resetByCode()
+    {
+        $email    = trim((string)$this->request->post('email', ''));
+        $code     = trim((string)$this->request->post('code', ''));
+        $password = (string)$this->request->post('password', '');
+        $user     = User::where('email', $email)->find();
+
+        if (!$user || (string)$user->reset_token === '' || (int)$user->reset_expire < time()) {
+            return $this->siteView('auth/forgot', ['stage' => 1, 'email' => $email, 'error' => '验证码已过期，请重新获取']);
+        }
+        if ((int)$user->reset_tries >= 5) {
+            return $this->siteView('auth/forgot', ['stage' => 2, 'email' => $email, 'error' => '尝试次数过多，请重新获取验证码']);
+        }
+        if (!hash_equals((string)$user->reset_token, $code)) {
+            Db::name('users')->where('id', $user->id)->inc('reset_tries')->update();
+            return $this->siteView('auth/forgot', ['stage' => 2, 'email' => $email, 'error' => '验证码不正确']);
+        }
+        if (strlen($password) < 8) {
+            return $this->siteView('auth/forgot', ['stage' => 2, 'email' => $email, 'error' => '密码至少 8 位']);
+        }
+
+        Db::name('users')->where('id', $user->id)->update([
+            'password'     => password_hash($password, PASSWORD_BCRYPT),
+            'reset_token'  => '', 'reset_expire' => 0, 'reset_tries' => 0,
+            'update_time'  => time(),
+        ]);
+        return $this->siteView('auth/verify_result', ['ok' => true, 'msg' => '密码已重置，请用新密码登录']);
     }
 
     /** 重置密码页 */

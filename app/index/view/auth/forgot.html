@@ -4,15 +4,24 @@
 <section class="auth-wrap">
   <div class="auth-card">
     <h1 class="auth-title">找回密码</h1>
-    {if condition="isset($sent) && $sent"}
-    <p class="auth-sub">如果该邮箱已注册，重置邮件已发送（含垃圾箱检查）。</p>
-    <p style="margin-top:16px"><a class="btn-ghost-sm" href="/login">返回登录</a></p>
+    {if condition="($stage ?? 1) eq 2"}
+    <p class="auth-sub">验证码已发送到 <b>{$email}</b>（纯文字邮件，若已注册才会收到，请检查垃圾箱）。</p>
+    <form method="post" action="/reset-code" class="auth-form">
+      <input type="hidden" name="email" value="{$email}">
+      <label>6 位验证码</label>
+      <input type="text" name="code" inputmode="numeric" maxlength="6" required>
+      <label>新密码（至少 8 位）</label>
+      <input type="password" name="password" required>
+      {if condition="isset($error)"}<p class="form-error">{$error}</p>{/if}
+      <button type="submit" class="btn btn-block">重置密码</button>
+    </form>
+    <p class="auth-sub" style="margin-top:14px"><a href="/forgot">重新获取验证码</a> · <a href="/login">返回登录</a></p>
     {else /}
     <form method="post" action="/forgot" class="auth-form">
       <label>注册邮箱</label>
       <input type="email" name="email" value="{$email|default=''}" required>
       {if condition="isset($error)"}<p class="form-error">{$error}</p>{/if}
-      <button type="submit" class="btn btn-block">发送重置邮件</button>
+      <button type="submit" class="btn btn-block">获取验证码</button>
     </form>
     <p class="auth-sub" style="margin-top:14px"><a href="/login">返回登录</a></p>
     {/if}

@@ -277,7 +277,7 @@ class CronService
             }
             if (MailerService::notify('vip_expire', (string)$u['email'],
                 '会员即将到期 · ' . (string)\app\common\model\Setting::get('site_name', '逍遥图床'),
-                'vip_expire', ['name' => (string)$u['nickname'], 'link' => date('Y-m-d', (int)$u['vip_expire_time'])])) {
+                'vip_expire', ['name' => (string)$u['nickname'], 'expire_at' => date('Y-m-d', (int)$u['vip_expire_time'])])) {
                 $sent++;
             }
         }

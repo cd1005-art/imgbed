@@ -249,13 +249,13 @@ class PaymentService
                 (string)$user->email,
                 '会员开通成功 · ' . (string)Setting::get('site_name', '逍遥图床'),
                 'vip_open',
-                ['amount' => (string)round((int)$order->amount / 100, 2), 'name' => (string)$plan->name, 'link' => date('Y-m-d', $expires)]
+                ['amount' => (string)round((int)$order->amount / 100, 2), 'name' => (string)$plan->name, 'expire_at' => date('Y-m-d', $expires)]
             );
             $adminTo = trim((string)Setting::get('admin_mail_to', ''));
             if ($adminTo !== '') {
                 MailerService::notify('vip_open', $adminTo, '【交易】新开通会员',
                     'vip_open',
-                    ['amount' => (string)round((int)$order->amount / 100, 2), 'name' => (string)$plan->name, 'link' => date('Y-m-d', $expires) . '（用户：' . $user->email . '）']);
+                    ['amount' => (string)round((int)$order->amount / 100, 2), 'name' => (string)$plan->name, 'expire_at' => date('Y-m-d', $expires) . '（用户：' . $user->email . '）']);
             }
         } catch (\Throwable $e) {
         }

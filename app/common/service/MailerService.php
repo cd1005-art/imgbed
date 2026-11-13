@@ -10,7 +10,8 @@ use think\facade\Db;
 /**
  * 邮件服务：统一 SMTP 发送 + 模板 + 日志
  *
- * 模板变量：{{site}} {{link}} {{reason}} {{amount}} {{name}}
+ * 模板变量：{{site}} {{expire_at}} {{reason}} {{amount}} {{name}} {{code}}
+ * ★ 规范：邮件正文禁止外部链接（防风控），验证/重置一律用 6 位数字验证码
  * 使用：MailerService::send('a@b.com', '标题', '正文HTML', 'template_key')
  */
 class MailerService
@@ -146,15 +147,17 @@ class MailerService
     public static function render(string $key, array $vars = []): string
     {
         $site = (string)Setting::get('site_name', '逍遥图床');
-        $vars = array_merge(['site' => $site, 'link' => '', 'reason' => '', 'amount' => '', 'name' => ''], $vars);
+        $vars = array_merge(['site' => $site, 'expire_at' => '', 'reason' => '', 'amount' => '', 'name' => '', 'code' => ''], $vars);
 
         $templates = [
-            'verify' => '<p>{{name}} 你好，</p><p>欢迎注册 {{site}}。请点击下方链接完成邮箱验证（{{expire}} 小时内有效）：</p>'
-                . '<p><a href="{{link}}">{{link}}</a></p><p>如果不是你本人操作，请忽略本邮件。</p>',
-            'reset' => '<p>{{name}} 你好，</p><p>我们收到了你的密码重置请求，请点击下方链接设置新密码（{{expire}} 小时内有效）：</p>'
-                . '<p><a href="{{link}}">{{link}}</a></p><p>如果不是你本人操作，请忽略本邮件。</p>',
-            'vip_open' => '<p>你的 {{site}} 会员已开通成功。</p><p>套餐：{{name}}<br>金额：{{amount}} 元<br>有效期至：{{link}}</p>',
-            'vip_expire' => '<p>你的 {{site}} 会员将于 {{link}} 到期，到期后将自动降回免费策略组（已上传图片保留）。</p>',
+            'verify' => '<p style="font-size:26px;letter-spacing:6px;font-weight:700;color:#1677ff;margin:16px 0">{{code}}</p>'
+                . '<p>{{name}} 你好，这是 {{site}} 的邮箱验证码（{{expire}} 小时内有效）。</p>'
+                . '<p>请回到网站填写该验证码完成验证；如非本人操作，请忽略本邮件。</p>',
+            'reset' => '<p style="font-size:26px;letter-spacing:6px;font-weight:700;color:#1677ff;margin:16px 0">{{code}}</p>'
+                . '<p>{{name}} 你好，这是 {{site}} 的密码重置验证码（{{expire}} 小时内有效）。</p>'
+                . '<p>请回到网站填写该验证码设置新密码；如非本人操作，请忽略本邮件。</p>',
+            'vip_open' => '<p>你的 {{site}} 会员已开通成功。</p><p>套餐：{{name}}<br>金额：{{amount}} 元<br>有效期至：{{expire_at}}</p>',
+            'vip_expire' => '<p>你的 {{site}} 会员将于 {{expire_at}} 到期，到期后将自动降回免费策略组（已上传图片保留）。</p>',
             'audit_reject' => '<p>你上传的图片未通过内容审核，已被拒绝。</p><p>原因：{{reason}}</p><p>如有疑问可联系管理员。</p>',
             'storage_alert' => '<p>{{site}} 存储告警：</p><p>{{reason}}</p><p>请及时处理，避免上传中断。</p>',
             'withdraw_result' => '<p>你的提现申请已处理。</p><p>金额：{{amount}} 元<br>状态：{{reason}}</p>',

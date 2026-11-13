@@ -49,6 +49,8 @@ CREATE TABLE `img_users` (
   `verify_expire` int unsigned NOT NULL DEFAULT '0',
   `reset_token` varchar(64) NOT NULL DEFAULT '',
   `reset_expire` int unsigned NOT NULL DEFAULT '0',
+  `verify_tries` int NOT NULL DEFAULT '0',
+  `reset_tries` int NOT NULL DEFAULT '0',
   `auto_public` tinyint NOT NULL DEFAULT '0' COMMENT '自动公开新图',
   `credits` int NOT NULL DEFAULT '0' COMMENT '站币余额',
   `credits_total` int NOT NULL DEFAULT '0' COMMENT '累计收益',

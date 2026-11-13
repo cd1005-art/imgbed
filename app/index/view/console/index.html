@@ -10,7 +10,9 @@
 {if condition="$verify_mode neq 'none' && !$email_verified"}
 <div class="hint-bar" id="verifyBar">
   <span>📮 邮箱尚未验证：{if condition="$verify_mode eq 'lazy'"}上传与公开前需完成验证{else /}验证后才能登录使用{/if}。</span>
-  <button class="btn-ghost-sm" type="button" id="resendVerifyBtn">重发验证邮件</button>
+  <input type="text" id="verifyCodeInput" inputmode="numeric" maxlength="6" placeholder="6 位验证码" style="width:120px;height:32px">
+  <button class="btn-ghost-sm" type="button" id="verifySubmitBtn">提交验证</button>
+  <button class="btn-ghost-sm" type="button" id="resendVerifyBtn">发送验证码</button>
 </div>
 {/if}
 

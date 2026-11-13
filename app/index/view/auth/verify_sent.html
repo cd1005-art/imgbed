@@ -2,11 +2,36 @@
 
 {block name="content"}
 <section class="auth-wrap">
-  <div class="auth-card" style="text-align:center">
-    <h1 class="auth-title">📮 验证邮件已发送</h1>
-    <p class="auth-sub">已发送到 <b>{$email}</b>，请点击邮件中的链接完成验证后再登录。</p>
-    <p class="auth-sub">没收到？检查垃圾箱，或稍后到登录页重试。</p>
-    <p style="margin-top:18px"><a class="btn-ghost-sm" href="/login">返回登录</a></p>
+  <div class="auth-card">
+    <h1 class="auth-title">📮 验证码已发送</h1>
+    <p class="auth-sub">验证码已发送到 <b>{$email}</b>（纯文字邮件，请检查收件箱与垃圾箱）。</p>
+    <form class="auth-form" id="codeForm">
+      <input type="hidden" name="email" value="{$email}">
+      <label>6 位验证码</label>
+      <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="输入邮件中的数字" required>
+      <p class="form-error" id="codeErr" hidden></p>
+      <button type="submit" class="btn btn-block">完成验证</button>
+    </form>
+    <p class="auth-sub" style="margin-top:14px">
+      <a href="/login">返回登录</a> · 没收到？<a href="/register">重新注册</a> 或到个人中心重发
+    </p>
   </div>
 </section>
+{/block}
+
+{block name="script"}
+<script>
+document.getElementById('codeForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var f = e.target;
+  var body = new URLSearchParams(new FormData(f)).toString();
+  fetch('/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.status) { location.href = '/console'; }
+      else { var el = document.getElementById('codeErr'); el.hidden = false; el.textContent = d.message; }
+    })
+    .catch(function () { alert('网络错误'); });
+});
+</script>
 {/block}
