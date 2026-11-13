@@ -36,6 +36,7 @@ class CronManage extends Base
             'page'     => 'cron',
             'tasks'    => $tasks,
             'key'      => $key,
+            'cron_key' => $key,   // 独立变量：模板里 volist 的 $key 是循环索引，会覆盖它
             'php'      => $php,
             'cli_list' => array_map(fn($t) => $t['cli'], $tasks),
             'url_list' => array_map(fn($t) => $t['url'], $tasks),
