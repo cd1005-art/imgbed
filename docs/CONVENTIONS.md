@@ -148,3 +148,23 @@ git add -f public/static/admin.js public/static/imgbed.js public/static/admin.cs
 ## 十、新功能交付话术
 
 交付时必须**主动列出本页已具备的清单项**（筛选 / 勾选 / 批量 / 行内操作 / 分页 / 空状态 / 二次确认），不要只说"已完成"。
+
+## 十一、财务域统一入口（★ 强制）
+
+**所有与钱相关的配置与流水，统一收敛到后台「财务管理」一个页面（`/admin/finance`），禁止再单独开菜单入口。**
+
+当前标签：
+| 标签 | 内容 |
+|---|---|
+| 支付网关 | 易支付对接（地址/PID/密钥/通道/开关）|
+| VIP 套餐 | 套餐增删改 |
+| 最近订单 | 订单列表 + 详情/补单/关闭/删除 |
+| 站币流水 | 全站站币变动 + 筛选 + 批量删除 |
+| 提现管理 | 提现申请/审核/打款/驳回 |
+
+**后续要做的（已约定，勿遗漏）**：
+- **Token 调用次数包、Token 容量包、VIP 套餐赠送调用次数/容量** → **新建 `token` 标签并入本页**，不另开菜单；
+- 订单前缀 `C`（容量/次数包）与 `V`（VIP）并行支持，订单类型扩展为 `vip / credits / capacity / token_pack`；
+- 订单列表的类型下拉、补单逻辑（`PaymentService::manualComplete`）需同步支持新类型。
+
+**扩展方式**：`finance.html` 加 tab-pane + `FinanceManage::index` 补查询 + `adminFinance()` 补绑定，菜单不动。

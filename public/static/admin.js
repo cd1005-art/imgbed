@@ -9,7 +9,7 @@
       adminImage: adminImage, adminUser: adminUser, adminGroup: adminGroup,
       adminStorage: adminStorage, adminPayment: adminPayment,
       adminAd: adminAd, adminToken: adminToken, adminSite: adminSite, adminAudit: adminAudit,
-      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminCredit: adminCredit, adminNone: function () {}
+      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminCredit: adminCredit, adminFinance: adminFinance, adminNone: function () {}
     };
     if (map[page]) map[page]();
   };
@@ -748,6 +748,88 @@
       armConfirm(lc, '清空全部执行日志? 不可恢复', function () {
         postBody('/admin/gen/clear-logs', '').then(function (d) {
           toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 500);
+        });
+      });
+    });
+  }
+
+  /* ---------- 财务管理（网关/套餐/订单/站币/提现） ---------- */
+  function adminFinance() {
+    initTabs('#finTabs');
+
+    // 订单批量
+    bindBatchDelete({checkAll:'#ordCheckAll', checkbox:'.ord-check', batchBtn:'#ordDel',
+      api:'/admin/payment/delete-orders', label:'订单', batchBar:'#ordBar',
+      barCount:'#ordCount', clearBtn:'#ordClearSel', unit:'条'});
+    // 站币流水批量
+    bindBatchDelete({checkAll:'#creditCheckAll', checkbox:'.credit-check', batchBtn:'#creditBatchDel',
+      api:'/admin/credit/delete', label:'流水记录', batchBar:'#creditBar',
+      barCount:'#creditCount', clearBtn:'#creditBatchClear', unit:'条'});
+    // 提现批量
+    bindBatchDelete({checkAll:'#wdCheckAll', checkbox:'.wd-check', batchBtn:'#wdBatchDel',
+      api:'/admin/withdraw/delete', label:'提现记录', batchBar:'#wdBatchBar',
+      barCount:'#wdBatchCount', clearBtn:'#wdBatchClear', unit:'条'});
+
+    // 网关表单
+    var gw = document.getElementById('gatewayForm');
+    if (gw) gw.addEventListener('submit', function (e) {
+      e.preventDefault();
+      postForm('/admin/payment/gateway', gw).then(function (d) { toast(d.message); });
+    });
+    // 套餐表单
+    var pf = document.getElementById('planForm');
+    if (pf) pf.addEventListener('submit', function (e) {
+      e.preventDefault();
+      postForm('/admin/payment/plan', pf).then(function (d) { toast(d.message); if (d.status) location.reload(); });
+    });
+    document.querySelectorAll('[data-plan-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        armConfirm(b, '确认删除该套餐?', function () {
+          post('/admin/payment/plan/delete/' + b.dataset.planDel).then(function (d) { d.status ? location.reload() : toast(d.message); });
+        });
+      });
+    });
+    document.querySelectorAll('[data-plan-fill]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var pl = (window.__plans || []).filter(function (x) { return String(x.id) === b.dataset.planFill; })[0];
+        if (!pl) return;
+        document.getElementById('p_id').value = pl.id;
+        document.getElementById('p_name').value = pl.name;
+        document.getElementById('p_days').value = pl.days;
+        document.getElementById('p_price').value = pl.price / 100;
+        document.getElementById('p_group').value = pl.group_id;
+        document.getElementById('p_desc').value = pl.description || '';
+        document.getElementById('p_status').value = pl.status;
+        if (pf) pf.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+
+    // 提现操作（通过/打款/驳回）
+    document.querySelectorAll('[data-wd-approve]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        armConfirm(b, '通过该提现申请？', function () {
+          post('/admin/withdraw/approve/' + b.dataset.wdApprove).then(function (d) {
+            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+          });
+        });
+      });
+    });
+    document.querySelectorAll('[data-wd-paid]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var v = prompt('填写打款凭证/备注（可留空）：') || '';
+        armConfirm(b, '确认已打款？', function () {
+          postBody('/admin/withdraw/paid/' + b.dataset.wdPaid, 'voucher=' + encodeURIComponent(v)).then(function (d) {
+            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+          });
+        });
+      });
+    });
+    document.querySelectorAll('[data-wd-reject]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var r = prompt('驳回原因（必填）：') || '';
+        if (!r.trim()) { toast('请填写驳回原因'); return; }
+        postBody('/admin/withdraw/reject/' + b.dataset.wdReject, 'reason=' + encodeURIComponent(r)).then(function (d) {
+          toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
         });
       });
     });

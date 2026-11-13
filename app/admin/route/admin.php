@@ -35,7 +35,7 @@ Route::group(function () {
     Route::post('gen/delete/:id', 'GenManage/delete');
     Route::get('gen', 'GenManage/index');
     Route::post('withdraw/delete', 'WithdrawManage/delete');
-    Route::get('withdraw', 'WithdrawManage/index');
+    Route::get('withdraw', 'FinanceManage/index');
     Route::post('report/delete', 'ReportManage/delete');
     Route::get('report', 'ReportManage/index');
     Route::get('tag', 'TagManage/index');
@@ -48,7 +48,7 @@ Route::group(function () {
     Route::post('user/verify-email/:id', 'UserManage/verifyEmail');
     Route::post('user/credits/:id', 'UserManage/adjustCredits');
     Route::post('credit/delete', 'CreditManage/delete');
-    Route::get('credit', 'CreditManage/index');
+    Route::get('credit', 'FinanceManage/index');
     Route::get('user', 'UserManage/index');
     Route::post('user/save/:id', 'UserManage/save');
     Route::post('user/batch', 'UserManage/batch');
@@ -66,7 +66,8 @@ Route::group(function () {
     Route::post('storage/probe/:id', 'StorageManage/probe');
     Route::post('storage/delete/:id', 'StorageManage/delete');
 
-    Route::get('payment', 'PaymentManage/index');
+    Route::get('finance', 'FinanceManage/index');
+    Route::get('payment', 'FinanceManage/index');  // 旧入口兼容
     Route::post('payment/gateway', 'PaymentManage/saveGateway');
     Route::post('payment/plan', 'PaymentManage/savePlan');
     Route::post('order/pay/:id', 'PaymentManage/orderPay');
