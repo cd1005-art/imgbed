@@ -10,10 +10,21 @@
       <label>6 位验证码</label>
       <input type="text" name="code" inputmode="numeric" maxlength="6" placeholder="输入邮件中的数字" required>
       <p class="form-error" id="codeErr" hidden></p>
+
+      <div style="height:14px"></div>
+
       <button type="submit" class="btn btn-block">完成验证</button>
     </form>
+
+    <div class="auth-resend">
+      <span class="field-hint">没收到验证码？</span>
+      <button class="btn-ghost-sm" type="button" id="resendCodeBtn" {if condition="$resend_wait gt 0"}disabled{/if}>
+        {$resend_wait gt 0 ? '重新发送（' . $resend_wait . 's）' : '重新发送验证码'}
+      </button>
+    </div>
+
     <p class="auth-sub" style="margin-top:14px">
-      <a href="/login">返回登录</a> · 没收到？<a href="/register">重新注册</a> 或到个人中心重发
+      <a href="/login">返回登录</a> · <a href="/register">重新注册</a>
     </p>
   </div>
 </section>
@@ -21,17 +32,60 @@
 
 {block name="script"}
 <script>
-document.getElementById('codeForm').addEventListener('submit', function (e) {
-  e.preventDefault();
-  var f = e.target;
-  var body = new URLSearchParams(new FormData(f)).toString();
-  fetch('/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (d.status) { location.href = '/console'; }
-      else { var el = document.getElementById('codeErr'); el.hidden = false; el.textContent = d.message; }
-    })
-    .catch(function () { alert('网络错误'); });
-});
+(function () {
+  var form = document.getElementById('codeForm');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var body = new URLSearchParams(new FormData(form)).toString();
+    fetch('/verify-code', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.status) { location.href = '/console'; }
+        else { var el = document.getElementById('codeErr'); el.hidden = false; el.textContent = d.message; }
+      })
+      .catch(function () { alert('网络错误'); });
+  });
+
+  // 重发倒计时
+  var btn = document.getElementById('resendCodeBtn');
+  var email = form.querySelector('input[name="email"]').value;
+  var timer = null;
+
+  function startCountdown(sec) {
+    if (!btn) return;
+    if (timer) clearInterval(timer);
+    var n = parseInt(sec, 10) || 0;
+    btn.disabled = true;
+    btn.textContent = '重新发送（' + n + 's）';
+    timer = setInterval(function () {
+      n--;
+      if (n <= 0) {
+        clearInterval(timer);
+        btn.disabled = false;
+        btn.textContent = '重新发送验证码';
+      } else {
+        btn.textContent = '重新发送（' + n + 's）';
+      }
+    }, 1000);
+  }
+
+  if (btn) {
+    {if condition="$resend_wait gt 0"}startCountdown({$resend_wait});{/if}
+    btn.addEventListener('click', function () {
+      if (btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = '发送中…';
+      fetch('/resend-code', {
+        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'email=' + encodeURIComponent(email)
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        alert(d.message);
+        startCountdown(d.wait || 60);
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = '重新发送验证码'; alert('网络错误');
+      });
+    });
+  }
+})();
 </script>
 {/block}

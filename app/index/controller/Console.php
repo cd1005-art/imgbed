@@ -149,31 +149,8 @@ class Console extends Base
         if ((int)$user->email_verified === 1) {
             return json(['status' => false, 'message' => '邮箱已验证，无需重发']);
         }
-        // 重发间隔限制
-        $interval = max(30, (int)Setting::get('resend_interval', 60));
-        $lastSent = (int)Db::name('users')->where('id', $user->id)->value('verify_expire');
-        if ($lastSent > 0 && ($lastSent - max(1, (int)Setting::get('verify_expire', '24')) * 3600) > time() - $interval) {
-            return json(['status' => false, 'message' => "请 {$interval} 秒后再试"]);
-        }
-
-        $code  = \app\index\controller\Auth::makeCode();
-        $hours = max(1, (int)Setting::get('verify_expire', '24'));
-        Db::name('users')->where('id', $user->id)->update([
-            'verify_token'  => $code,
-            'verify_expire' => time() + $hours * 3600,
-            'verify_tries'  => 0,
-        ]);
-        $ok = \app\common\service\MailerService::notify(
-            'verify',
-            (string)$user->email,
-            '邮箱验证码 · ' . (string)Setting::get('site_name', '逍遥图床'),
-            'verify',
-            ['name' => (string)$user->nickname, 'code' => $code]
-        );
-        return json([
-            'status'  => $ok,
-            'message' => $ok ? '验证码已发送，请查收（含垃圾箱）' : '发送失败：请检查后台 SMTP 配置',
-        ]);
+        $r = \app\index\controller\Auth::sendVerifyCode($user);
+        return json(['status' => $r['ok'], 'message' => $r['message']]);
     }
 
     /** 生成 Token */

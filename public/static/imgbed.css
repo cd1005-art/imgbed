@@ -342,3 +342,7 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 .pay-mask p { margin: 0; font-size: 13px; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
 
 .modal-mask[hidden] { display: none !important; }
+
+/* ---------- 验证码页：重发行 ---------- */
+.auth-resend { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.auth-resend .btn-ghost-sm[disabled] { opacity: .55; cursor: not-allowed; }

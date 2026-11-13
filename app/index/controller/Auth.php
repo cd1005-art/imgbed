@@ -152,6 +152,7 @@ class Auth extends Base
             'verify_token'  => $code,
             'verify_expire' => time() + $hours * 3600,
             'verify_tries'  => 0,
+            'verify_sent_at'=> time(),
         ]);
 
         $mode = (string)Setting::get('verify_mode', 'none');
@@ -167,7 +168,8 @@ class Auth extends Base
 
         if ($mode === 'register') {
             // 需验证后才能登录：注册成功页内嵌验证码输入
-            return $this->siteView('auth/verify_sent', ['email' => $email]);
+            $interval = max(30, (int)Setting::get('resend_interval', 60));
+            return $this->siteView('auth/verify_sent', ['email' => $email, 'resend_wait' => $interval]);
         }
 
         // none / lazy：注册即登录
@@ -180,6 +182,56 @@ class Auth extends Base
     public static function makeCode(): string
     {
         return str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * 生成并发送验证码（公共）：受重发间隔限制
+     * @return array ['ok'=>bool,'wait'=>剩余秒数,'message'=>string]
+     */
+    public static function sendVerifyCode(User $user): array
+    {
+        $interval = max(30, (int)Setting::get('resend_interval', 60));
+        $last = (int)$user->verify_sent_at;
+        if ($last > 0 && time() - $last < $interval) {
+            $wait = $interval - (time() - $last);
+            return ['ok' => false, 'wait' => $wait, 'message' => "请 {$wait} 秒后再试"];
+        }
+
+        $code  = self::makeCode();
+        $hours = max(1, (int)Setting::get('verify_expire', '24'));
+        Db::name('users')->where('id', $user->id)->update([
+            'verify_token'   => $code,
+            'verify_expire'  => time() + $hours * 3600,
+            'verify_tries'   => 0,
+            'verify_sent_at' => time(),
+        ]);
+        $ok = \app\common\service\MailerService::notify(
+            'verify',
+            (string)$user->email,
+            '邮箱验证码 · ' . (string)Setting::get('site_name', '逍遥图床'),
+            'verify',
+            ['name' => (string)$user->nickname, 'code' => $code]
+        );
+        return [
+            'ok'      => $ok,
+            'wait'    => $interval,
+            'message' => $ok ? '验证码已发送，请查收（含垃圾箱）' : '发送失败：请检查 SMTP 配置',
+        ];
+    }
+
+    /** 重发验证码（注册后未登录，凭邮箱） */
+    public function resendCode()
+    {
+        $email = trim((string)$this->request->post('email', ''));
+        $user  = User::where('email', $email)->find();
+        if (!$user) {
+            return json(['status' => false, 'message' => '邮箱不存在', 'wait' => 0]);
+        }
+        if ((int)$user->email_verified === 1) {
+            return json(['status' => true, 'message' => '邮箱已验证', 'wait' => 0]);
+        }
+        $r = self::sendVerifyCode($user);
+        return json(['status' => $r['ok'], 'message' => $r['message'], 'wait' => $r['wait']]);
     }
 
     /** 验证码校验（注册验证，无需登录；凭 邮箱+验证码） */
