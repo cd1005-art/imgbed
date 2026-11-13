@@ -20,7 +20,7 @@
         <td>{$t.desc}</td>
         <td>
           {if condition="$t.last_run gt 0"}{:date('m-d H:i:s', ts($t.last_run))}{else /}-{/if}
-          {if condition="$t.manual_time gt 0"}<br><span class="count">手动测试 {:date('m-d H:i', ts($t.manual_time))}（{$t.manual_count} 次）</span>{/if}
+          {if condition="$t.manual_time gt 0"}<br><span class="count">手动测试 {:date('m-d H:i', ts($t.manual_time))}（{$t.manual_count} 次）：{$t.manual_result|default='无输出'}</span>{/if}
         </td>
         <td>{$t.run_count}</td>
         <td class="td-clip" title="{$t.last_result}">{$t.last_result|default='-'}</td>
@@ -32,7 +32,10 @@
       {/volist}
     </tbody>
   </table>
-  <p class="panel-sub" style="margin-top:12px">「立即执行」在服务器后台异步运行；若无反应说明 CLI php 路径不可用，请直接用下方命令配置计划任务。</p>
+  <p class="panel-sub" style="margin-top:12px">
+    「立即执行」= 手动测试：**会真实执行一次并显示结果**（见「最后执行」列底部），但<b>不会让灯变绿</b>——灯变绿必须在宝塔配置计划任务后由真实调度触发。
+    执行需要几秒，按钮会显示「执行中…」。
+  </p>
 </section>
 
 <section class="panel">

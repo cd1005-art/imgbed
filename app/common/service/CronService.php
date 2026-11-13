@@ -36,8 +36,9 @@ class CronService
             }
             if ($source === 'manual') {
                 Db::name('cron_heartbeats')->where('task_key', $key)->update([
-                    'manual_time'  => time(),
-                    'manual_count' => (int)$row['manual_count'] + 1,
+                    'manual_time'   => time(),
+                    'manual_count'  => (int)$row['manual_count'] + 1,
+                    'manual_result' => mb_substr($result, 0, 200),
                 ]);
                 return;
             }
@@ -99,6 +100,7 @@ class CronService
                 'status' => $state, 'last_run' => $lastRun, 'last_result' => $lastResult,
                 'run_count' => $runCount, 'last_source' => $source,
                 'manual_time' => $manualTime, 'manual_count' => $manualCount,
+                'manual_result' => (string)($r['manual_result'] ?? ''),
             ];
         }
         return $out;
@@ -126,7 +128,7 @@ class CronService
                 default:
                     return ['ok' => false, 'msg' => 'unknown task'];
             }
-            self::beat($key, 'done', $source);
+            self::beat($key, $source === 'manual' ? $msg : 'done', $source);
             return ['ok' => true, 'msg' => $msg];
         } catch (\Throwable $e) {
             self::beat($key, 'fail: ' . mb_substr($e->getMessage(), 0, 120));
