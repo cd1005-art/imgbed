@@ -39,15 +39,23 @@
   <h2 class="panel-title">配置方式（二选一）</h2>
 
   <h3 style="font-size:14px;margin:14px 0 6px">方式 A：宝塔 Shell 脚本（推荐）</h3>
-  <p class="panel-sub">宝塔 → 计划任务 → 添加任务 → Shell 脚本，按对应频率填：</p>
-  {volist name="cli_list" id="c"}
-  <div class="cron-line"><pre class="url-text" style="white-space:pre-wrap;flex:1;margin:0">{$c}</pre><button class="btn-ghost-sm" type="button" data-copy-text="{$c}">复制</button></div>
+  <p class="panel-sub">宝塔 → 计划任务 → 添加任务 → Shell 脚本，按任务逐一粘贴（命令首行是任务名注释，不影响执行）：</p>
+  {volist name="tasks" id="t"}
+  <div class="cron-line">
+    <div class="cron-label">{$t.name}</div>
+    <pre class="url-text" style="white-space:pre-wrap;flex:1;margin:0">{$t.cli}</pre>
+    <button class="btn-ghost-sm" type="button" data-copy-text="{$t.cli}">复制</button>
+  </div>
   {/volist}
 
   <h3 style="font-size:14px;margin:18px 0 6px">方式 B：宝塔 访问URL（免 CLI）</h3>
-  <p class="panel-sub">把下列地址填进宝塔「访问URL」计划任务（频率同上）：</p>
-  {volist name="url_list" id="u"}
-  <div class="cron-line"><pre class="url-text" style="white-space:pre-wrap;flex:1;margin:0">{$u}</pre><button class="btn-ghost-sm" type="button" data-copy-text="{$u}">复制</button></div>
+  <p class="panel-sub">把下列地址填进宝塔「访问URL-GET」计划任务（任务类型必须选 GET）：</p>
+  {volist name="tasks" id="t"}
+  <div class="cron-line">
+    <div class="cron-label">{$t.name}</div>
+    <pre class="url-text" style="white-space:pre-wrap;flex:1;margin:0">{$t.url}</pre>
+    <button class="btn-ghost-sm" type="button" data-copy-text="{$t.url}">复制</button>
+  </div>
   {/volist}
 
   <div class="model-inline-form" style="margin-top:16px">

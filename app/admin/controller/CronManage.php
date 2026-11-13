@@ -23,7 +23,9 @@ class CronManage extends Base
         $php    = CronService::phpBinary();
 
         foreach ($tasks as &$t) {
-            $t['cli'] = ($php !== '' ? $php : 'php') . ' ' . $root . '/think ' . $t['cmd'];
+            // CLI 命令带注释头（复制到宝塔也一眼知道是什么任务；# 注释不影响执行）
+            $t['cli_inner'] = ($php !== '' ? $php : 'php') . ' ' . $root . '/think ' . $t['cmd'];
+            $t['cli'] = '# ' . $t['name'] . '\n' . $t['cli_inner'];
             $t['url'] = $domain . '/cron/' . $t['key'] . '?key=' . $key;
         }
         unset($t);
