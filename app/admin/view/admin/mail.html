@@ -67,7 +67,7 @@
     <section class="panel">
       <h2 class="panel-title">通知开关（勾选启用 · 全站事件覆盖）</h2>
       <p class="panel-sub">
-        勾选的事件才会发邮件；「全不勾 = 全部关闭」。互斥功能用下拉（如注册邮箱验证）；<b>灰色胶囊标签</b>表示功能必需项（如找回密码），始终发送、不可关闭。
+        勾选的事件才会发邮件；「全不勾 = 全部关闭」。互斥功能用下拉（如注册邮箱验证）；<b>带 🔒 的项</b>为功能必需，始终发送、不可取消。
         新功能上线在此自动增加对应事件，不会再有"两处重复配置"。
       </p>
       <form id="eventsForm" class="notify-matrix">
@@ -96,11 +96,11 @@
                 </select>
               </label>
               {elseif condition="$key eq 'reset'"}
-              <!-- 功能必需项：不做成勾选框（避免误认为可关闭），用胶囊标签明示 -->
-              <span class="notify-item notify-item-locked">
-                <span class="locked-pill">{$label} · 必需</span>
-                <span class="field-hint">账号安全依赖，始终发送</span>
-              </span>
+              <!-- 功能必需项：保持与其他项一致的勾选样式，文字后加锁；不可取消 -->
+              <label class="notify-item notify-locked-item" title="功能必需，始终发送，不可关闭">
+                <input type="checkbox" checked tabindex="-1" aria-disabled="true">
+                <span>{$label} 🔒</span>
+              </label>
               {else /}
               <label class="notify-item">
                 <input type="checkbox" name="mail_events[]" value="{$key}" {if condition="in_array($key, $enabled_events)"}checked{/if}>
