@@ -184,3 +184,14 @@ git add -f public/static/admin.js public/static/imgbed.js public/static/admin.cs
 - 生成命令时用**双引号真换行**、**绝对路径**、**显式 cd**；
 - 路径推导**不要依赖 `is_file/is_executable`**（宝塔 `open_basedir` 会让它们恒为 false）——用 `PHP_BINDIR` / `PHP_BINARY` 字符串推导，并处理 `sbin → bin` 差异；
 - 交付前把复制出来的**原文**贴到服务器执行一次，确认有预期输出。
+
+## 十三、模板变量命名避坑（★）
+
+ThinkPHP 模板中 `{volist name="xxx" id="vo"}` 会**自动注入 `$key`（循环索引）**，会**覆盖**控制器同名的 `$key` 变量。
+
+2026-11-14 事故：计划任务页的「访问密钥」显示为 `3`——实际是 volist 最后一个任务的索引覆盖了密钥变量，被误判为"宽度截断"，反复改 CSS 无用。
+
+**规则**：
+- 传给视图的变量**避免使用** `key`、`vo`、`i`、`id`、`mod` 等 volist/循环保留名；
+- 需要展示密钥/ID 之类时用明确名（如 `cron_key`、`secret_value`）；
+- 页面元素显示异常时，**先用 curl 看渲染后的 HTML 原始值**，确认是数据问题还是样式问题，再改样式。
