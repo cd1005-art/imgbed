@@ -5,6 +5,7 @@ namespace app\index\controller;
 
 use app\index\controller\Base;
 use app\common\model\ApiToken;
+use app\common\model\Setting;
 use app\common\model\StrategyGroup;
 use app\common\model\User;
 use think\facade\Db;
