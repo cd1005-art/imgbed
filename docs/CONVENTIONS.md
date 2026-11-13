@@ -105,3 +105,20 @@ git add -f public/static/admin.js public/static/imgbed.js public/static/admin.cs
 ```
 
 否则仓库缺失资源，换会话/换机器部署会不一致。
+
+## 八、静态资源版本号（★ 每次必做）
+
+改动 `public/static/admin.js`、`admin.css`、`imgbed.js`、`imgbed.css` 后，**必须**同步提升 layout 中的版本参数：
+
+```html
+<!-- app/admin/view/admin/layout.html -->
+<script src="/static/admin.js?v=39"></script>
+<link rel="stylesheet" href="/static/admin.css?v=39">
+
+<!-- app/index/view/common/layout.html -->
+<script src="/static/imgbed.js?v=25"></script>
+```
+
+**不升版本的后果**：浏览器继续使用缓存的旧文件，页面结构已更新但交互逻辑还是旧的，表现为"改了没效果"（2026-11-14 实际踩过：连续多轮改动均未生效，最终定位是版本号停在 v=38）。
+
+**检查方法**：`curl -s https://域名/admin/xxx | grep -oE 'admin\.(js|css)\?v=[0-9]+'`
