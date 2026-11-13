@@ -52,8 +52,19 @@ class Photo extends Base
             }
         }
 
+        // SEO：浏览器标题 / 分享描述
+        $seoTitle = mb_substr(trim((string)$img->name), 0, 50) ?: '图片';
+        $seoDesc  = implode('、', array_slice($tags, 0, 5));
+        if ($seoDesc === '') {
+            $seoDesc = '免费图片托管 · ' . $seoTitle;
+        }
+
         return $this->siteView('photo/show', [
             'image'    => $img,
+            'seo_title' => $seoTitle,
+            'seo_desc'  => mb_substr($seoDesc, 0, 120),
+            'seo_img'   => request()->domain() . '/i/' . $img->path,
+            'seo_url'   => request()->domain() . '/p/' . $img->id,
             'author'   => $author,
             'tags'     => $tags,
             'related'  => $related,

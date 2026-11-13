@@ -1,6 +1,16 @@
 {extend name="common/layout"}
 
-{block name="title"} · 图片详情{/block}
+{block name="title"} · {$seo_title}{/block}
+
+{block name="head_extra"}
+<meta property="og:type" content="article">
+<meta property="og:title" content="{$seo_title}">
+<meta property="og:description" content="{$seo_desc}">
+<meta property="og:image" content="{$seo_img}">
+<meta name="description" content="{$seo_desc}">
+<meta property="og:url" content="{$seo_url}">
+<link rel="canonical" href="{$seo_url}">
+{/block}
 
 {block name="content"}
 {if condition="$notfound"}
