@@ -34,22 +34,21 @@ class CronService
                 ]);
                 $row = Db::name('cron_heartbeats')->where('task_key', $key)->find();
             }
-            if ($source === 'manual') {
-                Db::name('cron_heartbeats')->where('task_key', $key)->update([
-                    'manual_time'   => time(),
-                    'manual_count'  => (int)$row['manual_count'] + 1,
-                    'manual_result' => mb_substr($result, 0, 200),
-                ]);
-                return;
-            }
-            // cli / url：记为「计划任务接入」的有效执行
-            Db::name('cron_heartbeats')->where('task_key', $key)->update([
+            // 所有来源都记账：灯色 = 最近一次执行的成败
+            $update = [
                 'last_run'    => time(),
                 'last_result' => mb_substr($result, 0, 200),
                 'last_source' => $source,
                 'source_time' => time(),
                 'run_count'   => (int)$row['run_count'] + 1,
-            ]);
+            ];
+            if ($source === 'manual') {
+                // 手动执行额外记录统计（用于展示"手动验证 N 次"）
+                $update['manual_time']  = time();
+                $update['manual_count'] = (int)$row['manual_count'] + 1;
+                $update['manual_result'] = mb_substr($result, 0, 200);
+            }
+            Db::name('cron_heartbeats')->where('task_key', $key)->update($update);
         } catch (\Throwable $e) {
         }
     }
@@ -84,8 +83,8 @@ class CronService
                 $manualTime = (int)($r['manual_time'] ?? 0);
                 $manualCount = (int)($r['manual_count'] ?? 0);
 
-                if ($lastRun > 0 && $source !== '') {
-                    // 红 = 最近一次执行失败；绿 = 已接入（不论超期与否，超期用文字提示）
+                if ($lastRun > 0) {
+                    // 红 = 最近一次执行失败；绿 = 最近一次执行成功；灰 = 从未执行
                     if (stripos($lastResult, 'fail') !== false || stripos($lastResult, 'error') !== false) {
                         $state = 'red';
                     } else {

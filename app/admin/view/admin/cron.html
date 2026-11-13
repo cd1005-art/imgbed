@@ -1,7 +1,7 @@
 {extend name="admin/layout"}
 
 {block name="content"}
-<h1 class="page-title">计划任务 <span class="count">状态灯：灰=未接入计划任务 · 绿=已接入（执行成功）· 红=执行失败</span></h1>
+<h1 class="page-title">计划任务 <span class="count">状态灯：灰=未执行过 · 绿=最近执行成功 · 红=最近执行失败</span></h1>
 
 <section class="panel">
   <h2 class="panel-title">任务状态</h2>
@@ -13,9 +13,14 @@
         <td><span class="dot dot-{$t.status}"></span></td>
         <td>
           <b>{$t.name}</b><br><span class="count">{$t.why}</span>
-          {if condition="$t.status eq 'gray'"}<br><span class="count">未接入计划任务（手动测试不算接入）</span>{/if}
-          {if condition="$t.status eq 'red'"}<br><span class="count">最近一次执行失败（详情见结果列 / runtime 日志）</span>{/if}
-          {if condition="$t.status eq 'green'"}<br><span class="count">已接入 · 来源 {if condition="$t.last_source eq 'cli'"}命令行{else /}URL{/if}{if condition="$t.overdue"} · <b style="color:#d29922">⚠ 已超期未执行，请检查计划任务</b>{/if}</span>{/if}
+          {if condition="$t.status eq 'gray'"}<br><span class="count">尚未执行（接入后点「立即执行」验证，或等计划任务自动跑）</span>{/if}
+          {if condition="$t.status eq 'red'"}<br><span class="count">最近一次执行失败（见结果列；红灯多为配置/网络问题）</span>{/if}
+          {if condition="$t.status eq 'green'"}<br><span class="count">
+            {if condition="$t.last_source eq 'cli'"}已接入 · 来源 CLI 调度
+            {elseif condition="$t.last_source eq 'url'"}已接入 · 来源 URL 调度
+            {else /}已接入 · 来源 手动验证（宝塔调度尚未跑过）{/if}
+            {if condition="$t.overdue"} · <b style="color:#d29922">⚠ 已超期未执行</b>{/if}
+          </span>{/if}
         </td>
         <td>{$t.desc}</td>
         <td>
@@ -33,8 +38,8 @@
     </tbody>
   </table>
   <p class="panel-sub" style="margin-top:12px">
-    「立即执行」= 手动测试：**会真实执行一次并显示结果**（见「最后执行」列底部），但<b>不会让灯变绿</b>——灯变绿必须在宝塔配置计划任务后由真实调度触发。
-    执行需要几秒，按钮会显示「执行中…」。
+    「立即执行」= <b>强制跑一次并参与灯色判定</b>：执行成功 → 绿灯（并标注来源「手动验证」）；执行失败 → 红灯；从未执行 → 灰灯。
+    宝塔计划任务真实触发后，来源会变为「URL 调度 / CLI 调度」，同样按成败亮灯。执行需几秒，按钮会显示「执行中…」。
   </p>
 </section>
 
