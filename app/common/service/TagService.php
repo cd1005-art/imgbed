@@ -68,7 +68,9 @@ class TagService
                 continue;
             }
             $n = self::normalize($t);
-            if ($n !== '' && !in_array($n, $out, true)) {
+            // 去掉 [模型名] 之类前缀，并丢弃过长（>8 字）的"描述型标签"
+            $n = trim((string)preg_replace('/^\[[^\]]*\]\s*/u', '', $n));
+            if ($n !== '' && mb_strlen($n) <= 8 && !in_array($n, $out, true)) {
                 $out[] = $n;
             }
             if (count($out) >= $max) {

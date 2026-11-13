@@ -466,17 +466,11 @@ class CronService
         if ((int)($task['auto_tag'] ?? 0) !== 1) {
             return;
         }
+        // 只补任务分类；审核短标签由审核驱动在入库时自动挂载（2~6 字的主体/风格/色调）
         $tags = [];
         $cat  = trim((string)($task['category'] ?? ''));
         if ($cat !== '') {
             $tags[] = $cat;
-        }
-        $detail = (string)Db::name('audit_logs')->where('image_id', $imageId)->value('detail');
-        if ($detail !== '') {
-            $first = trim((string)(preg_split('/[，,。；;]/u', $detail)[0] ?? ''));
-            if (mb_strlen($first) >= 2 && mb_strlen($first) <= 16) {
-                $tags[] = $first;
-            }
         }
         if ($tags) {
             try {
