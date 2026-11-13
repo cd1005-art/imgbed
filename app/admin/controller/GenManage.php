@@ -91,13 +91,22 @@ class GenManage extends Base
             return json(['status' => false, 'message' => "未找到目标账号：「{$targetInput}」（支持用户ID/邮箱/昵称）"]);
         }
 
+        // 所选模型必须是生图模型（防止误选审核模型导致 400）
+        $mid = max(0, (int)$this->request->post('model_id', 0));
+        if ($mid > 0) {
+            $mm = Db::name('audit_models')->where('id', $mid)->find();
+            if (!$mm || (string)$mm['purpose'] !== 'image_gen') {
+                return json(['status' => false, 'message' => '所选模型不是生图模型，请在「模型管理」中确认用途为 image_gen']);
+            }
+        }
+
         $data = [
             'name'            => mb_substr(trim((string)$this->request->post('name', '')), 0, 60) ?: '造图任务',
             'prompts'         => json_encode(array_slice($arr, 0, 50), JSON_UNESCAPED_UNICODE),
             'category'        => mb_substr(trim((string)$this->request->post('category', '')), 0, 30),
             'count_per_run'   => max(1, min(20, (int)$this->request->post('count_per_run', 1))),
             'interval_minutes' => max(5, min(1440, (int)$this->request->post('interval_minutes', 60))),
-            'model_id'        => max(0, (int)$this->request->post('model_id', 0)),
+            'model_id'        => $mid,
             'target_user_id'  => (int)$target['id'],
             'auto_public'     => (int)$this->request->post('auto_public', 1) === 1 ? 1 : 0,
             'status'          => (int)$this->request->post('status', 1) === 1 ? 1 : 0,
