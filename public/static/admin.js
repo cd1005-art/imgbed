@@ -36,8 +36,11 @@
     btns.forEach(function (b) {
       b.addEventListener('click', function () { show(b.getAttribute('data-tab'), true); });
     });
+    // 定位优先级：URL hash → ?tab= → 第一个标签（GET 筛选提交后能停留在原标签）
     var hash = (location.hash || '').replace('#', '');
-    show(hash || (btns[0] ? btns[0].getAttribute('data-tab') : ''), false);
+    var qs = new URLSearchParams(location.search || '');
+    var initial = hash || qs.get('tab') || (btns[0] ? btns[0].getAttribute('data-tab') : '');
+    show(initial, false);
   }
 
   function post(url) {
