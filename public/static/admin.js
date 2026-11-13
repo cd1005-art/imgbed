@@ -857,6 +857,32 @@
         });
       });
     });
+    // 批量下架 / 批量驳回
+    var rbc = document.getElementById('reportBatchConfirm');
+    if (rbc) rbc.addEventListener('click', function () {
+      var ids = Array.prototype.map.call(document.querySelectorAll('.report-check:checked'), function (c) { return c.value; });
+      if (!ids.length) { toast('先勾选举报记录'); return; }
+      armConfirm(rbc, '批量下架选中的 ' + ids.length + ' 条举报对应图片？（不可恢复）', function () {
+        postBody('/admin/report/batch-confirm', 'ids=' + ids.join(',')).then(function (d) {
+          toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 700);
+        });
+      });
+    });
+    var rbr = document.getElementById('reportBatchReject');
+    if (rbr) rbr.addEventListener('click', function () {
+      var ids = Array.prototype.map.call(document.querySelectorAll('.report-check:checked'), function (c) { return c.value; });
+      if (!ids.length) { toast('先勾选举报记录'); return; }
+      if (!confirm('批量驳回选中的 ' + ids.length + ' 条举报？')) return;
+      var done = 0;
+      Promise.all(ids.map(function (id) {
+        return fetch('/admin/report/reject/' + id, { method: 'POST' }).then(function (r) { return r.json(); });
+      })).then(function (rs) {
+        done = rs.filter(function (x) { return x.status; }).length;
+        toast('已驳回 ' + done + ' 条');
+        setTimeout(function () { location.reload(); }, 700);
+      });
+    });
+
     document.querySelectorAll('[data-rep-unban]').forEach(function (b) {
       b.addEventListener('click', function () {
         armConfirm(b, '解除该图片的禁止公开限制？', function () {

@@ -54,9 +54,34 @@ class ReportManage extends Base
     /** 判定下架（人工复核成立） */
     public function confirm(int $id)
     {
+        if (!$this->confirmCore($id)) {
+            return json(['status' => false, 'message' => '举报不存在']);
+        }
+        return json(['status' => true, 'message' => '已下架并加入违规指纹库']);
+    }
+
+    /** 批量下架（逐条复用人工复核逻辑） */
+    public function batchConfirm()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择举报记录']);
+        }
+        $ok = 0;
+        foreach ($ids as $id) {
+            if ($this->confirmCore($id)) {
+                $ok++;
+            }
+        }
+        return json(['status' => true, 'message' => "已下架 {$ok} 条举报对应的图片并加入违规指纹库"]);
+    }
+
+    /** 人工复核核心：下架图片 + 标记状态 + 通知举报人 */
+    protected function confirmCore(int $id): bool
+    {
         $rep = Db::name('reports')->where('id', $id)->find();
         if (!$rep) {
-            return json(['status' => false, 'message' => '举报不存在']);
+            return false;
         }
         $img = Image::find((int)$rep['image_id']);
         if ($img) {
@@ -66,7 +91,7 @@ class ReportManage extends Base
             'status' => 'manual', 'handled_by' => (int)session('admin_id'), 'update_time' => time(),
         ]);
         $this->notifyReporter((int)$rep['reporter_id'], '举报成立，图片已下架', (string)$rep['reason']);
-        return json(['status' => true, 'message' => '已下架并加入违规指纹库']);
+        return true;
     }
 
     /** 驳回举报 */

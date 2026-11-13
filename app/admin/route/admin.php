@@ -36,6 +36,7 @@ Route::group(function () {
     Route::get('gen', 'GenManage/index');
     Route::post('withdraw/delete', 'WithdrawManage/delete');
     Route::get('withdraw', 'FinanceManage/index');
+    Route::post('report/batch-confirm', 'ReportManage/batchConfirm');
     Route::post('report/delete', 'ReportManage/delete');
     Route::get('report', 'ReportManage/index');
     Route::get('tag', 'TagManage/index');
