@@ -804,6 +804,46 @@
       });
     });
 
+    // 任务详情弹窗
+    var dm = document.getElementById('genDetailModal');
+    document.querySelectorAll('[data-gen-detail]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        fetch('/admin/gen/detail/' + b.dataset.genDetail).then(function (r) { return r.json(); }).then(function (d) {
+          if (!d.status) { toast(d.message); return; }
+          document.getElementById('genDetailTitle').textContent = '任务 #' + b.dataset.genDetail + ' · ' + d.name;
+          document.getElementById('genDetailInfo').textContent = d.info;
+          var g = document.getElementById('genDetailGrid');
+          var e = document.getElementById('genDetailEmpty');
+          g.innerHTML = '';
+          (d.images || []).forEach(function (im) {
+            var cell = document.createElement('a');
+            cell.href = im.url; cell.target = '_blank';
+            cell.style.cssText = 'display:block;border:1px solid #E4E1DB;border-radius:8px;overflow:hidden;text-decoration:none;color:inherit';
+            cell.innerHTML = '<img src="' + im.url + '" style="width:100%;height:110px;object-fit:cover;display:block">'
+              + '<div style="padding:6px 8px;font-size:12px;line-height:1.5">#' + im.id + ' · ' + im.time
+              + '<br><span style="color:' + (im.audit_text === '通过' ? '#2E6B4F' : (im.audit_text === '拒绝' ? '#B3402A' : '#8A867E')) + '">'
+              + im.audit_text + (im.is_public == 1 ? ' · 已公开' : '') + '</span></div>';
+            g.appendChild(cell);
+          });
+          e.hidden = !!(d.images && d.images.length);
+          e.textContent = d.message || '';
+          dm.hidden = false;
+        }).catch(function () { toast('读取失败'); });
+      });
+    });
+    if (dm) document.getElementById('genDetailClose').onclick = function () { dm.hidden = true; };
+
+    // 复制任务
+    document.querySelectorAll('[data-gen-copy]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        armConfirm(b, '复制该任务？（副本默认暂停，便于修改后启用）', function () {
+          post('/admin/gen/copy/' + b.dataset.genCopy).then(function (d) {
+            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 700);
+          });
+        });
+      });
+    });
+
     // ===== 提示词中心 =====
     initTabs('#promptTabs');
     var pv = document.getElementById('promptPreview');
@@ -866,6 +906,23 @@
       if (!sel || !sel.value) { toast('请选择任务'); return; }
       window.location.href = '/admin/gen/prompt/export/' + sel.value;
     });
+    var ur = document.getElementById('usageRun');
+    if (ur) ur.addEventListener('click', function () {
+      var sel = document.getElementById('promptTargetTask');
+      if (!sel || !sel.value) { toast('请选择任务'); return; }
+      ur.disabled = true;
+      promptPost('/admin/gen/prompt/usage', 'task_id=' + sel.value).then(function (d) {
+        var out = document.getElementById('usageOut');
+        if (!d.status) { toast(d.message); if (out) { out.textContent = d.message || ''; } return; }
+        var lines = [d.summary, ''];
+        (d.list || []).forEach(function (x, i) {
+          lines.push((i + 1) + '. [' + x.count + ' 次] ' + x.prompt);
+        });
+        if (out) { out.textContent = lines.join('\n'); }
+      }).catch(function () { toast('统计失败：网络错误'); })
+        .finally(function () { ur.disabled = false; });
+    });
+
     var pab = document.getElementById('promptAppendBtn');
     if (pab) pab.addEventListener('click', function () {
       var sel = document.getElementById('promptTargetTask');

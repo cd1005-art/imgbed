@@ -649,7 +649,15 @@ class CronService
                         \think\facade\Db::name('images')->where('id', $r['image']->id)->update(['is_public' => 1]);
                     }
                     $ok++;
-                    $detail[] = "OK #{$r['image']->id} " . mb_substr($prompt, 0, 20) . ($made === 'placeholder' ? '（占位图）' : '');
+                    $auditMap = [0 => '待审', 1 => '通过', 2 => '拒绝', 3 => '人工'];
+                    $auditTxt = $auditMap[(int)($fresh['audit_status'] ?? 0)] ?? '未知';
+                    $pubTxt   = '';
+                    if ((int)$task['auto_public'] === 1 && $auditTxt !== '通过') {
+                        $pubTxt = '｜未公开(' . $auditTxt . '审核)';
+                    }
+                    $detail[] = "OK #{$r['image']->id} " . mb_substr($prompt, 0, 20)
+                        . ($made === 'placeholder' ? '（占位图）' : '')
+                        . '｜审核:' . $auditTxt . $pubTxt;
                     self::applyAutoTags($task, (int)$r['image']->id);
                 } catch (\Throwable $e) {
                     $fail++;

@@ -78,7 +78,19 @@
   <!-- ===== 任务列表 ===== -->
   <div class="tab-pane" data-pane="list">
     <section class="panel">
-      <h2 class="panel-title">任务列表 <span class="count">{$list|count} 个</span></h2>
+      <div class="page-toolbar">
+        <h2 class="panel-title" style="margin:0">任务列表 <span class="count">{$list|count} 个</span></h2>
+        <form class="search-bar" method="get" action="/admin/gen">
+          <input type="hidden" name="tab" value="list">
+          <input type="text" name="tkw" value="{$tkw}" placeholder="任务名关键词" style="width:180px">
+          <select name="tstatus" class="filter-select">
+            <option value="">全部状态</option>
+            <option value="1" {if condition="$tstatus eq '1'"}selected{/if}>运行中</option>
+            <option value="0" {if condition="$tstatus eq '0'"}selected{/if}>已暂停</option>
+          </select>
+          <button class="btn btn-sm" type="submit">筛选</button>
+        </form>
+      </div>
 
       <div class="batch-bar" id="genTaskBar" hidden>
         <span id="genTaskCount">已选 0 个</span>
@@ -103,15 +115,29 @@
               {if condition="$vo.fail_streak gt 0"}<span class="count">连续失败 {$vo.fail_streak}</span>{/if}</td>
             <td>{if condition="$vo.next_run gt 0"}{:date('m-d H:i', ts($vo.next_run))}{else /}-{/if}</td>
             <td class="td-actions">
+              <button class="btn-ghost-sm" data-gen-detail="{$vo.id}">查看</button>
               <button class="btn-ghost-sm" data-gen-run="{$vo.id}">立即执行</button>
               <button class="btn-ghost-sm" data-gen-toggle="{$vo.id}">{if condition="$vo.status eq 1"}暂停{else /}启用{/if}</button>
               <button class="btn-ghost-sm" data-gen-edit="{$vo.id}">编辑</button>
+              <button class="btn-ghost-sm" data-gen-copy="{$vo.id}">复制</button>
               <button class="btn-ghost-sm btn-danger-sm" data-gen-del="{$vo.id}">删除</button>
             </td>
           </tr>
           {/volist}
         </tbody>
       </table>
+
+      <div class="modal-mask" id="genDetailModal" hidden>
+        <div class="modal" style="width:min(720px,94vw)">
+          <h3 class="modal-title" id="genDetailTitle">任务详情</h3>
+          <p class="field-hint" id="genDetailInfo" style="margin-bottom:10px"></p>
+          <div id="genDetailGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
+          <p class="field-hint" id="genDetailEmpty" hidden></p>
+          <div class="modal-actions">
+            <button class="btn-ghost-sm" type="button" id="genDetailClose">关闭</button>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -200,6 +226,15 @@
           </div>
           <textarea id="promptPreview" rows="10" class="modal-textarea" placeholder="生成/反推/导入的结果会出现在这里，可直接编辑，然后点「追加到任务」（自动去重，单任务上限 2000 条）"></textarea>
         </div>
+
+        <div class="hint-bar" style="margin-top:12px">
+          <div class="model-inline-form">
+            <span class="field-label">使用情况</span>
+            <span class="field-hint">统计最近 800 条执行日志里各提示词的出现次数，用于淘汰低质提示词</span>
+            <button class="btn-ghost-sm" type="button" id="usageRun">统计使用情况</button>
+          </div>
+          <pre id="usageOut" style="white-space:pre-wrap;margin:8px 0 0;font-size:12px;line-height:1.7;color:#5C5850"></pre>
+        </div>
       </div>
     </section>
   </div>
@@ -207,6 +242,15 @@
   <div class="tab-pane" data-pane="logs">
     <section class="panel">
       <h2 class="panel-title">执行日志 <span class="count">共 {$logs_total} 条</span></h2>
+
+      <div class="batch-bar" style="background:#FAF9F7;color:#1C1B18;display:flex;margin-bottom:12px">
+        <span><b>今日</b></span>
+        <span>生成 <b>{$stats.gen}</b> 张</span>
+        <span>成功 <b class="ok">{$stats.ok}</b></span>
+        <span>失败 <b class="danger">{$stats.fail}</b></span>
+        <span>入库 {$stats.total} 张</span>
+        <span>审核通过 {$stats.passed} 张（<b>{$stats.rate}%</b>）</span>
+      </div>
 
       <div class="page-toolbar">
         <form class="search-bar" method="get" action="/admin/gen">

@@ -11,7 +11,13 @@ class GenManage extends Base
 {
     public function index()
     {
-        $list = Db::name('gen_tasks')->order('id', 'desc')->select()->toArray();
+        // 任务列表筛选
+        $tkw     = trim((string)$this->request->param('tkw', ''));
+        $tstatus = (string)$this->request->param('tstatus', '');
+        $tq = Db::name('gen_tasks');
+        if ($tkw !== '') { $tq->where('name', 'like', '%' . $tkw . '%'); }
+        if ($tstatus !== '') { $tq->where('status', (int)$tstatus); }
+        $list = $tq->order('id', 'desc')->select()->toArray();
         $models = Db::name('audit_models')->where('purpose', 'image_gen')->order('sort', 'asc')->select()->toArray();
 
         // 模型名 / 目标账号昵称（列表展示与编辑回填用）
@@ -53,8 +59,26 @@ class GenManage extends Base
         $logs = $lq->order('id', 'desc')->limit(100)->select()->toArray();
         $logsTotal = (int)Db::name('gen_task_logs')->count();
 
+        // 今日统计（执行日志页顶部）
+        $todayStart = strtotime(date('Y-m-d'));
+        $lgq = Db::name('gen_task_logs')->where('create_time', '>=', $todayStart);
+        $stats = [
+            'gen'  => (int)(clone $lgq)->sum('gen_count'),
+            'ok'   => (int)(clone $lgq)->sum('success_count'),
+            'fail' => (int)(clone $lgq)->sum('fail_count'),
+            'total' => 0,
+            'passed' => 0,
+            'rate' => 0,
+        ];
+        $stats['total']  = (int)Db::name('images')->where('origin', 'gen_bot')->where('create_time', '>=', $todayStart)->count();
+        $stats['passed'] = (int)Db::name('images')->where('origin', 'gen_bot')->where('create_time', '>=', $todayStart)->where('audit_status', 1)->count();
+        $stats['rate']   = $stats['total'] > 0 ? (int)round($stats['passed'] * 100 / $stats['total']) : 0;
+
         return $this->adminView('admin/gen', [
-            'page'   => 'gen',
+            'page'    => 'gen',
+            'stats'   => $stats,
+            'tkw'     => $tkw,
+            'tstatus' => $tstatus,
             'list'   => $list,
             'models' => $models,
             'logs'   => $logs,
@@ -144,6 +168,55 @@ class GenManage extends Base
         $msg = \app\common\service\CronService::taskGen(max(1, (int)$task['count_per_run']), $id);
         $ok  = !preg_match('/失败|不存在|已达|无到期/', $msg);
         return json(['status' => $ok, 'message' => $msg]);
+    }
+
+    /** 任务详情：最近生成图 + 审核状态（供列表弹窗预览） */
+    public function detail(int $id)
+    {
+        $task = Db::name('gen_tasks')->where('id', $id)->find();
+        if (!$task) {
+            return json(['status' => false, 'message' => '任务不存在']);
+        }
+        $imgs = Db::name('images')->where('origin', 'gen_bot')
+            ->where('user_id', (int)$task['target_user_id'])
+            ->order('id', 'desc')->limit(6)->field('id,path,audit_status,is_public,create_time')->select()->toArray();
+        $auditMap = [0 => '待审', 1 => '通过', 2 => '拒绝', 3 => '人工'];
+        foreach ($imgs as &$im) {
+            $im['url'] = '/i/' . $im['path'];
+            $im['audit_text'] = $auditMap[(int)$im['audit_status']] ?? '未知';
+            $im['time'] = date('m-d H:i', (int)$im['create_time']);
+        }
+        unset($im);
+        $pl = json_decode((string)$task['prompts'], true) ?: [];
+        return json([
+            'status' => true,
+            'name'   => $task['name'],
+            'info'   => '提示词 ' . count($pl) . ' 条 · 累计生成 ' . (int)$task['total_generated']
+                        . ' 张 · 每 ' . (int)$task['interval_minutes'] . ' 分钟 × ' . (int)$task['count_per_run'],
+            'images' => $imgs,
+            'message' => count($imgs) ? '' : '该账号下暂无造图记录',
+        ]);
+    }
+
+    /** 复制任务（暂停状态，便于改名/改提示词后再启用） */
+    public function copy(int $id)
+    {
+        $t = Db::name('gen_tasks')->where('id', $id)->find();
+        if (!$t) {
+            return json(['status' => false, 'message' => '任务不存在']);
+        }
+        unset($t['id']);
+        $t['name']            = mb_substr((string)$t['name'] . '-副本', 0, 60);
+        $t['status']          = 0;          // 复制后默认暂停，避免立即开跑
+        $t['next_run']        = 0;
+        $t['last_run']        = 0;
+        $t['total_generated'] = 0;
+        $t['fail_streak']     = 0;
+        $t['prompt_cursor']   = 0;
+        $t['create_time']     = time();
+        $t['update_time']     = time();
+        $newId = Db::name('gen_tasks')->insertGetId($t);
+        return json(['status' => true, 'message' => "已复制为任务 #{$newId}（默认暂停，确认后再启用）"]);
     }
 
     /* ==================== 提示词中心 ==================== */
@@ -254,6 +327,20 @@ class GenManage extends Base
         if (!$m || (string)$m['endpoint'] === '') {
             return json(['status' => false, 'message' => '请选择视觉模型']);
         }
+        // 图片转为 base64 data URI（部分网关不接受远程 URL）
+        $bin = @file_get_contents($imageUrl);
+        if ($bin === false || strlen($bin) < 1024) {
+            return json(['status' => false, 'message' => '图片地址无法读取（生产环境请用公网可访问地址）']);
+        }
+        if (strlen($bin) > 8 * 1024 * 1024) {
+            return json(['status' => false, 'message' => '图片过大（>8MB），请换小一点的图']);
+        }
+        // 用 getimagesizefromstring 取真实 mime（服务器可能未装 fileinfo 扩展）
+        $sz   = @getimagesizefromstring($bin);
+        $mime = is_array($sz) && !empty($sz['mime']) ? (string)$sz['mime'] : 'image/jpeg';
+        if (!str_starts_with($mime, 'image/')) { $mime = 'image/jpeg'; }
+        $dataUrl = 'data:' . $mime . ';base64,' . base64_encode($bin);
+
         $url = rtrim((string)$m['endpoint'], '/');
         if (!str_contains($url, '/chat/completions')) {
             $url .= '/chat/completions';
@@ -264,7 +351,7 @@ class GenManage extends Base
                 'role' => 'user',
                 'content' => [
                     ['type' => 'text', 'text' => '观察这张图的画面内容，写出能生成这张图的中文提示词（一条，60~120 字，包含主体、场景、光线、镜头、风格）。只输出提示词本人。'],
-                    ['type' => 'image_url', 'image_url' => ['url' => $imageUrl]],
+                    ['type' => 'image_url', 'image_url' => ['url' => $dataUrl]],
                 ],
             ]],
             'temperature' => 0.7,
@@ -287,6 +374,37 @@ class GenManage extends Base
             return json(['status' => false, 'message' => "模型未返回内容（HTTP {$code}）"]);
         }
         return json(['status' => true, 'list' => [$txt], 'message' => '反推完成']);
+    }
+
+    /** 提示词使用统计（从最近日志的明细中统计出现次数） */
+    public function promptUsage()
+    {
+        $taskId = (int)$this->request->post('task_id', 0);
+        $task = Db::name('gen_tasks')->where('id', $taskId)->find();
+        if (!$task) {
+            return json(['status' => false, 'message' => '请选择任务']);
+        }
+        $pool = json_decode((string)$task['prompts'], true) ?: [];
+        if (!$pool) {
+            return json(['status' => false, 'message' => '该任务提示词池为空']);
+        }
+        $logs = Db::name('gen_task_logs')->where('task_id', $taskId)
+            ->order('id', 'desc')->limit(800)->column('detail');
+        $text = implode("\n", array_map('strval', $logs));
+        $usage = [];
+        foreach ($pool as $p) {
+            $needle = mb_substr($p, 0, 16);   // 用前 16 字匹配（日志里提示词被截断到 20 字）
+            if ($needle === '') { continue; }
+            $cnt = substr_count($text, $needle);
+            if ($cnt > 0) { $usage[] = ['prompt' => $p, 'count' => $cnt]; }
+        }
+        usort($usage, function ($a, $b) { return $b['count'] <=> $a['count']; });
+        $used = count($usage);
+        return json([
+            'status' => true,
+            'list'   => array_slice($usage, 0, 20),
+            'summary' => '池子共 ' . count($pool) . " 条，最近 " . count($logs) . " 条日志中命中 {$used} 条",
+        ]);
     }
 
     /** 追加提示词到指定任务（去重） */

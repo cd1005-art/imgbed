@@ -92,7 +92,13 @@ class GenRun extends Command
                         Db::name('images')->where('id', $img->id)->update(['is_public' => 1]);
                     }
                     $ok++;
-                    $detail[] = "OK #{$img->id} {$prompt}";
+                    $auditMap = [0 => '待审', 1 => '通过', 2 => '拒绝', 3 => '人工'];
+                    $auditTxt = $auditMap[(int)($fresh['audit_status'] ?? 0)] ?? '未知';
+                    $pubTxt   = '';
+                    if ((int)$task['auto_public'] === 1 && $auditTxt !== '通过') {
+                        $pubTxt = '｜未公开(' . $auditTxt . '审核)';
+                    }
+                    $detail[] = "OK #{$img->id} {$prompt}｜审核:{$auditTxt}{$pubTxt}";
                     \app\common\service\CronService::applyAutoTags($task, (int)$img->id);
                 } catch (\Throwable $e) {
                     $fail++;

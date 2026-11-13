@@ -30,7 +30,10 @@ Route::group(function () {
     Route::post('gen/prompt/template', 'GenManage/promptTemplate');
     Route::post('gen/prompt/reverse', 'GenManage/promptReverse');
     Route::post('gen/prompt/append', 'GenManage/promptAppend');
+    Route::post('gen/prompt/usage', 'GenManage/promptUsage');
     Route::get('gen/prompt/export/:id', 'GenManage/promptExport');
+    Route::get('gen/detail/:id', 'GenManage/detail');
+    Route::post('gen/copy/:id', 'GenManage/copy');
     Route::post('gen/run/:id', 'GenManage/runNow');
     Route::post('gen/batch', 'GenManage/batch');
     Route::post('gen/settings', 'GenManage/saveSettings');
