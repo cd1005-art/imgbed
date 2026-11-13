@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$site_name|default='逍遥图床'}{block name="title"}{/block}</title>
-<link rel="stylesheet" href="/static/imgbed.css?v=28">
+<link rel="stylesheet" href="/static/imgbed.css?v=29">
 </head>
 <body>
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -21,7 +21,7 @@
 <header class="topbar">
   <div class="wrap topbar-in">
     <a class="brand" href="/">{$site_name|default='逍遥图床'}</a>
-    <a class="brand-link" href="/explore" title="浏览全站公开图片">画廊</a>
+    <a class="brand-link" href="/explore" title="浏览全站公开图片">图片广场</a>
     <nav class="nav">
       {if condition="$user ?? null"}
         <a href="/gallery">我的图片</a>
@@ -61,7 +61,7 @@
 </footer>
 
 <div id="toast" class="toast" hidden></div>
-<script src="/static/imgbed.js?v=28"></script>
+<script src="/static/imgbed.js?v=29"></script>
 {block name="script"}{/block}
 </body>
 </html>
