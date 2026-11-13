@@ -93,6 +93,37 @@
 </section>
 {/volist}
 
+<h2 class="panel-title" style="margin:22px 0 8px">提示词模型（可选，用于 AI 批量生成提示词）</h2>
+{volist name="prompt_models" id="m"}
+<section class="panel" data-model-panel="{$m.id}">
+  <div class="panel-head">
+    <h2 class="panel-title">
+      P{$i} {$m.name}
+      <span class="count">
+        {if condition="$m.status eq 1"}启用{else /}停用{/if}
+        · 失败 {$m.fail_count} 次
+        {if condition="$m.last_ok_time gt 0"}· 最近成功 {:date('m-d H:i', ts($m.last_ok_time))}{/if}
+      </span>
+    </h2>
+    <div class="td-actions">
+      <button class="btn-ghost-sm" data-model-test="{$m.id}">测试连接</button>
+      <button class="btn-ghost-sm" data-model-toggle="{$m.id}">{if condition="$m.status eq 1"}停用{else /}启用{/if}</button>
+      <button class="btn-ghost-sm btn-danger-sm" data-model-del="{$m.id}">删除</button>
+    </div>
+  </div>
+  <form class="model-inline-form model-form">
+    <input type="hidden" name="id" value="{$m.id}">
+    <input type="hidden" name="purpose" value="prompt">
+    <input type="text" name="name" value="{$m.name}" placeholder="名称" style="width:90px">
+    <input type="text" name="model_name" value="{$m.model_name}" placeholder="模型名，如 glm-4-flash" style="width:190px">
+    <select name="status" style="width:76px"><option value="1" {if condition="$m.status eq 1"}selected{/if}>启用</option><option value="2" {if condition="$m.status eq 2"}selected{/if}>停用</option></select>
+    <input type="text" name="endpoint" value="{$m.endpoint}" placeholder="接口地址（自动补 /chat/completions）" style="width:280px">
+    <input type="text" name="api_key" value="{$m.api_key}" placeholder="API Key" style="width:170px">
+    <button type="submit" class="btn btn-sm">保存</button>
+  </form>
+</section>
+{/volist}
+
 <section class="panel">
   <h2 class="panel-title">新增模型卡片</h2>
   <form class="model-inline-form model-form" id="modelNewForm">
@@ -100,6 +131,7 @@
     <select name="purpose" style="width:110px">
       <option value="audit">审核模型</option>
       <option value="image_gen">生成模型</option>
+      <option value="prompt">提示词模型</option>
     </select>
     <input type="text" name="name" placeholder="名称" style="width:90px">
     <select name="type" style="width:118px">

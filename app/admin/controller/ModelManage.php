@@ -19,11 +19,12 @@ class ModelManage extends Base
         // 按用途分组：审核模型 / 生成模型（文生图）
         $auditModels = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? 'audit') === 'audit'));
         $genModels   = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? '') === 'image_gen'));
+        $promptModels = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? '') === 'prompt'));
 
         return $this->adminView('admin/model', [
             'page'        => 'model',
             'models'      => $auditModels,
-            'gen_models'  => $genModels,
+            'gen_models'  => $genModels, 'prompt_models' => $promptModels,
             'settings'    => Setting::allSettings(),
         ]);
     }
@@ -37,7 +38,7 @@ class ModelManage extends Base
             'endpoint'    => trim((string)$this->request->post('endpoint', '')),
             'api_key'     => trim((string)$this->request->post('api_key', '')),
             'type'        => in_array($this->request->post('type'), ['llm', 'local_nsfw'], true) ? (string)$this->request->post('type') : 'llm',
-            'purpose'     => in_array($this->request->post('purpose'), ['audit', 'image_gen'], true) ? (string)$this->request->post('purpose') : 'audit',
+            'purpose'     => in_array($this->request->post('purpose'), ['audit', 'image_gen', 'prompt'], true) ? (string)$this->request->post('purpose') : 'audit',
             'model_name'  => trim((string)$this->request->post('model_name', '')),
             'status'      => (int)$this->request->post('status', 1) === 1 ? 1 : 2,
             'update_time' => time(),

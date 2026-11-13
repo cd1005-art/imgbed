@@ -19,9 +19,13 @@ class GenManage extends Base
         if ($tstatus !== '') { $tq->where('status', (int)$tstatus); }
         $list = $tq->order('id', 'desc')->select()->toArray();
         $models = Db::name('audit_models')->where('purpose', 'image_gen')->order('sort', 'asc')->select()->toArray();
-        // 文本/视觉模型（用于 AI 生成提示词、图生文），排除生图模型
-        $textModels = Db::name('audit_models')->whereIn('purpose', ['audit', 'text'])
+        // 文本/视觉模型：优先专用「提示词模型」(purpose=prompt)，没有则回退审核模型
+        $textModels = Db::name('audit_models')->where('purpose', 'prompt')
             ->order('sort', 'asc')->select()->toArray();
+        if (!$textModels) {
+            $textModels = Db::name('audit_models')->whereIn('purpose', ['audit', 'text'])
+                ->order('sort', 'asc')->select()->toArray();
+        }
 
         // 模型名 / 目标账号昵称（列表展示与编辑回填用）
         $modelName = [];
