@@ -47,6 +47,10 @@ class GroupManage extends Base
             'storage_id'  => 0,  // 占位，下方校验后回填
             'ad_exempt'   => (int)$this->request->post('ad_exempt', 0),
             'max_tokens'  => max(-1, (int)$this->request->post('max_tokens', -1)),
+            'allow_public'      => (int)$this->request->post('allow_public', 0) === 1 ? 1 : 0,
+            'allow_auto_public' => (int)$this->request->post('allow_auto_public', 0) === 1 ? 1 : 0,
+            'can_report'        => (int)$this->request->post('can_report', 0) === 1 ? 1 : 0,
+            'allow_paid'        => (int)$this->request->post('allow_paid', 0) === 1 ? 1 : 0,
             'status'      => (int)$this->request->post('status', 1),
             'update_time' => time(),
         ];

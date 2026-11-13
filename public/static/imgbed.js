@@ -177,6 +177,19 @@
     function checkedIds() {
       return Array.prototype.map.call(document.querySelectorAll('.g-check:checked'), function (c) { return c.value; });
     }
+    var bd = document.getElementById('bulkDelete');
+    if (bd) bd.addEventListener('click', function () {
+      var ids = Array.prototype.map.call(document.querySelectorAll('.g-check:checked'), function (c) { return c.value; });
+      if (!ids.length) { toast('先勾选图片'); return; }
+      if (!confirm('删除选中的 ' + ids.length + ' 张图片？\n\n图片与文件将被永久删除，配额会释放，不可恢复！')) return;
+      fetch('/gallery/batch-delete', {
+        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'ids=' + ids.join(',')
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 800);
+      }).catch(function () { toast('删除失败：网络错误'); });
+    });
+
     document.querySelectorAll('[data-bulk]').forEach(function (b) {
       b.addEventListener('click', function () {
         var ids = checkedIds();

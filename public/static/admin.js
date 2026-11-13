@@ -480,6 +480,10 @@
         document.getElementById('g_storage').value = g.storage_id;
         document.getElementById('g_ad').value = g.ad_exempt;
         document.getElementById('g_status').value = g.status;
+        if (document.getElementById('g_allow_public')) document.getElementById('g_allow_public').value = g.allow_public;
+        if (document.getElementById('g_allow_auto_public')) document.getElementById('g_allow_auto_public').value = g.allow_auto_public;
+        if (document.getElementById('g_can_report')) document.getElementById('g_can_report').value = g.can_report;
+        if (document.getElementById('g_allow_paid')) document.getElementById('g_allow_paid').value = g.allow_paid;
         form.scrollIntoView({ behavior: 'smooth' });
       });
     });

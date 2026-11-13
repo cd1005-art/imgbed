@@ -136,6 +136,56 @@ class Gallery extends Base
     }
 
     /** 自动公开开关 */
+    /** 批量删除自己的图片（记录 + 本地文件；已售出的解锁记录保留为历史） */
+    public function batchDelete()
+    {
+        $uid = (int)session('user_id');
+        $user = $uid > 0 ? User::find($uid) : null;
+        if (!$user) {
+            return json(['status' => false, 'message' => '请先登录']);
+        }
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择图片']);
+        }
+        // 仅限自己的图片
+        $images = Db::name('images')->whereIn('id', $ids)->where('user_id', $uid)->select()->toArray();
+        if (!$images) {
+            return json(['status' => false, 'message' => '未找到可删除的图片（只能删除自己的）']);
+        }
+        $imageIds = array_column($images, 'id');
+        Db::startTrans();
+        try {
+            Db::name('image_tags')->whereIn('image_id', $imageIds)->delete();
+            Db::name('images')->whereIn('id', $imageIds)->delete();
+            // 释放用户配额（按各图实际大小）
+            $bytes = array_sum(array_map(function ($i) { return (int)$i['size']; }, $images));
+            Db::name('users')->where('id', $uid)->where('quota_used', '>=', $bytes)->dec('quota_used', $bytes)->update();
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            return json(['status' => false, 'message' => '删除失败：' . $e->getMessage()]);
+        }
+        // 物理文件（仅本地存储）
+        $files = 0;
+        foreach ($images as $img) {
+            try {
+                $cfgRow = Db::name('storage_configs')->where('id', (int)$img['storage_id'])->find();
+                if (!$cfgRow || $cfgRow['driver'] !== 'local') {
+                    continue;
+                }
+                $cfg = json_decode((string)$cfgRow['config'], true) ?: [];
+                $root = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
+                $local = rtrim(public_path(), '/\\') . '/' . $root . '/' . ltrim((string)$img['path'], '/');
+                if (@is_file($local) && @unlink($local)) {
+                    $files++;
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+        return json(['status' => true, 'message' => '已删除 ' . count($images) . " 张图片（文件 {$files} 个），配额已释放"]);
+    }
+
     public function autoPublic()
     {
         $user  = $this->request->loginUser;

@@ -47,6 +47,7 @@ Route::group(function () {
 
     Route::post('gallery/visibility/:id', 'Gallery/visibility');
 Route::post('gallery/batch-visibility', 'Gallery/batchVisibility');
+Route::post('gallery/batch-delete', 'Gallery/batchDelete');
 Route::post('gallery/all-visibility', 'Gallery/allVisibility');
 Route::post('gallery/auto-public', 'Gallery/autoPublic');
 Route::get('gallery', 'Gallery/index');
