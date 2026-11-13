@@ -41,10 +41,24 @@ class Pay extends Base
             return redirect('/console')->with(['msg' => '支付验证失败']);
         }
 
-        $order = Order::where('order_no', (string)($params['out_trade_no'] ?? ''))->find();
-        if ($order && (int)$order->status === Order::STATUS_PAID) {
-            return redirect('/vip')->with(['msg' => 'VIP 开通成功']);
+        $orderNo = (string)($params['out_trade_no'] ?? '');
+
+        // 同步返回往往早于异步通知（notify）到达，这里短暂重试等待订单状态更新
+        $order = null;
+        for ($i = 0; $i < 5; $i++) {
+            $order = Order::where('order_no', $orderNo)->find();
+            if ($order && (int)$order->status === Order::STATUS_PAID) {
+                break;
+            }
+            sleep(1);
         }
-        return redirect('/vip')->with(['msg' => '支付未完成，如已扣款请稍后刷新查看']);
+
+        $backUrl = ($order && (string)$order->type === 'credits') ? '/console#credits' : '/vip';
+        if ($order && (int)$order->status === Order::STATUS_PAID) {
+            $msg = (string)$order->type === 'credits' ? '充值成功，站币已到账' : 'VIP 开通成功';
+            return redirect($backUrl)->with(['msg' => $msg]);
+        }
+        // 已扣款但回调未到：给中性提示，避免"未完成"造成误解
+        return redirect($backUrl)->with(['msg' => '支付结果确认中，如已扣款请稍后刷新（通常几秒内到账）']);
     }
 }
