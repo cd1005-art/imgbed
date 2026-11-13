@@ -95,7 +95,8 @@
 <section class="panel">
   <h2 class="panel-title">最近订单 <span class="count">共 {$total_orders} 条{if condition="$filtered_orders neq $total_orders"} · 筛选后 {$filtered_orders} 条{/if}</span></h2>
 
-  <form class="search-bar" method="get" action="/admin/payment" style="flex-wrap:wrap;margin-bottom:12px">
+  <div class="page-toolbar">
+  <form class="search-bar" method="get" action="/admin/payment">
     <input type="hidden" name="tab" value="orders">
     <input type="text" name="ono" value="{$ono}" placeholder="订单号" style="width:190px">
     <input type="text" name="ouser" value="{$ouser}" placeholder="用户ID/邮箱/昵称" style="width:190px">
@@ -114,13 +115,14 @@
     <span class="field-hint">至</span>
     <input type="date" name="odto" value="{$odto}" style="width:140px">
     <button class="btn btn-sm" type="submit">筛选</button>
-    <a class="btn-ghost-sm" href="/admin/payment#orders">重置</a>
   </form>
+  <span class="field-hint">已支付订单不可删除（财务记录保留）</span>
+  </div>
 
-  <div class="gallery-batch" style="margin-bottom:10px">
-    <button class="btn-ghost-sm" type="button" id="ordAll">全选</button>
-    <button class="btn-ghost-sm btn-danger-sm" type="button" id="ordDel">删除选中</button>
-    <span class="field-hint">已支付订单不可删除（财务记录保留）</span>
+  <div class="batch-bar" id="ordBar" hidden>
+    <span id="ordCount">已选 0 条</span>
+    <button class="btn-ghost-sm btn-danger-sm" type="button" id="ordDel">批量删除</button>
+    <button class="btn-ghost-sm" type="button" id="ordClearSel">取消选择</button>
   </div>
 
   {if condition="empty($orders)"}
