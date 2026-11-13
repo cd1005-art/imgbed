@@ -69,9 +69,16 @@
 
   <div class="model-inline-form" style="margin-top:16px">
     <span class="field-hint">访问密钥：</span>
-    <code class="inline-code">{$key}</code>
-    <button class="btn-ghost-sm" type="button" id="cronRotate">重置密钥</button>
+    <code class="inline-code" style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle" title="{$key}">{$key}</code>
+    <button class="btn-ghost-sm" type="button" id="cronKeyCopy">复制密钥</button>
+    <button class="btn-ghost-sm btn-danger-sm" type="button" id="cronRotate">重置密钥</button>
   </div>
+  <p class="panel-sub" style="margin-top:8px">
+    <b>访问密钥的用途</b>：方式 B（访问 URL）里的 <code class="inline-code">key=</code> 参数，用于证明请求来自你本人——
+    防止他人构造同一个地址反复触发任务（例如恶意刷造图，消耗你的模型额度）。<b>方式 A（CLI 命令）不需要密钥</b>。<br>
+    <b>重置会怎样</b>：立即生成新密钥，<b>所有旧地址当场失效</b>，宝塔里用方式 B 配置的任务需逐个替换成新地址（方式 A 不受影响）。
+    当前已用方式 A（CLI）的可放心重置。
+  </p>
 </section>
 <div class="modal-mask" id="cronLogModal" hidden>
   <div class="modal" style="width:min(760px,94vw)">
