@@ -405,6 +405,46 @@ class CronService
         return "检查 " . count($users) . " 个到期用户，发送 {$sent} 封提醒";
     }
 
+    /** 判断图片是否"无意义"（过小/纯色/近纯色）；用于拦截模型返回的空白图 */
+    protected static function isMeaninglessImage(string $file): bool
+    {
+        $size = @filesize($file);
+        if ($size === false || $size < 10240) {   // <10KB 视为无效
+            return true;
+        }
+        $info = @getimagesize($file);
+        if (!$info || (int)$info[0] < 256 || (int)$info[1] < 256) {
+            return true;
+        }
+        $im = @imagecreatefromstring((string)@file_get_contents($file));
+        if (!$im) {
+            return true;
+        }
+        $w = imagesx($im); $h = imagesy($im);
+        $vals = [];
+        for ($i = 0; $i < 60; $i++) {
+            $x = (int)mt_rand(0, max(0, $w - 1));
+            $y = (int)mt_rand(0, max(0, $h - 1));
+            $rgb = imagecolorat($im, $x, $y);
+            $vals[] = [($rgb >> 16) & 0xFF, ($rgb >> 8) & 0xFF, $rgb & 0xFF];
+        }
+        @imagedestroy($im);
+        if (!$vals) {
+            return true;
+        }
+        // 各通道方差都很小 → 视为纯色/近乎空白
+        $flat = 0;
+        for ($c = 0; $c < 3; $c++) {
+            $arr = array_map(fn($v) => $v[$c], $vals);
+            $mean = array_sum($arr) / count($arr);
+            $var = 0;
+            foreach ($arr as $v) { $var += ($v - $mean) ** 2; }
+            $var /= count($arr);
+            if ($var < 25) { $flat++; }   // 标准差 < 5
+        }
+        return $flat >= 2;   // 至少两个通道几乎无变化
+    }
+
     /** 调用图像生成模型（OpenAI 兼容 /images/generations）；无模型或失败时回退 GD 占位图 */
     protected static function generateImage(int $modelId, string $prompt, string $outFile): string
     {
@@ -431,16 +471,24 @@ class CronService
                     $data = json_decode($raw, true);
                     $b64    = (string)($data['data'][0]['b64_json'] ?? '');
                     $imgUrl = (string)($data['data'][0]['url'] ?? '');
-                    if ($b64 !== '' && @file_put_contents($outFile, base64_decode($b64)) !== false) {
-                        Db::name('audit_models')->where('id', $modelId)->update(['last_ok_time' => time()]);
-                        return 'model';
-                    }
-                    if ($imgUrl !== '') {
-                        $bin = @file_get_contents($imgUrl);
-                        if ($bin !== false && @file_put_contents($outFile, $bin) !== false) {
+                    if ($b64 !== '') {
+                        // 兼容 data:image/png;base64,xxx 前缀
+                        $b64 = preg_replace('/^data:[^;]+;base64,/', '', $b64);
+                        if (@file_put_contents($outFile, base64_decode($b64)) !== false
+                            && !self::isMeaninglessImage($outFile)) {
                             Db::name('audit_models')->where('id', $modelId)->update(['last_ok_time' => time()]);
                             return 'model';
                         }
+                        @unlink($outFile);
+                    }
+                    if ($imgUrl !== '') {
+                        $bin = @file_get_contents($imgUrl);
+                        if ($bin !== false && @file_put_contents($outFile, $bin) !== false
+                            && !self::isMeaninglessImage($outFile)) {
+                            Db::name('audit_models')->where('id', $modelId)->update(['last_ok_time' => time()]);
+                            return 'model';
+                        }
+                        @unlink($outFile);
                     }
                     if ($code >= 400) {
                         Db::name('audit_models')->where('id', $modelId)->update(['fail_count' => Db::raw('fail_count + 1')]);
@@ -448,7 +496,10 @@ class CronService
                 }
             }
         }
-        return self::placeholderImage($prompt, $outFile) ? 'placeholder' : '';
+        if (self::placeholderImage($prompt, $outFile) && !self::isMeaninglessImage($outFile)) {
+            return 'placeholder';
+        }
+        return '';
     }
 
     /** GD 占位图（无可用模型/调用失败时） */
