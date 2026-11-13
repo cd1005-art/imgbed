@@ -155,7 +155,7 @@
       </div>
 
       <table class="table">
-        <thead><tr><th style="width:28px"><input type="checkbox" id="mailLogCheckAll"></th><th>ID</th><th>收件人</th><th>主题</th><th>事件</th><th>状态</th><th>错误</th><th>时间</th></tr></thead>
+        <thead><tr><th style="width:28px"><input type="checkbox" id="mailLogCheckAll"></th><th>ID</th><th>收件人</th><th>主题</th><th>事件</th><th>状态</th><th>错误</th><th>时间</th><th>操作</th></tr></thead>
         <tbody>
           {volist name="logs" id="vo"}
           <tr>
@@ -167,6 +167,7 @@
             <td>{if condition="$vo.status eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
             <td class="td-clip" title="{$vo.error}">{$vo.error|default='-'}</td>
             <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+            <td class="td-actions"><button class="btn-ghost-sm btn-danger-sm" data-row-del="{$vo.id}">删除</button></td>
           </tr>
           {/volist}
         </tbody>
