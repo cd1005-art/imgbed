@@ -47,12 +47,16 @@
       </td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>
       <td class="td-actions">
-        {if condition="$vo.status eq 'pending'"}
+        {if condition="$vo.status eq 'pending' || $vo.status eq 'ai_rejected' || $vo.status eq 'closed'"}
         <button class="btn-ghost-sm" data-rep-confirm="{$vo.id}">下架</button>
+        {/if}
+        {if condition="$vo.status eq 'pending'"}
         <button class="btn-ghost-sm" data-rep-reject="{$vo.id}">驳回</button>
-        {elseif condition="$vo.ban_public eq 1"}
+        {/if}
+        {if condition="$vo.ban_public eq 1"}
         <button class="btn-ghost-sm" data-rep-unban="{$vo.image_id}">解除禁公开</button>
         {/if}
+        <button class="btn-ghost-sm btn-danger-sm" data-row-del="{$vo.id}">删除</button>
       </td>
     </tr>
     {/volist}

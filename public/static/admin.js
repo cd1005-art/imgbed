@@ -677,6 +677,15 @@
         });
       });
     });
+    document.querySelectorAll('[data-rep-unban]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        armConfirm(b, '解除该图片的禁止公开限制？', function () {
+          post('/admin/report/unban/' + b.dataset.repUnban).then(function (d) {
+            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+          });
+        });
+      });
+    });
     document.querySelectorAll('[data-rep-reject]').forEach(function (b) {
       b.addEventListener('click', function () {
         armConfirm(b, '驳回该举报？', function () {
