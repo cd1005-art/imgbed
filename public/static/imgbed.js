@@ -39,9 +39,10 @@
 
   /* ---------- 页面引导 ---------- */
   window.pageBoot = function (page) {
-    if (page === 'upload') bootUpload();
-    if (page === 'gallery') bootGallery();
-    if (page === 'console') bootConsole();
+    // 单个页面初始化异常不应中断后续内联脚本（如详情页的举报/解锁绑定）
+    try { if (page === 'upload') bootUpload(); } catch (e) { console.error('bootUpload', e); }
+    try { if (page === 'gallery') bootGallery(); } catch (e) { console.error('bootGallery', e); }
+    try { if (page === 'console') bootConsole(); } catch (e) { console.error('bootConsole', e); }
   };
 
   /* ---------- 上传页 ---------- */
