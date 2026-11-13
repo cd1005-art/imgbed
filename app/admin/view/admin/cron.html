@@ -1,7 +1,7 @@
 {extend name="admin/layout"}
 
 {block name="content"}
-<h1 class="page-title">计划任务 <span class="count">状态灯：灰=未接入计划任务 · 绿=已接入且按期 · 红=已接入但超期/异常</span></h1>
+<h1 class="page-title">计划任务 <span class="count">状态灯：灰=未接入计划任务 · 绿=已接入（执行成功）· 红=执行失败</span></h1>
 
 <section class="panel">
   <h2 class="panel-title">任务状态</h2>
@@ -14,8 +14,8 @@
         <td>
           <b>{$t.name}</b><br><span class="count">{$t.why}</span>
           {if condition="$t.status eq 'gray'"}<br><span class="count">未接入计划任务（手动测试不算接入）</span>{/if}
-          {if condition="$t.status eq 'red'"}<br><span class="count">已接入但超期未执行 / 最近失败</span>{/if}
-          {if condition="$t.status eq 'green'"}<br><span class="count">已接入 · 来源 {if condition="$t.last_source eq 'cli'"}命令行{else /}URL{/if}</span>{/if}
+          {if condition="$t.status eq 'red'"}<br><span class="count">最近一次执行失败（详情见结果列 / runtime 日志）</span>{/if}
+          {if condition="$t.status eq 'green'"}<br><span class="count">已接入 · 来源 {if condition="$t.last_source eq 'cli'"}命令行{else /}URL{/if}{if condition="$t.overdue"} · <b style="color:#d29922">⚠ 已超期未执行，请检查计划任务</b>{/if}</span>{/if}
         </td>
         <td>{$t.desc}</td>
         <td>

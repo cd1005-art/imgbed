@@ -102,7 +102,7 @@ class StorageAlert extends Command
             ['reason' => implode('<br>', array_map('htmlspecialchars', $fresh))]
         );
         $output->writeln($ok ? '告警邮件已发送' : '告警邮件发送失败（检查 SMTP 与日志）');
-        \app\common\service\CronService::beat('storage', 'done');
+        \app\common\service\CronService::beat('storage', 'CLI 执行完成（详见输出/邮件）');
         return 0;
     }
 }

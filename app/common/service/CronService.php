@@ -75,6 +75,7 @@ class CronService
             $source = '';
             $manualTime = 0;
             $manualCount = 0;
+            $overdue = false;
             if ($r) {
                 $lastRun = (int)$r['last_run'];
                 $lastResult = (string)$r['last_result'];
@@ -84,15 +85,14 @@ class CronService
                 $manualCount = (int)($r['manual_count'] ?? 0);
 
                 if ($lastRun > 0 && $source !== '') {
-                    $age = time() - $lastRun;
+                    // 红 = 最近一次执行失败；绿 = 已接入（不论超期与否，超期用文字提示）
                     if (stripos($lastResult, 'fail') !== false || stripos($lastResult, 'error') !== false) {
                         $state = 'red';
-                    } elseif ($age > $def['interval'] * 3) {
-                        $state = 'red';   // 已接入但超期
                     } else {
-                        $state = 'green'; // 已接入且按期
+                        $state = 'green';
                     }
                 }
+                $overdue = $lastRun > 0 && (time() - $lastRun) > $def['interval'] * 3;
             }
             $out[] = [
                 'key' => $key, 'name' => $def['name'], 'cmd' => $def['cmd'],
@@ -101,6 +101,7 @@ class CronService
                 'run_count' => $runCount, 'last_source' => $source,
                 'manual_time' => $manualTime, 'manual_count' => $manualCount,
                 'manual_result' => (string)($r['manual_result'] ?? ''),
+                'overdue' => $overdue,
             ];
         }
         return $out;
@@ -128,7 +129,7 @@ class CronService
                 default:
                     return ['ok' => false, 'msg' => 'unknown task'];
             }
-            self::beat($key, $source === 'manual' ? $msg : 'done', $source);
+            self::beat($key, $msg, $source);
             return ['ok' => true, 'msg' => $msg];
         } catch (\Throwable $e) {
             self::beat($key, 'fail: ' . mb_substr($e->getMessage(), 0, 120));

@@ -55,7 +55,7 @@ class VipNotice extends Command
             }
         }
         $output->writeln("检查 {$users} 个即将到期用户，发送 {$sent} 封提醒");
-        \app\common\service\CronService::beat('vip', 'done');
+        \app\common\service\CronService::beat('vip', 'CLI 执行完成');
         return 0;
     }
 }

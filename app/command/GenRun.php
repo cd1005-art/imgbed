@@ -111,7 +111,7 @@ class GenRun extends Command
             $this->logTask((int)$task['id'], $gen, $ok, $fail, implode('; ', array_slice($detail, 0, 10)));
             $output->writeln("任务 #{$task['id']} {$task['name']}：生成 {$gen}，成功 {$ok}，失败 {$fail}");
         }
-        \app\common\service\CronService::beat('gen', 'done');
+        \app\common\service\CronService::beat('gen', 'CLI 执行完成（详见任务日志）');
         return 0;
     }
 
