@@ -186,26 +186,26 @@ class V1 extends BaseController
         $page = max(1, (int)$this->request->param('page', 1));
         $size = min(100, max(1, (int)$this->request->param('size', 20)));
 
-        $list = Image::where('user_id', $this->user->id)
+        $rows = Image::where('user_id', $this->user->id)
             ->where('status', Image::ST_NORMAL)
             ->order('id', 'desc')
             ->page($page, $size)
             ->select()
-            ->each(function ($item) {
-                $item['url'] = $this->request->domain() . '/i/' . $item['path'];
-                return $item;
-            });
+            ->toArray();   // 先转纯数组，避免模型序列化把 tags 数组当字符串（Array to string conversion）
 
-        $this->logCall('list');
-        foreach ($list as &$row) {
+        $domain = $this->request->domain();
+        foreach ($rows as &$row) {
+            $row['url']  = $domain . '/i/' . $row['path'];
             $row['tags'] = json_decode((string)($row['tags'] ?? '[]'), true) ?: [];
         }
         unset($row);
+
+        $this->logCall('list');
         return json([
             'status'  => true,
             'code'    => 200,
             'message' => 'success',
-            'data'    => ['page' => $page, 'size' => $size, 'list' => $list],
+            'data'    => ['page' => $page, 'size' => $size, 'list' => $rows],
         ]);
     }
 
