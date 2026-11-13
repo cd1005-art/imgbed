@@ -14,6 +14,29 @@ class GenManage extends Base
         $list = Db::name('gen_tasks')->order('id', 'desc')->select()->toArray();
         $models = Db::name('audit_models')->where('purpose', 'image_gen')->order('sort', 'asc')->select()->toArray();
 
+        // 模型名 / 目标账号昵称（列表展示与编辑回填用）
+        $modelName = [];
+        foreach ($models as $m) { $modelName[(int)$m['id']] = (string)$m['name']; }
+        $uids = []; $muids = [];
+        foreach ($list as &$t) {
+            $uids[(int)$t['target_user_id']] = (int)$t['target_user_id'];
+            $muids[(int)$t['model_id']] = (int)$t['model_id'];
+        }
+        unset($t);
+        $userName = [];
+        if ($uids) {
+            foreach (Db::name('users')->whereIn('id', array_values($uids))->field('id,nickname,email,status')->select()->toArray() as $u) {
+                $label = $u['nickname'] !== '' ? $u['nickname'] : $u['email'];
+                if ((int)$u['status'] === 3 || strpos((string)$u['email'], '#del') !== false) { $label .= '（已删除）'; }
+                $userName[(int)$u['id']] = $label;
+            }
+        }
+        foreach ($list as &$t) {
+            $t['model_name']  = $modelName[(int)$t['model_id']] ?? 'GD 占位图';
+            $t['target_name'] = $userName[(int)$t['target_user_id']] ?? ('#' . (int)$t['target_user_id']);
+        }
+        unset($t);
+
         // 执行日志筛选：任务 / 结果 / 日期
         $lgTask = (int)$this->request->param('lg_task', 0);
         $lgOk   = (string)$this->request->param('lg_ok', '');

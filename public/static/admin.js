@@ -735,7 +735,7 @@
         nf.querySelector('[name=id]').value = t.id;
         nf.querySelector('[name=name]').value = t.name;
         nf.querySelector('[name=model_id]').value = t.model_id;
-        nf.querySelector('[name=target_user_input]').value = t.target_user_id;
+        nf.querySelector('[name=target_user_input]').value = t.target_name || t.target_user_id;
         nf.querySelector('[name=count_per_run]').value = t.count_per_run;
         nf.querySelector('[name=interval_minutes]').value = t.interval_minutes;
         nf.querySelector('[name=auto_public]').value = t.auto_public;
