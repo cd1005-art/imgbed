@@ -285,36 +285,55 @@ class CronService
     }
 
     /** 造图（与 gen:run 同逻辑的精简版，$limit 限制本次张数） */
+    /**
+     * 造图任务执行（web 触发与 CLI 共用调度语义）
+     * 仅执行「到期」任务，执行后推进 next_run（上次执行 + 间隔），并写日志、计失败
+     * @param int $limit 单任务单次最多生成张数
+     */
     public static function taskGen(int $limit = 1): string
     {
-        $tasks = Db::name('gen_tasks')->where('status', 1)->select()->toArray();
-        if (!$tasks) {
-            return '无任务';
-        }
+        $now = time();
 
-        // 单日上限（0 = 不限）；手动触发同样受限，避免绕过日限额
+        // 单日上限（0 = 不限）
         $dailyLimit = (int)\app\common\model\Setting::get('gen_daily_limit', 100);
         if ($dailyLimit > 0) {
             $today = (int)Db::name('gen_task_logs')->where('create_time', '>=', strtotime(date('Y-m-d')))->sum('gen_count');
-            $left = $dailyLimit - $today;
-            if ($left <= 0) {
+            if ($today >= $dailyLimit) {
                 return "已达单日上限 {$dailyLimit} 张（设为 0 表示不限）";
             }
-            $limit = min($limit, $left);
         }
+
+        // 只取到期任务（next_run 为空视为立即执行）
+        $tasks = Db::name('gen_tasks')->where('status', 1)
+            ->where(function ($q) use ($now) { $q->where('next_run', '<=', $now)->whereOr('next_run', 0); })
+            ->select()->toArray();
+        if (!$tasks) {
+            return '无到期任务';
+        }
+
         $total = 0;
         foreach ($tasks as $task) {
+            $gen = 0; $ok = 0; $fail = 0; $detail = [];
+
             $user  = \app\common\model\User::find((int)$task['target_user_id']);
             $group = $user ? \app\common\model\StrategyGroup::find((int)$user->group_id) : null;
             if (!$user || !$group) {
+                Db::name('gen_tasks')->where('id', $task['id'])->update(['status' => 0, 'fail_streak' => (int)$task['fail_streak'] + 1]);
+                self::logGenTask((int)$task['id'], 0, 0, 1, '目标用户/策略组不存在，任务已暂停');
                 continue;
             }
+
             $prompts = json_decode((string)$task['prompts'], true) ?: ['abstract gradient'];
-            for ($i = 0; $i < min($limit, max(1, (int)$task['count_per_run'])); $i++) {
+            $times   = min(max(1, $limit), max(1, (int)$task['count_per_run']));
+
+            for ($i = 0; $i < $times; $i++) {
                 $prompt = $prompts[array_rand($prompts)];
                 $tmp = sys_get_temp_dir() . '/gen_' . uniqid() . '.jpg';
+
                 $im = @imagecreatetruecolor(1024, 768);
                 if (!$im) {
+                    $fail++;
+                    $detail[] = 'GD 创建画布失败';
                     continue;
                 }
                 $c1 = [mt_rand(20, 120), mt_rand(40, 140), mt_rand(60, 160)];
@@ -322,7 +341,9 @@ class CronService
                 for ($y = 0; $y < 768; $y++) {
                     $k = $y / 768;
                     imageline($im, 0, $y, 1024, $y, imagecolorallocate($im,
-                        (int)($c1[0] + ($c2[0] - $c1[0]) * $k), (int)($c1[1] + ($c2[1] - $c1[1]) * $k), (int)($c1[2] + ($c2[2] - $c1[2]) * $k)));
+                        (int)($c1[0] + ($c2[0] - $c1[0]) * $k),
+                        (int)($c1[1] + ($c2[1] - $c1[1]) * $k),
+                        (int)($c1[2] + ($c2[2] - $c1[2]) * $k)));
                 }
                 for ($j = 0; $j < 5; $j++) {
                     imagefilledellipse($im, mt_rand(0, 1024), mt_rand(0, 768), mt_rand(120, 420), mt_rand(120, 420),
@@ -330,6 +351,8 @@ class CronService
                 }
                 @imagejpeg($im, $tmp, 85);
                 @imagedestroy($im);
+                $gen++;
+
                 try {
                     $f = new \think\file\UploadedFile($tmp, 'gen_' . date('YmdHis') . '_' . $i . '.jpg', 'image/jpeg', null, true);
                     $r = (new \app\common\service\UploadService())->upload($f, (int)$user->id, $group, '127.0.0.1', 'gen-bot');
@@ -338,142 +361,50 @@ class CronService
                     if ((int)$task['auto_public'] === 1 && $fresh && (int)$fresh['audit_status'] === 1) {
                         \think\facade\Db::name('images')->where('id', $r['image']->id)->update(['is_public' => 1]);
                     }
-                    $total++;
+                    $ok++;
+                    $detail[] = "OK #{$r['image']->id} " . mb_substr($prompt, 0, 20);
                 } catch (\Throwable $e) {
+                    $fail++;
+                    $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);
                 } finally {
                     @unlink($tmp);
                 }
             }
-            Db::name('gen_tasks')->where('id', $task['id'])->update(['last_run' => time(), 'total_generated' => (int)$task['total_generated'] + 1]);
+
+            $interval = max(5, (int)$task['interval_minutes']);
+            $newStreak = $ok === 0 && $fail > 0 ? (int)$task['fail_streak'] + 1 : 0;
+            Db::name('gen_tasks')->where('id', $task['id'])->update([
+                'last_run'        => $now,
+                'next_run'        => $now + $interval * 60,
+                'total_generated' => (int)$task['total_generated'] + $ok,
+                'fail_streak'     => $newStreak,
+                'update_time'     => time(),
+            ]);
+            if ($newStreak >= 3) {
+                Db::name('gen_tasks')->where('id', $task['id'])->update(['status' => 0]);
+                $detail[] = '连续失败 3 次，任务已自动暂停';
+            }
+            self::logGenTask((int)$task['id'], $gen, $ok, $fail, implode('；', array_slice($detail, 0, 10)));
+            $total += $ok;
         }
-        return "生成 {$total} 张";
+
+        return "生成 {$total} 张（到期任务 " . count($tasks) . ' 个）';
     }
 
-    /** 站点健康巡检：应用可用性 + 证书到期（本机 127.0.0.1 探测，规避 DNS 问题） */
-    public static function taskSite(): string
+    /** 写造图任务日志 */
+    protected static function logGenTask(int $taskId, int $gen, int $ok, int $fail, string $detail): void
     {
-        $domain = (string)\app\common\model\Setting::get('site_domain', '');
-        if ($domain === '') {
-            $domain = (string)request()->domain();
-        }
-        // 兼容设置里不带协议前缀（如 "oddpp.com"）
-        $host = parse_url($domain, PHP_URL_HOST) ?: trim($domain);
-        if ($host === '' || filter_var($host, FILTER_VALIDATE_IP)) {
-            $host = $host !== '' ? $host : '127.0.0.1';
-        }
-        $msgs = [];
-        $bad = false;
-
-        $ch = @curl_init('https://127.0.0.1/');
-        if ($ch) {
-            @curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15,
-                CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => false,
-                CURLOPT_HTTPHEADER => ['Host: ' . $host],
-            ]);
-            @curl_exec($ch);
-            $code = (int)@curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            @curl_close($ch);
-            if ($code !== 200) {
-                $bad = true;
-                $msgs[] = "首页返回 {$code}（非 200）";
-            } else {
-                $msgs[] = '首页 200 正常';
-            }
-        } else {
-            $msgs[] = 'curl 不可用';
-        }
-
-        $certDays = null;
-        $ctx = @stream_context_create(['ssl' => [
-            'capture_peer_cert' => true, 'verify_peer' => false,
-            'verify_peer_name' => false, 'SNI_enabled' => true, 'peer_name' => $host,
-        ]]);
-        $sock = @stream_socket_client('ssl://127.0.0.1:443', $errno, $errstr, 8, STREAM_CLIENT_CONNECT, $ctx);
-        if ($sock) {
-            $params = @stream_context_get_params($sock);
-            $cert = $params['options']['ssl']['peer_certificate'] ?? null;
-            if ($cert) {
-                $info = @openssl_x509_parse($cert);
-                if ($info && isset($info['validTo_time_t'])) {
-                    $certDays = (int)floor(($info['validTo_time_t'] - time()) / 86400);
-                }
-            }
-            @fclose($sock);
-        }
-        if ($certDays !== null) {
-            $msgs[] = "证书剩余 {$certDays} 天";
-            if ($certDays < 15) {
-                $bad = true;
-                $msgs[] = '⚠ 证书即将到期';
-            }
-        } else {
-            $msgs[] = '证书读取失败';
-        }
-
-        // 3) 域名到期检查（RDAP，剩余 < 30 天告警）
         try {
-            $rootDomain = self::rootDomain($host);
-            if ($rootDomain !== '') {
-                $rdap = '';
-                // 重试 2 次：国外 RDAP 端点在国内网络偶发超时
-                for ($try = 0; $try < 2 && $rdap === ''; $try++) {
-                    $ch = @curl_init('https://rdap.org/domain/' . $rootDomain);
-                    if (!$ch) {
-                        break;
-                    }
-                    @curl_setopt_array($ch, [
-                        CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8,
-                        CURLOPT_FOLLOWLOCATION => true,
-                        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_USERAGENT => 'imgbed-monitor',
-                    ]);
-                    $rdap = (string)@curl_exec($ch);
-                    @curl_close($ch);
-                }
-                if ($rdap !== '') {
-                    $jd = json_decode($rdap, true);
-                    $exp = null;
-                    foreach (($jd['events'] ?? []) as $ev) {
-                        if (($ev['eventAction'] ?? '') === 'expiration') {
-                            $exp = strtotime((string)$ev['eventDate']);
-                        }
-                    }
-                    if ($exp) {
-                        $days = (int)floor(($exp - time()) / 86400);
-                        $msgs[] = "域名剩余 {$days} 天";
-                        if ($days < 30) {
-                            $bad = true;
-                            $msgs[] = '⚠ 域名即将到期，请立即续费';
-                            self::notifyAdmin('domain_expire', '【域名即将到期】' . $rootDomain, 'domain_expire',
-                                ['name' => $rootDomain, 'reason' => $days . ' 天']);
-                        }
-                    }
-                }
-            }
+            Db::name('gen_task_logs')->insert([
+                'task_id'       => $taskId,
+                'gen_count'     => $gen,
+                'success_count' => $ok,
+                'fail_count'    => $fail,
+                'detail'        => mb_substr($detail, 0, 2000),
+                'create_time'   => time(),
+            ]);
         } catch (\Throwable $e) {
         }
-
-        $text = implode('；', $msgs);
-        if ($bad) {
-            self::notifyAdmin('site_down', '【站点巡检异常】' . $host, 'storage_alert', ['reason' => $text]);
-            return 'fail: ' . $text;
-        }
-        return $text;
-    }
-
-    /** 取主域名（xxx.yyy.com → yyy.com，支持常见二级后缀） */
-    protected static function rootDomain(string $host): string
-    {
-        $parts = array_values(array_filter(explode('.', strtolower(trim($host)))));
-        if (count($parts) < 2) {
-            return '';
-        }
-        $twoLevel = ['com.cn', 'net.cn', 'org.cn', 'gov.cn', 'edu.cn', 'co.uk', 'com.hk', 'com.tw'];
-        $last2 = $parts[count($parts) - 2] . '.' . $parts[count($parts) - 1];
-        if (in_array($last2, $twoLevel, true) && count($parts) >= 3) {
-            return $parts[count($parts) - 3] . '.' . $last2;
-        }
-        return $last2;
     }
 
     /** 展示用 CLI php 路径（不探测，避免 disable_functions 限制；按服务器实际修改） */
