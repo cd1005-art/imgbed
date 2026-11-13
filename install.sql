@@ -214,6 +214,7 @@ CREATE TABLE `img_orders` (
   `amount` int NOT NULL DEFAULT '0' COMMENT '实付金额(分)',
   `status` tinyint NOT NULL DEFAULT '0' COMMENT '0待支付 1已支付 2已取消 3退款',
   `gateway` varchar(20) NOT NULL DEFAULT '' COMMENT 'xpay/yipay',
+  `pay_channel` varchar(20) NOT NULL DEFAULT '' COMMENT '支付渠道 alipay/wxpay/qqpay',
   `trade_no` varchar(64) NOT NULL DEFAULT '' COMMENT '网关流水号',
   `pay_time` int unsigned NOT NULL DEFAULT '0',
   `notify_raw` text COMMENT '回调原始参数',

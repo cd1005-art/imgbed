@@ -142,7 +142,7 @@ class PaymentService
             'plan_id'     => 0,
             'type'        => 'credits',
             'amount'      => $yuan * 100,
-            'status'      => Order::ST_PENDING,
+            'status'      => Order::STATUS_UNPAID,
             'pay_channel' => $payChannel,
             'create_time' => time(),
             'update_time' => time(),

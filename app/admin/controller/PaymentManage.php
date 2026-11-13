@@ -36,7 +36,17 @@ class PaymentManage extends Base
 
         $q = Order::order('id', 'desc');
         if ($ono !== '')     { $q->where('order_no', 'like', '%' . $ono . '%'); }
-        if ($ouser !== '')   { $q->where('user_id', (int)$ouser); }
+        if ($ouser !== '') {
+            if (ctype_digit($ouser)) {
+                $q->where('user_id', (int)$ouser);
+            } else {
+                $uids = \think\facade\Db::name('users')->where(function ($qq) use ($ouser) {
+                    $qq->where('email', 'like', '%' . $ouser . '%')
+                       ->whereOr('nickname', 'like', '%' . $ouser . '%');
+                })->column('id');
+                $q->whereIn('user_id', $uids ?: [0]);
+            }
+        }
         if ($otype !== '')   { $q->where('type', $otype); }
         if ($ostatus !== '') { $q->where('status', (int)$ostatus); }
         if ($odfrom !== '')  { $q->where('create_time', '>=', strtotime($odfrom . ' 00:00:00')); }

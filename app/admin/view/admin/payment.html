@@ -98,7 +98,7 @@
   <form class="search-bar" method="get" action="/admin/payment" style="flex-wrap:wrap;margin-bottom:12px">
     <input type="hidden" name="tab" value="orders">
     <input type="text" name="ono" value="{$ono}" placeholder="订单号" style="width:190px">
-    <input type="number" name="ouser" value="{$ouser}" placeholder="用户ID" style="width:100px">
+    <input type="text" name="ouser" value="{$ouser}" placeholder="用户ID/邮箱/昵称" style="width:190px">
     <select name="otype" class="filter-select">
       <option value="">全部类型</option>
       <option value="vip" {if condition="$otype eq 'vip'"}selected{/if}>VIP</option>
