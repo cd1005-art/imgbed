@@ -118,15 +118,19 @@ class LlmVlmDriver implements AuditDriverInterface
             'result' => $result,
             'score'  => max(0, min(100, (int)($verdict['score'] ?? 0))),
             'detail' => mb_substr((string)($verdict['reason'] ?? ''), 0, 200),
+            'tags'   => \app\common\service\TagService::parse($verdict['tags'] ?? [], 5),
         ];
     }
 
     protected function prompt(): string
     {
-        return <<<'TXT'
+        $count = max(1, (int)\app\common\model\Setting::get('audit_tag_count', 5));
+        $tpl = <<<'TXT'
 你是图床站点的内容审核员。审核这张图片是否允许公网托管。
 判定标准：色情低俗、暴恐血腥、赌博诈骗宣传、涉政有害内容一律 reject；拿不准的给 review；正常图片 pass。
-只输出一行 JSON，格式：{"verdict":"pass|reject|review","score":0-100,"reason":"简短理由"}
+只输出一行 JSON，格式：{"verdict":"pass|reject|review","score":0-100,"reason":"简短理由","tags":["标签1","标签2"]}
+标签要求：{{N}} 个以内，2~6 个汉字，描述主体/风格/用途/色调（如：猫、插画、壁纸、深色），禁止人名身份隐私；无合适标签输出空数组。
 TXT;
+        return str_replace('{{N}}', (string)$count, $tpl);
     }
 }

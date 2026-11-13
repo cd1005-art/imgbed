@@ -8,6 +8,24 @@
   <h1 class="page-title">我的图片 <span class="count">{$total} 张</span></h1>
 </div>
 
+{if condition="$allow_public"}
+<div class="gallery-tools">
+  <label class="auto-public">
+    <input type="checkbox" id="autoPublicSwitch" {if condition="$auto_public"}checked{/if} {if condition="!$allow_auto_public"}disabled{/if}>
+    上传过审后自动公开{if condition="!$allow_auto_public"}（当前策略未开放）{/if}
+  </label>
+  <div class="gallery-batch">
+    <button class="btn-ghost-sm" type="button" id="selectAll">全选</button>
+    <button class="btn-ghost-sm" type="button" data-bulk="public">批量公开</button>
+    <button class="btn-ghost-sm" type="button" data-bulk="private">批量私密</button>
+    <button class="btn-ghost-sm" type="button" data-all="public">全部公开</button>
+    <button class="btn-ghost-sm" type="button" data-all="private">全部私密</button>
+  </div>
+</div>
+{else /}
+<div class="hint-bar">当前策略组未开放「公开图片」功能。</div>
+{/if}
+
 {if condition="empty($list)"}
 <div class="empty">
   <svg class="ic ic-lg"><use href="#i-image"/></svg>
@@ -17,14 +35,25 @@
 <div class="grid" id="grid">
   {volist name="list" id="vo"}
   <figure class="cell" data-id="{$vo.id}">
+    <label class="cell-check"><input type="checkbox" class="g-check" value="{$vo.id}"></label>
     <a class="cell-img" href="/i/{$vo.path}" target="_blank" rel="noopener">
       <img src="/i/{$vo.path}" loading="lazy" alt="{$vo.name}">
     </a>
     <figcaption class="cell-meta">
       <span class="cell-name" title="{$vo.name}">{$vo.name}</span>
-      <span class="cell-size">{:round($vo.size / 1024, 1)} KB</span>
+      <span class="cell-size">
+        {if condition="$vo.ban_public eq 1"}<span class="badge badge-banned">已下架</span>
+        {elseif condition="$vo.is_public eq 1"}<span class="badge badge-public">公开</span>
+        {else /}<span class="badge badge-private">私密</span>{/if}
+        {if condition="$vo.audit_status neq 1"}<span class="badge badge-pending">待审/复审</span>{/if}
+      </span>
     </figcaption>
     <div class="cell-actions">
+      {if condition="$vo.ban_public neq 1"}
+      <button class="icon-btn" type="button" data-vis="{$vo.id}" data-to="{if condition="$vo.is_public eq 1"}private{else /}public{/if}" title="{if condition="$vo.is_public eq 1"}设为私密{else /}公开{/if}">
+        <svg class="ic"><use href="#i-check"/></svg>
+      </button>
+      {/if}
       <button class="icon-btn" type="button" data-copy-url="/i/{$vo.path}" title="复制外链"><svg class="ic"><use href="#i-copy"/></svg></button>
       <button class="icon-btn icon-danger" type="button" data-del="{$vo.id}" title="删除"><svg class="ic"><use href="#i-trash"/></svg></button>
     </div>

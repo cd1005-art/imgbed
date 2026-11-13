@@ -1,0 +1,69 @@
+{extend name="common/layout"}
+
+{block name="title"} · 图片详情{/block}
+
+{block name="content"}
+{if condition="$notfound"}
+<div class="empty">
+  <svg class="ic ic-lg"><use href="#i-image"/></svg>
+  <p>图片不存在或未公开。</p>
+  <p><a href="/">返回首页</a></p>
+</div>
+{else /}
+<div class="photo-wrap">
+  <div class="photo-main">
+    <img id="photoImg" src="/i/{$image.path}" alt="{$image.name}" draggable="false">
+  </div>
+  <div class="photo-side">
+    <h1 class="photo-title">{$image.name}</h1>
+    <p class="photo-meta">
+      {:round($image.size / 1024, 1)} KB
+      {if condition="$image.width"}· {$image.width}×{$image.height}{/if}
+      · 浏览 {$image.view_count}
+      {if condition="$image.is_public eq 1"}<span class="badge badge-public">公开</span>{else /}<span class="badge badge-private">私密</span>{/if}
+    </p>
+    {if condition="$author"}
+    <p class="photo-meta">作者：{$author.nickname}</p>
+    {else /}
+    <p class="photo-meta">作者：匿名</p>
+    {/if}
+
+    {if condition="$tags"}
+    <div class="photo-tags">
+      {volist name="tags" id="t"}
+      <a class="tag-chip" href="/tag?name={$t|urlencode}">{$t}</a>
+      {/volist}
+    </div>
+    {/if}
+
+    <div class="photo-actions">
+      <button class="btn btn-sm" type="button" data-copy-url="/i/{$image.path}">复制外链</button>
+      {if condition="$is_owner"}<a class="btn-ghost-sm" href="/gallery">管理我的图片</a>{/if}
+    </div>
+    <p class="field-hint" style="margin-top:14px">请尊重作者版权，未经许可请勿用于商业用途。</p>
+  </div>
+</div>
+
+{if condition="$related"}
+<h2 class="page-title" style="font-size:15px;margin:26px 0 12px">同标签推荐</h2>
+<div class="grid">
+  {volist name="related" id="r"}
+  <figure class="cell">
+    <a class="cell-img" href="/p/{$r.id}"><img src="/i/{$r.path}" loading="lazy" alt="{$r.name}"></a>
+  </figure>
+  {/volist}
+</div>
+{/if}
+{/if}
+{/block}
+
+{block name="script"}
+<script>
+pageBoot('gallery');
+(function () {
+  {if condition="$protect.right_click"}document.getElementById('photoImg').addEventListener('contextmenu', function (e) { e.preventDefault(); });{/if}
+  {if condition="$protect.drag"}document.getElementById('photoImg').addEventListener('dragstart', function (e) { e.preventDefault(); });{/if}
+  {if condition="$protect.long_press"}document.getElementById('photoImg').addEventListener('touchstart', function (e) { if (e.touches.length > 1) e.preventDefault(); });{/if}
+})();
+</script>
+{/block}

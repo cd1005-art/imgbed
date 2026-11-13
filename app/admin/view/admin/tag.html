@@ -1,0 +1,52 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<div class="page-toolbar">
+  <h1 class="page-title">标签管理 <span class="count">{$total} 个</span></h1>
+  <form class="search-bar" method="get" action="/admin/tag">
+    <input type="text" name="kw" value="{$kw}" placeholder="标签名搜索">
+    <button class="btn btn-sm" type="submit">搜索</button>
+  </form>
+</div>
+
+<section class="panel">
+  <h2 class="panel-title">合并标签</h2>
+  <div class="model-inline-form" id="mergeForm">
+    <input type="text" name="from" placeholder="要合并掉的标签名" style="width:200px">
+    <input type="number" name="to_id" placeholder="目标标签 ID" style="width:140px">
+    <button class="btn btn-sm" type="button" id="mergeBtn">合并</button>
+  </div>
+  <p class="panel-sub" style="margin:8px 0 0">来源标签的图片关联迁移到目标标签，来源词转为别名（AI 以后自动归并到目标）。</p>
+</section>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>标签</th><th>分类</th><th>来源</th><th>使用次数</th><th>状态</th><th>操作</th></tr></thead>
+  <tbody>
+    {volist name="list" id="vo"}
+    <tr>
+      <td>{$vo.id}</td>
+      <td><b>{$vo.name}</b></td>
+      <td>{$vo.category}</td>
+      <td>{$vo.source}</td>
+      <td>{$vo.use_count}</td>
+      <td>{if condition="$vo.status eq 1"}启用{else /}<span class="danger">停用</span>{/if}</td>
+      <td class="td-actions">
+        <button class="btn-ghost-sm" data-tag-toggle="{$vo.id}">{if condition="$vo.status eq 1"}停用{else /}启用{/if}</button>
+      </td>
+    </tr>
+    {/volist}
+  </tbody>
+</table>
+
+{if condition="$pages gt 1"}
+<nav class="pager">
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}">上一页</a>{/if}
+  <span class="pager-info">{$page_no} / {$pages}</span>
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}">下一页</a>{/if}
+</nav>
+{/if}
+{/block}
+
+{block name="script"}
+<script>pageBoot('adminTag');</script>
+{/block}

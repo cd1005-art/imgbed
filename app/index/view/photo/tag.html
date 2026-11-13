@@ -1,0 +1,30 @@
+{extend name="common/layout"}
+
+{block name="title"} · 标签：{$tag_name}{/block}
+
+{block name="content"}
+<div class="page-head">
+  <a class="icon-btn" href="/" aria-label="返回"><svg class="ic"><use href="#i-back"/></svg></a>
+  <h1 class="page-title">标签：{$tag_name} <span class="count">{$total} 张</span></h1>
+</div>
+
+{if condition="empty($list)"}
+<div class="empty"><p>该标签下暂无公开图片。</p></div>
+{else /}
+<div class="grid">
+  {volist name="list" id="vo"}
+  <figure class="cell">
+    <a class="cell-img" href="/p/{$vo.id}"><img src="/i/{$vo.path}" loading="lazy" alt="{$vo.name}"></a>
+    <figcaption class="cell-meta"><span class="cell-name">{$vo.name}</span></figcaption>
+  </figure>
+  {/volist}
+</div>
+{if condition="$pages gt 1"}
+<nav class="pager">
+  {if condition="$page gt 1"}<a class="btn btn-ghost btn-sm" href="?page={$page-1}">上一页</a>{/if}
+  <span class="pager-info">{$page} / {$pages}</span>
+  {if condition="$page lt $pages"}<a class="btn btn-ghost btn-sm" href="?page={$page+1}">下一页</a>{/if}
+</nav>
+{/if}
+{/if}
+{/block}

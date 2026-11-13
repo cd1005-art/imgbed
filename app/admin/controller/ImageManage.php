@@ -19,13 +19,14 @@ class ImageManage extends Base
         $size   = 20;
         $kw      = trim((string)$this->request->param('kw', ''));
         $ufilter = trim((string)$this->request->param('ufilter', ''));
+        $tag     = trim((string)$this->request->param('tag', ''));
         $sid     = (int)$this->request->param('sid', 0);       // 存储实例
         $audit  = (string)$this->request->param('audit', ''); // 审核状态 0/1/2/3
         $status = (string)$this->request->param('status', '');// 状态 1正常/2冻结
         $dfrom  = (string)$this->request->param('dfrom', '');  // 起始日期 Y-m-d
         $dto    = (string)$this->request->param('dto', '');    // 结束日期 Y-m-d
 
-        $build = function () use ($kw, $ufilter, $sid, $audit, $status, $dfrom, $dto) {
+        $build = function () use ($kw, $ufilter, $tag, $sid, $audit, $status, $dfrom, $dto) {
             $q = Image::alias('i')->leftJoin('img_users u', 'u.id = i.user_id')
                 ->field('i.*, u.nickname as user_nickname, u.email as user_email')
                 ->where('i.status', '>', 0);
@@ -42,6 +43,7 @@ class ImageManage extends Base
                     }
                 });
             }
+            if ($tag !== '')    { $q->where('i.tags', 'like', '%"' . $tag . '"%'); }
             if ($sid > 0)       { $q->where('i.storage_id', $sid); }
             if ($audit !== '')  { $q->where('i.audit_status', (int)$audit); }
             if ($status !== '') { $q->where('i.status', (int)$status); }
@@ -58,6 +60,8 @@ class ImageManage extends Base
             $log = Db::name('audit_logs')->where('image_id', $item['id'])->order('id', 'desc')->find();
             $item['audit_hint'] = $log ? ('[' . $log['driver'] . '] ' . mb_substr((string)$log['detail'], 0, 120)) : '';
             $item['audit_model'] = '';
+            $item['tag_list'] = json_decode((string)($item['tags'] ?? '[]'), true) ?: [];
+            $item['tag_text'] = implode(' / ', $item['tag_list']);
             if ($log && preg_match('/^\[([^\]]+)\]/u', (string)$log['detail'], $mm)) {
                 $item['audit_model'] = trim($mm[1]);
             }
@@ -76,6 +80,7 @@ class ImageManage extends Base
             'list'     => $list,
             'kw'       => $kw,
             'ufilter'  => $ufilter,
+            'tag'      => $tag,
             'sid'      => $sid,
             'audit'    => $audit,
             'status'   => $status,

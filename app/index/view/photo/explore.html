@@ -1,0 +1,47 @@
+{extend name="common/layout"}
+
+{block name="title"} · 图片广场{/block}
+
+{block name="content"}
+<div class="page-head">
+  <h1 class="page-title">图片广场 <span class="count">{$total} 张公开</span></h1>
+  <div class="gallery-batch">
+    <a class="btn-ghost-sm" href="?sort=new">最新</a>
+    <a class="btn-ghost-sm" href="?sort=hot">最热</a>
+  </div>
+</div>
+
+{if condition="$hot_tags"}
+<div class="photo-tags" style="margin-bottom:16px">
+  {volist name="hot_tags" id="t"}
+  <a class="tag-chip" href="/tag?name={$t.name|urlencode}">{$t.name}<span class="count"> {$t.use_count}</span></a>
+  {/volist}
+</div>
+{/if}
+
+{if condition="empty($list)"}
+<div class="empty">
+  <svg class="ic ic-lg"><use href="#i-image"/></svg>
+  <p>还没有公开图片。到<a href="/gallery">我的图片</a>把喜欢的图公开吧。</p>
+</div>
+{else /}
+<div class="grid">
+  {volist name="list" id="vo"}
+  <figure class="cell">
+    <a class="cell-img" href="/p/{$vo.id}"><img src="/i/{$vo.path}" loading="lazy" alt="{$vo.name}"></a>
+    <figcaption class="cell-meta">
+      <span class="cell-name">{$vo.name}</span>
+      <span class="cell-size">浏览 {$vo.view_count}</span>
+    </figcaption>
+  </figure>
+  {/volist}
+</div>
+{if condition="$pages gt 1"}
+<nav class="pager">
+  {if condition="$page gt 1"}<a class="btn btn-ghost btn-sm" href="?page={$page-1}&sort={$sort}">上一页</a>{/if}
+  <span class="pager-info">{$page} / {$pages}</span>
+  {if condition="$page lt $pages"}<a class="btn btn-ghost btn-sm" href="?page={$page+1}&sort={$sort}">下一页</a>{/if}
+</nav>
+{/if}
+{/if}
+{/block}

@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$page_title|default='后台'} · {$site_name}</title>
-<link rel="stylesheet" href="/static/imgbed.css?v=21">
-<link rel="stylesheet" href="/static/admin.css?v=21">
+<link rel="stylesheet" href="/static/imgbed.css?v=22">
+<link rel="stylesheet" href="/static/admin.css?v=22">
 </head>
 <body class="admin-body">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -36,6 +36,7 @@
     <a href="/admin/payment" class="{if condition="$page eq 'payment'"}active{/if}"><svg class="ic"><use href="#i-pay"/></svg> 支付管理</a>
     <a href="/admin/ad" class="{if condition="$page eq 'ad'"}active{/if}"><svg class="ic"><use href="#i-ad"/></svg> 广告管理</a>
     <a href="/admin/model" class="{if condition="$page eq 'model'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> 模型设置</a>
+    <a href="/admin/tag" class="{if condition="$page eq 'tag'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 标签管理</a>
     <a href="/admin/token" class="{if condition="$page eq 'token'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> API Token</a>
     <a href="/admin/log" class="{if condition="$page eq 'log'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 上传日志</a>
   </nav>
@@ -50,8 +51,8 @@
 </main>
 
 <div id="toast" class="toast" hidden></div>
-<script src="/static/imgbed.js?v=21"></script>
-<script src="/static/admin.js?v=21"></script>
+<script src="/static/imgbed.js?v=22"></script>
+<script src="/static/admin.js?v=22"></script>
 {block name="script"}{/block}
 </body>
 </html>

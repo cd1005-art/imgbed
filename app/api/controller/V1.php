@@ -150,6 +150,7 @@ class V1 extends BaseController
                 'reused'     => $result['reused'],
                 // 常用格式快捷链接（Markdown / BBCode / HTML）
                 'markdown'   => '![](' . $url . ')',
+                'tags'       => json_decode((string)($image->tags ?? '[]'), true) ?: [],
                 'html'       => '<img src="' . $url . '" />',
                 'bbcode'     => '[img]' . $url . '[/img]',
                 'delete'     => $this->request->domain() . '/api/v1/delete/' . $image->id,
@@ -169,7 +170,9 @@ class V1 extends BaseController
             $this->fail(404, '图片不存在');
         }
         $this->logCall('info');
-        return json(['status' => true, 'code' => 200, 'message' => 'success', 'data' => $image->toArray()]);
+        $info = $image->toArray();
+        $info['tags'] = json_decode((string)($image->tags ?? '[]'), true) ?: [];
+        return json(['status' => true, 'code' => 200, 'message' => 'success', 'data' => $info]);
     }
 
     /**
@@ -193,6 +196,10 @@ class V1 extends BaseController
             });
 
         $this->logCall('list');
+        foreach ($list as &$row) {
+            $row['tags'] = json_decode((string)($row['tags'] ?? '[]'), true) ?: [];
+        }
+        unset($row);
         return json([
             'status'  => true,
             'code'    => 200,

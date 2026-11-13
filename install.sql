@@ -44,6 +44,17 @@ CREATE TABLE `img_users` (
   `last_login_ip` varchar(45) NOT NULL DEFAULT '',
   `create_time` int unsigned NOT NULL DEFAULT '0',
   `update_time` int unsigned NOT NULL DEFAULT '0',
+  `email_verified` tinyint NOT NULL DEFAULT '1' COMMENT '1已验证',
+  `verify_token` varchar(64) NOT NULL DEFAULT '',
+  `verify_expire` int unsigned NOT NULL DEFAULT '0',
+  `reset_token` varchar(64) NOT NULL DEFAULT '',
+  `reset_expire` int unsigned NOT NULL DEFAULT '0',
+  `auto_public` tinyint NOT NULL DEFAULT '0' COMMENT '自动公开新图',
+  `credits` int NOT NULL DEFAULT '0' COMMENT '站币余额',
+  `credits_total` int NOT NULL DEFAULT '0' COMMENT '累计收益',
+  `violation_count` int NOT NULL DEFAULT '0',
+  `alipay_name` varchar(50) NOT NULL DEFAULT '',
+  `alipay_account` varchar(80) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_email` (`email`),
   KEY `idx_group` (`group_id`)
@@ -74,6 +85,11 @@ CREATE TABLE `img_strategy_groups` (
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '1启用 2停用',
   `create_time` int unsigned NOT NULL DEFAULT '0',
   `update_time` int unsigned NOT NULL DEFAULT '0',
+  `allow_public` tinyint NOT NULL DEFAULT '1',
+  `allow_auto_public` tinyint NOT NULL DEFAULT '0',
+  `can_report` tinyint NOT NULL DEFAULT '1',
+  `allow_paid` tinyint NOT NULL DEFAULT '1',
+  `max_tokens` int NOT NULL DEFAULT '0' COMMENT '可生成Token数量上限(0不限)',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='策略组';
 
@@ -123,6 +139,14 @@ CREATE TABLE `img_images` (
   `create_time` int unsigned NOT NULL DEFAULT '0',
   `update_time` int unsigned NOT NULL DEFAULT '0',
   `delete_time` int unsigned NOT NULL DEFAULT '0' COMMENT '软删时间',
+  `is_public` tinyint NOT NULL DEFAULT '0',
+  `ban_public` tinyint NOT NULL DEFAULT '0',
+  `is_anonymous` tinyint NOT NULL DEFAULT '0',
+  `view_count` int NOT NULL DEFAULT '0',
+  `origin` varchar(20) NOT NULL DEFAULT 'upload',
+  `price_credits` int NOT NULL DEFAULT '0',
+  `license_price` int NOT NULL DEFAULT '0',
+  `tags` text NULL COMMENT '标签JSON数组',
   PRIMARY KEY (`id`),
   KEY `idx_sha1` (`sha1`),
   KEY `idx_user` (`user_id`,`create_time`),
@@ -315,6 +339,8 @@ CREATE TABLE `img_audit_models` (
   `last_ok_time` int unsigned NOT NULL DEFAULT '0',
   `create_time` int unsigned NOT NULL DEFAULT '0',
   `update_time` int unsigned NOT NULL DEFAULT '0',
+  `type` varchar(20) NOT NULL DEFAULT 'llm' COMMENT 'llm/local_nsfw',
+  `purpose` varchar(20) NOT NULL DEFAULT 'audit' COMMENT 'audit/image_gen',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审核模型（多模型链）';
 
@@ -362,3 +388,22 @@ INSERT INTO `img_ad_slots` (`slot_key`, `name`, `type`, `content`, `is_open`, `s
 ('home_footer', '首页底部', 'html', '', 0, 1, UNIX_TIMESTAMP()),
 ('upload_done', '上传成功页', 'html', '', 0, 2, UNIX_TIMESTAMP()),
 ('view_page', '图片查看页', 'html', '', 0, 3, UNIX_TIMESTAMP());
+
+-- ============================================================
+-- v1.1 增量迁移（M1 邮箱体系 / M2 标签与公开 / M4 举报与付费 / M5 造图）
+-- 旧版本升级：可直接执行本段（幂等）
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS `img_mail_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `to_email` varchar(120) NOT NULL DEFAULT '',
+  `subject` varchar(200) NOT NULL DEFAULT '',
+  `template` varchar(50) NOT NULL DEFAULT '',
+  `status` tinyint NOT NULL DEFAULT '0',
+  `error` varchar(255) NOT NULL DEFAULT '',
+  `create_time` int unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`), KEY `idx_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='邮件发送日志';
+
+-- 注：新列已并入上方基础表结构定义（MySQL 5.7 不支持 ADD COLUMN IF NOT EXISTS）
+

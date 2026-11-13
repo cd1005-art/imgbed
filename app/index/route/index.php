@@ -21,6 +21,11 @@ Route::get('register', 'Auth/registerPage');
 Route::post('register', 'Auth/register');
 Route::get('logout', 'Auth/logout');
 
+// ---- 公开页面：广场 / 图片详情 / 标签聚合（无需登录） ----
+Route::get('p/:id', 'Photo/show');
+Route::get('tag', 'Photo/tag');
+Route::get('explore', 'Explore/index');
+
 // ---- VIP 购买（具体规则在前，避免被 vip 短规则抢占） ----
 Route::get('vip/buy/:id', 'Vip/buy');
 Route::get('vip', 'Vip/index');
@@ -32,7 +37,12 @@ Route::get('pay/return', 'Pay/returnBack');
 // ---- 登录后 ----
 Route::group(function () {
 
-    Route::get('gallery', 'Gallery/index');
+    Route::post('gallery/visibility/:id', 'Gallery/visibility');
+Route::post('gallery/batch-visibility', 'Gallery/batchVisibility');
+Route::post('gallery/all-visibility', 'Gallery/allVisibility');
+Route::post('gallery/auto-public', 'Gallery/autoPublic');
+Route::get('gallery', 'Gallery/index');
+
     Route::post('gallery/delete/:id', 'Gallery/delete');
 
     Route::post('console/resend-verify', 'Console/resendVerify');

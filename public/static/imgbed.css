@@ -301,3 +301,27 @@ a.btn, a.btn:visited, a.btn:hover, .nav a.btn, .nav a.btn:hover { color: #fff; t
 }
 .doc-main pre code { background: none; padding: 0; }
 .doc-main table { width: 100%; }
+
+/* ---------- 图库公开体系 ---------- */
+.gallery-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 0 0 14px; }
+.auto-public { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+.gallery-batch { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge { display: inline-block; font-size: 10.5px; line-height: 1; padding: 3px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle; }
+.badge-public { background: rgba(46,160,67,.16); color: #3fb950; }
+.badge-private { background: rgba(139,148,158,.16); color: #8b949e; }
+.badge-pending { background: rgba(210,153,34,.16); color: #d29922; }
+.badge-banned { background: rgba(248,81,73,.16); color: #f85149; }
+.cell { position: relative; }
+.cell-check { position: absolute; top: 8px; left: 8px; z-index: 2; }
+.cell-check input { width: 16px; height: 16px; }
+
+/* ---------- 图片详情页 ---------- */
+.photo-wrap { display: flex; gap: 26px; align-items: flex-start; flex-wrap: wrap; }
+.photo-main { flex: 1; min-width: 320px; background: var(--code-bg); border-radius: var(--r-lg); padding: 14px; display: flex; justify-content: center; }
+.photo-main img { max-width: 100%; max-height: 70vh; border-radius: var(--r-md); user-select: none; -webkit-user-select: none; }
+.photo-side { width: 300px; }
+.photo-title { font-size: 17px; margin: 4px 0 8px; word-break: break-all; }
+.photo-meta { color: var(--ink-2); font-size: 12.5px; margin: 4px 0; }
+.photo-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.tag-chip { display: inline-block; padding: 5px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 12.5px; }
+.photo-actions { display: flex; gap: 10px; margin-top: 14px; }

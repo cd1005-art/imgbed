@@ -89,6 +89,29 @@ class AuditService
         if ($result['result'] === 'reject') {
             $update['status'] = Image::ST_FROZEN;   // 拒绝即冻结，外链断
         }
+
+        // 标签（仅通过时入库，复审/拒绝不公示）
+        if ($result['result'] === 'pass' && !empty($result['tags'])) {
+            try {
+                \app\common\service\TagService::attach((int)$image->id, (array)$result['tags'], 'auto');
+            } catch (\Throwable $e) {
+            }
+        }
+
+        // 自动公开：用户开启 + 策略组允许 + 审核通过
+        if ($result['result'] === 'pass' && (int)$image->user_id > 0) {
+            try {
+                $user  = Db::name('users')->where('id', $image->user_id)->find();
+                $group = StrategyGroup::find((int)$image->group_id);
+                if ($user && (int)($user['auto_public'] ?? 0) === 1
+                    && $group && (int)($group->allow_public ?? 1) === 1
+                    && (int)($group->allow_auto_public ?? 0) === 1) {
+                    $update['is_public'] = 1;
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
         Db::name('images')->where('id', $image->id)->update($update);
     }
 }
