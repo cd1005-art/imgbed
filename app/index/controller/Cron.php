@@ -21,7 +21,7 @@ class Cron extends Base
         if (!isset(CronService::TASKS[$task])) {
             return json(['status' => false, 'message' => 'unknown task'], 404);
         }
-        $r = CronService::runNow($task);
+        $r = CronService::runNow($task, 'url');
         return json(['status' => $r['ok'], 'message' => $r['msg']]);
     }
 }

@@ -41,7 +41,7 @@ class CronManage extends Base
     /** 立即执行一次（同步，web 无法 exec 时可靠） */
     public function run(string $task)
     {
-        $r = CronService::runNow($task);
+        $r = CronService::runNow($task, 'manual');
         return json(['status' => $r['ok'], 'message' => $r['msg']]);
     }
 

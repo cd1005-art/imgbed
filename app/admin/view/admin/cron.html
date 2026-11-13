@@ -1,7 +1,7 @@
 {extend name="admin/layout"}
 
 {block name="content"}
-<h1 class="page-title">计划任务 <span class="count">状态灯：绿=正常 · 灰=未接入 · 红=超期/异常</span></h1>
+<h1 class="page-title">计划任务 <span class="count">状态灯：灰=未接入计划任务 · 绿=已接入且按期 · 红=已接入但超期/异常</span></h1>
 
 <section class="panel">
   <h2 class="panel-title">任务状态</h2>
@@ -10,10 +10,18 @@
     <tbody>
       {volist name="tasks" id="t"}
       <tr>
-        <td><span class="dot dot-{$t.status}" title="{$t.status}"></span></td>
-        <td><b>{$t.name}</b><br><span class="count">{$t.why}</span></td>
+        <td><span class="dot dot-{$t.status}"></span></td>
+        <td>
+          <b>{$t.name}</b><br><span class="count">{$t.why}</span>
+          {if condition="$t.status eq 'gray'"}<br><span class="count">未接入计划任务（手动测试不算接入）</span>{/if}
+          {if condition="$t.status eq 'red'"}<br><span class="count">已接入但超期未执行 / 最近失败</span>{/if}
+          {if condition="$t.status eq 'green'"}<br><span class="count">已接入 · 来源 {if condition="$t.last_source eq 'cli'"}命令行{else /}URL{/if}</span>{/if}
+        </td>
         <td>{$t.desc}</td>
-        <td>{if condition="$t.last_run gt 0"}{:date('m-d H:i:s', ts($t.last_run))}{else /}-{/if}</td>
+        <td>
+          {if condition="$t.last_run gt 0"}{:date('m-d H:i:s', ts($t.last_run))}{else /}-{/if}
+          {if condition="$t.manual_time gt 0"}<br><span class="count">手动测试 {:date('m-d H:i', ts($t.manual_time))}（{$t.manual_count} 次）</span>{/if}
+        </td>
         <td>{$t.run_count}</td>
         <td class="td-clip" title="{$t.last_result}">{$t.last_result|default='-'}</td>
         <td class="td-actions">

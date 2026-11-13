@@ -17,23 +17,38 @@ class CronService
         'vip' => ['name' => 'VIP 到期提醒', 'cmd' => 'monitor:vip', 'interval' => 86400, 'desc' => '每天', 'why' => '到期前 3 天提醒邮件'],
     ];
 
-    /** 记录心跳（命令内调用） */
-    public static function beat(string $key, string $result = 'ok'): void
+    /**
+     * 记录心跳
+     * @param string $source cli=命令行计划任务 / url=URL计划任务 / manual=后台手动测试
+     * 说明：manual 只更新时间与次数，不影响「接入状态」（灯色）
+     */
+    public static function beat(string $key, string $result = 'ok', string $source = 'cli'): void
     {
         try {
             $row = Db::name('cron_heartbeats')->where('task_key', $key)->find();
-            if ($row) {
-                Db::name('cron_heartbeats')->where('task_key', $key)->update([
-                    'last_run'    => time(),
-                    'last_result' => mb_substr($result, 0, 200),
-                    'run_count'   => (int)$row['run_count'] + 1,
-                ]);
-            } else {
+            if (!$row) {
                 Db::name('cron_heartbeats')->insert([
-                    'task_key' => $key, 'last_run' => time(),
-                    'last_result' => mb_substr($result, 0, 200), 'run_count' => 1,
+                    'task_key' => $key, 'last_run' => 0, 'last_result' => '',
+                    'last_source' => '', 'source_time' => 0, 'manual_time' => 0,
+                    'manual_count' => 0, 'run_count' => 0,
                 ]);
+                $row = Db::name('cron_heartbeats')->where('task_key', $key)->find();
             }
+            if ($source === 'manual') {
+                Db::name('cron_heartbeats')->where('task_key', $key)->update([
+                    'manual_time'  => time(),
+                    'manual_count' => (int)$row['manual_count'] + 1,
+                ]);
+                return;
+            }
+            // cli / url：记为「计划任务接入」的有效执行
+            Db::name('cron_heartbeats')->where('task_key', $key)->update([
+                'last_run'    => time(),
+                'last_result' => mb_substr($result, 0, 200),
+                'last_source' => $source,
+                'source_time' => time(),
+                'run_count'   => (int)$row['run_count'] + 1,
+            ]);
         } catch (\Throwable $e) {
         }
     }
@@ -52,35 +67,49 @@ class CronService
         $out = [];
         foreach (self::TASKS as $key => $def) {
             $r = $map[$key] ?? null;
-            $state = 'gray';
+            $state = 'gray';       // 未接入（从未被 CLI/URL 计划任务触发）
             $lastRun = 0;
             $lastResult = '';
             $runCount = 0;
+            $source = '';
+            $manualTime = 0;
+            $manualCount = 0;
             if ($r) {
                 $lastRun = (int)$r['last_run'];
                 $lastResult = (string)$r['last_result'];
                 $runCount = (int)$r['run_count'];
-                $age = time() - $lastRun;
-                if (stripos($lastResult, 'fail') !== false || stripos($lastResult, 'error') !== false) {
-                    $state = 'red';
-                } elseif ($age > $def['interval'] * 3) {
-                    $state = 'red';
-                } else {
-                    $state = 'green';
+                $source = (string)($r['last_source'] ?? '');
+                $manualTime = (int)($r['manual_time'] ?? 0);
+                $manualCount = (int)($r['manual_count'] ?? 0);
+
+                if ($lastRun > 0 && $source !== '') {
+                    $age = time() - $lastRun;
+                    if (stripos($lastResult, 'fail') !== false || stripos($lastResult, 'error') !== false) {
+                        $state = 'red';
+                    } elseif ($age > $def['interval'] * 3) {
+                        $state = 'red';   // 已接入但超期
+                    } else {
+                        $state = 'green'; // 已接入且按期
+                    }
                 }
             }
             $out[] = [
                 'key' => $key, 'name' => $def['name'], 'cmd' => $def['cmd'],
                 'desc' => $def['desc'], 'why' => $def['why'], 'interval' => $def['interval'],
-                'status' => $state, 'last_run' => $lastRun, 'last_result' => $lastResult, 'run_count' => $runCount,
+                'status' => $state, 'last_run' => $lastRun, 'last_result' => $lastResult,
+                'run_count' => $runCount, 'last_source' => $source,
+                'manual_time' => $manualTime, 'manual_count' => $manualCount,
             ];
         }
         return $out;
     }
 
 
-    /** 同步执行任务（web 环境 disable_functions 禁用 exec，直接同进程跑） */
-    public static function runNow(string $key): array
+    /**
+     * 同步执行任务（web 环境 disable_functions 禁用 exec，直接同进程跑）
+     * @param string $source manual=后台手动测试 / url=URL 计划任务
+     */
+    public static function runNow(string $key, string $source = 'manual'): array
     {
         @set_time_limit(300);
         try {
@@ -97,7 +126,7 @@ class CronService
                 default:
                     return ['ok' => false, 'msg' => 'unknown task'];
             }
-            self::beat($key, 'done');
+            self::beat($key, 'done', $source);
             return ['ok' => true, 'msg' => $msg];
         } catch (\Throwable $e) {
             self::beat($key, 'fail: ' . mb_substr($e->getMessage(), 0, 120));
