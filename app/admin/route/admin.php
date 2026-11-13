@@ -26,6 +26,11 @@ Route::group(function () {
     Route::post('withdraw/approve/:id', 'WithdrawManage/approve');
     Route::post('withdraw/paid/:id', 'WithdrawManage/paid');
     Route::post('withdraw/reject/:id', 'WithdrawManage/reject');
+    Route::post('gen/prompt/gen', 'GenManage/promptGen');
+    Route::post('gen/prompt/template', 'GenManage/promptTemplate');
+    Route::post('gen/prompt/reverse', 'GenManage/promptReverse');
+    Route::post('gen/prompt/append', 'GenManage/promptAppend');
+    Route::get('gen/prompt/export/:id', 'GenManage/promptExport');
     Route::post('gen/run/:id', 'GenManage/runNow');
     Route::post('gen/batch', 'GenManage/batch');
     Route::post('gen/settings', 'GenManage/saveSettings');

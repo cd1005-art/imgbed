@@ -18,8 +18,8 @@
   function initTabs(rootSel) {
     var root = document.querySelector(rootSel);
     if (!root) return;
-    var btns = root.querySelectorAll('.tab-btn');
-    var panes = root.querySelectorAll('.tab-pane');
+    var btns = root.querySelectorAll(':scope > .tabs-nav .tab-btn');
+    var panes = root.querySelectorAll(':scope > .tab-pane');
     function show(name, push) {
       var found = false;
       btns.forEach(function (b) {
@@ -800,6 +800,81 @@
         nf.scrollIntoView({ behavior: 'smooth' });
         toast('已载入任务 #' + t.id + '，修改后点「保存修改」');
       });
+    });
+
+    // ===== 提示词中心 =====
+    initTabs('#promptTabs');
+    var pv = document.getElementById('promptPreview');
+    function fillPreview(list) {
+      if (!pv) { return; }
+      pv.value = (list || []).join('\n');
+      pv.focus();
+    }
+    function promptPost(url, body) {
+      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
+        .then(function (r) { return r.json(); });
+    }
+    var pgr = document.getElementById('pgRun');
+    if (pgr) pgr.addEventListener('click', function () {
+      var topic = (document.getElementById('pgTopic') || {}).value || '';
+      if (!topic.trim()) { toast('请填写主题'); return; }
+      pgr.disabled = true; pgr.textContent = '生成中…';
+      promptPost('/admin/gen/prompt/gen',
+        'topic=' + encodeURIComponent(topic)
+        + '&style=' + encodeURIComponent((document.getElementById('pgStyle') || {}).value || '')
+        + '&count=' + ((document.getElementById('pgCount') || {}).value || 30)
+        + '&model_id=' + ((document.getElementById('pgModel') || {}).value || 0)
+      ).then(function (d) {
+        toast(d.message); if (d.list) { fillPreview(d.list); }
+      }).catch(function () { toast('生成失败：网络错误'); })
+        .finally(function () { pgr.disabled = false; pgr.textContent = '生成'; });
+    });
+    var tplr = document.getElementById('tplRun');
+    if (tplr) tplr.addEventListener('click', function () {
+      promptPost('/admin/gen/prompt/template', 'count=' + ((document.getElementById('tplCount') || {}).value || 60))
+        .then(function (d) {
+          toast(d.status ? ('已生成 ' + d.list.length + ' 条') : (d.message || '失败'));
+          if (d.list) { fillPreview(d.list); }
+        }).catch(function () { toast('生成失败：网络错误'); });
+    });
+    var rvr = document.getElementById('revRun');
+    if (rvr) rvr.addEventListener('click', function () {
+      var u = (document.getElementById('revUrl') || {}).value || '';
+      if (!u.trim()) { toast('请填写图片地址'); return; }
+      rvr.disabled = true; rvr.textContent = '识别中…';
+      promptPost('/admin/gen/prompt/reverse',
+        'image_url=' + encodeURIComponent(u) + '&model_id=' + ((document.getElementById('revModel') || {}).value || 0)
+      ).then(function (d) {
+        toast(d.message); if (d.list) { fillPreview(d.list); }
+      }).catch(function () { toast('反推失败：网络错误'); })
+        .finally(function () { rvr.disabled = false; rvr.textContent = '反推提示词'; });
+    });
+    var iof = document.getElementById('ioFile');
+    if (iof) iof.addEventListener('change', function () {
+      var f = iof.files && iof.files[0];
+      if (!f) { return; }
+      var fr = new FileReader();
+      fr.onload = function () { if (pv) { pv.value = String(fr.result || ''); } toast('文件已读入下方编辑框'); };
+      fr.readAsText(f, 'utf-8');
+    });
+    var ioe = document.getElementById('ioExport');
+    if (ioe) ioe.addEventListener('click', function (e) {
+      e.preventDefault();
+      var sel = document.getElementById('ioTaskExport');
+      if (!sel || !sel.value) { toast('请选择任务'); return; }
+      window.location.href = '/admin/gen/prompt/export/' + sel.value;
+    });
+    var pab = document.getElementById('promptAppendBtn');
+    if (pab) pab.addEventListener('click', function () {
+      var sel = document.getElementById('promptTargetTask');
+      if (!sel || !sel.value) { toast('请选择目标任务'); return; }
+      var txt = pv ? pv.value : '';
+      if (!txt.trim()) { toast('下方编辑框为空'); return; }
+      promptPost('/admin/gen/prompt/append',
+        'task_id=' + sel.value + '&prompts=' + encodeURIComponent(txt)
+      ).then(function (d) {
+        toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 800);
+      }).catch(function () { toast('追加失败：网络错误'); });
     });
 
     // 任务列表批量（启用/暂停/删除）
