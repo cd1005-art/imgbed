@@ -176,3 +176,15 @@ cd tools/nsfw-service && pip install -r requirements.txt && python app.py   # 0.
 - [ ] `public/storage/` 目录 nginx 静态服务（不落 PHP）
 - [ ] 审核驱动开启（none = 任何内容直接公网外链，合规风险自负）
 - [ ] HTTPS + 防盗链（Referer 白名单，二期功能，先用 nginx 实现）
+
+## 计划任务（通知 / 造图机器人）
+
+宝塔「计划任务 → Shell 脚本」添加（路径按实际站点调整）：
+
+| 频率 | 命令 | 用途 |
+|---|---|---|
+| 每 5 分钟 | `/www/server/php/83/bin/php /www/wwwroot/你的站点/think gen:run` | 造图机器人执行到期任务 |
+| 每小时 | `/www/server/php/83/bin/php /www/wwwroot/你的站点/think monitor:storage` | 存储告警（磁盘/配额/网盘阈值）|
+| 每天 09:00 | `/www/server/php/83/bin/php /www/wwwroot/你的站点/think monitor:vip` | VIP 到期提醒 |
+
+> 未配置计划任务不影响主站功能，仅以上自动化不触发。
