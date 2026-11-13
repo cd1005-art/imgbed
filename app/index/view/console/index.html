@@ -116,7 +116,7 @@
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">申请提现</button></div>
   </form>
 
-  {if condition="$withdraws"}
+  {if condition="$has_withdraws"}
   <table class="table" style="margin-top:14px">
     <thead><tr><th>金额</th><th>实得</th><th>状态</th><th>时间</th></tr></thead>
     <tbody>
@@ -130,6 +130,8 @@
       {/volist}
     </tbody>
   </table>
+  {else /}
+  <p class="field-hint" style="margin-top:14px">暂无提现记录。作者收益可在此申请提现到支付宝。</p>
   {/if}
 </section>
   </div>

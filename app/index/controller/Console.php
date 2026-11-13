@@ -50,6 +50,7 @@ class Console extends Base
             'pay_available'  => (new \app\common\service\PaymentService())->isAvailable(),
             'min_withdraw'   => (int)Setting::get('min_withdraw', 50),
             'withdraws'      => Db::name('withdrawals')->where('user_id', $user->id)->order('id', 'desc')->limit(5)->select(),
+            'has_withdraws'  => (int)Db::name('withdrawals')->where('user_id', $user->id)->count() > 0,
             'verify_mode'    => (string)Setting::get('verify_mode', 'none'),
             'token_limit' => ($group && (int)$group->max_tokens > 0) ? (int)$group->max_tokens : 0,
             // 权益面板（与后台策略组同步展示）
