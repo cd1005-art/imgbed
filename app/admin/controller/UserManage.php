@@ -78,9 +78,8 @@ class UserManage extends Base
 
     /** 编辑保存（昵称/邮箱/策略组/状态/可选新密码） */
     /**
-     * 删除用户（软删除：status=3，登录即刻失效；记录与图片保留，避免孤儿数据）
-     * @param int $id
-     * purge=1 时同时下架其所有图片（设为私密 + 禁止再公开）
+     * 彻底删除用户（物理删除：清除其图片记录与文件、订单、流水、解锁、举报、Token）
+     * 有未处理提现时拒绝删除（财务安全）
      */
     public function delete(int $id)
     {
@@ -88,37 +87,71 @@ class UserManage extends Base
         if (!$user) {
             return json(['status' => false, 'message' => '用户不存在']);
         }
-        if ((int)$user->status === 3) {
-            return json(['status' => false, 'message' => '该用户已删除']);
+        return $this->purgeUser($id);
+    }
+
+    /** 批量删除：逐个彻底删除 */
+    protected function purgeUser(int $id): \think\response\Json
+    {
+        // 未处理提现 → 拒绝
+        $pending = Db::name('withdrawals')->where('user_id', $id)
+            ->whereIn('status', ['pending', 'approved'])->count();
+        if ($pending > 0) {
+            return json(['status' => false, 'message' => "该用户有 {$pending} 笔未处理提现，请先处理后再删除"]);
         }
-        $purge = (int)$this->request->post('purge', 0) === 1;
 
         try {
             Db::startTrans();
-            // 释放邮箱占用（加 #del{id} 后缀保留可追溯），否则原邮箱无法重新注册
-            $email = (string)$user->email;
-            if (strpos($email, '#del') === false) {
-                Db::name('users')->where('id', $id)->update([
-                    'email' => mb_substr($email, 0, 100) . '#del' . $id,
-                ]);
+
+            $imageIds = Db::name('images')->where('user_id', $id)->column('id');
+            $images   = Db::name('images')->where('user_id', $id)->select()->toArray();
+
+            if ($imageIds) {
+                Db::name('image_tags')->whereIn('image_id', $imageIds)->delete();
+                Db::name('unlocks')->whereIn('image_id', $imageIds)->delete();
+                Db::name('audit_logs')->whereIn('image_id', $imageIds)->delete();
+                Db::name('banned_fingerprints')->whereIn('image_id', $imageIds)->delete();
             }
-            Db::name('users')->where('id', $id)->update(['status' => 3, 'update_time' => time()]);
-            // 立即踢下线：清该用户所有 token
+            Db::name('reports')->where('reporter_id', $id)->delete();
+            if ($imageIds) {
+                Db::name('reports')->whereIn('image_id', $imageIds)->delete();
+            }
+            Db::name('unlocks')->where('user_id', $id)->delete();
+            Db::name('credit_logs')->where('user_id', $id)->delete();
+            Db::name('orders')->where('user_id', $id)->delete();
+            Db::name('withdrawals')->where('user_id', $id)->delete();
             Db::name('api_tokens')->where('user_id', $id)->delete();
-            if ($purge) {
-                Db::name('images')->where('user_id', $id)->update([
-                    'is_public' => 0, 'ban_public' => 1, 'update_time' => time(),
-                ]);
-            }
+            Db::name('gen_tasks')->where('target_user_id', $id)->delete();
+            Db::name('images')->where('user_id', $id)->delete();
+            Db::name('users')->where('id', $id)->delete();
+
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();
             return json(['status' => false, 'message' => '删除失败：' . $e->getMessage()]);
         }
 
+        // 物理文件删除（仅本地存储；对象存储请到云控制台清理）
+        $removed = 0;
+        foreach ($images as $img) {
+            try {
+                $row = Db::name('storage_configs')->where('id', (int)$img['storage_id'])->find();
+                if (!$row || $row['driver'] !== 'local') {
+                    continue;
+                }
+                $cfg = json_decode((string)$row['config'], true) ?: [];
+                $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
+                $local = rtrim(public_path(), '/\\') . '/' . $rootRel . '/' . ltrim((string)$img['path'], '/');
+                if (@is_file($local) && @unlink($local)) {
+                    $removed++;
+                }
+            } catch (\Throwable $e) {
+            }
+        }
+
         return json([
             'status'  => true,
-            'message' => '用户已删除（无法登录）' . ($purge ? '，其图片已全部下架' : '，图片保留'),
+            'message' => "已彻底删除（图片 " . count($images) . " 条记录、文件 {$removed} 个，订单/流水/举报已清理）",
         ]);
     }
 
@@ -184,19 +217,24 @@ class UserManage extends Base
         }
 
         if ($action === 'delete') {
+            $ok = 0;
+            $skip = [];
             foreach ($ids as $uid) {
-                $u = User::find($uid);
-                if (!$u) {
+                if (!User::find($uid)) {
                     continue;
                 }
-                $email = (string)$u->email;
-                if (strpos($email, '#del') === false) {
-                    Db::name('users')->where('id', $uid)->update(['email' => mb_substr($email, 0, 100) . '#del' . $uid]);
+                $r = $this->purgeUser($uid);
+                $data = json_decode($r->getContent(), true);
+                if (!empty($data['status'])) {
+                    $ok++;
+                } else {
+                    $skip[] = '#' . $uid . ': ' . ($data['message'] ?? '失败');
                 }
-                Db::name('users')->where('id', $uid)->update(['status' => 3, 'update_time' => time()]);
             }
-            Db::name('api_tokens')->whereIn('user_id', $ids)->delete();
-            return json(['status' => true, 'message' => '已删除 ' . count($ids) . ' 个用户（图片保留，邮箱已释放）']);
+            return json([
+                'status'  => true,
+                'message' => "已彻底删除 {$ok} 个用户" . ($skip ? '；跳过：' . implode('；', $skip) : ''),
+            ]);
         }
 
         if (!in_array($action, ['disable', 'enable'], true)) {
