@@ -67,11 +67,11 @@
       <td class="mono">{$vo.ip}</td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>
       <td class="td-actions">
-        {if condition="$vo.audit_status eq 3"}
-        <button class="btn-ghost-sm" data-img-approve="{$vo.id}">通过</button>
-        <button class="btn-ghost-sm btn-danger-sm" data-img-reject="{$vo.id}">驳回</button>
-        {/if}
-        <button class="btn-ghost-sm" data-img-title="{$vo.id}" data-name="{$vo.name|htmlspecialchars}" data-desc="{$vo.audit_hint|htmlspecialchars}">编辑</button>
+        <button class="btn-ghost-sm" data-img-title="{$vo.id}"
+                data-name="{$vo.name|htmlspecialchars}"
+                data-tags="{$vo.tag_text|htmlspecialchars}"
+                data-audit="{$vo.audit_status}"
+                data-desc="{$vo.audit_hint|htmlspecialchars}">编辑</button>
         <button class="btn-ghost-sm" data-toggle-status="{$vo.id}">{if condition="$vo.status eq 1"}冻结{else /}解冻{/if}</button>
         <button class="btn-ghost-sm btn-danger-sm" data-del="{$vo.id}">删除</button>
       </td>
@@ -81,10 +81,23 @@
 </table>
 <div class="modal-mask" id="imgTitleModal" hidden>
   <div class="modal" style="width:min(620px,94vw)">
-    <h3 class="modal-title">编辑标题</h3>
-    <input type="text" id="imgTitleInput" class="modal-textarea" rows="1" style="height:38px" placeholder="标题">
-    <p class="field-hint" style="margin:10px 0 6px">审核模型描述（可复制后修改为标题）：</p>
-    <textarea id="imgTitleDesc" class="modal-textarea" rows="5" readonly></textarea>
+    <h3 class="modal-title">编辑图片</h3>
+    <label class="field"><span class="field-label">标题</span>
+      <input type="text" id="imgTitleInput" class="modal-textarea" style="height:38px" placeholder="标题">
+    </label>
+    <label class="field" style="margin-top:10px"><span class="field-label">标签（逗号分隔）</span>
+      <input type="text" id="imgTagsInput" class="modal-textarea" style="height:38px" placeholder="人物, 摄影, 暖色">
+    </label>
+    <label class="field" style="margin-top:10px"><span class="field-label">审核状态</span>
+      <select id="imgAuditSelect" class="filter-select" style="width:160px">
+        <option value="1">通过</option>
+        <option value="3">复审</option>
+        <option value="0">待审</option>
+        <option value="2">拒绝</option>
+      </select>
+    </label>
+    <p class="field-hint" style="margin:12px 0 6px">审核模型描述（可复制后修改为标题）：</p>
+    <textarea id="imgTitleDesc" class="modal-textarea" rows="4" readonly></textarea>
     <div class="modal-actions">
       <button class="btn-ghost-sm" type="button" id="imgTitleCopy">复制描述</button>
       <button class="btn-ghost-sm" type="button" id="imgTitleCancel">取消</button>

@@ -284,21 +284,42 @@ class ImageManage extends Base
     }
 
     /** 冻结 / 解冻（外链即断） */
-    /** 修改图片标题（审核描述作标题，可手动修正） */
-    public function setTitle(int $id)
+    /** 编辑图片：标题 / 标签 / 审核状态 一次保存 */
+    public function update(int $id)
     {
         $img = Image::find($id);
         if (!$img) {
             return json(['status' => false, 'message' => '图片不存在']);
         }
         $title = trim((string)$this->request->post('title', ''));
-        if ($title === '') {
-            return json(['status' => false, 'message' => '标题不能为空']);
+        $tags  = trim((string)$this->request->post('tags', ''));
+        $audit = (int)$this->request->post('audit_status', -1);
+
+        Db::startTrans();
+        try {
+            $data = ['update_time' => time()];
+            if ($title !== '') {
+                $data['name'] = mb_substr($title, 0, 120);
+            }
+            if (in_array($audit, [0, 1, 2, 3], true)) {
+                $data['audit_status'] = $audit;
+            }
+            Db::name('images')->where('id', $id)->update($data);
+
+            // 标签：整组替换（清空旧关联，重新挂载）
+            if ($tags !== '') {
+                Db::name('image_tags')->where('image_id', $id)->delete();
+                $list = \app\common\service\TagService::parse($tags, 12);
+                if ($list) {
+                    \app\common\service\TagService::attach($id, $list, 'user');
+                }
+            }
+            Db::commit();
+        } catch (\Throwable $e) {
+            Db::rollback();
+            return json(['status' => false, 'message' => '保存失败：' . $e->getMessage()]);
         }
-        Db::name('images')->where('id', $id)->update([
-            'name' => mb_substr($title, 0, 120), 'update_time' => time(),
-        ]);
-        return json(['status' => true, 'message' => '标题已更新']);
+        return json(['status' => true, 'message' => '已保存（标题/标签/审核状态）']);
     }
 
     /** 人工复审：通过（恢复为正常审核状态） */

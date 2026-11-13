@@ -50,7 +50,7 @@ Route::group(function () {
     Route::get('report', 'ReportManage/index');
     Route::get('tag', 'TagManage/index');
     Route::get('image', 'ImageManage/index');
-    Route::post('image/title/:id', 'ImageManage/setTitle');
+    Route::post('image/update/:id', 'ImageManage/update');
     Route::post('image/approve/:id', 'ImageManage/approve');
     Route::post('image/reject/:id', 'ImageManage/reject');
     Route::post('image/toggle/:id', 'ImageManage/toggle');

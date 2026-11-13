@@ -1092,6 +1092,10 @@
         curId = b.dataset.imgTitle;
         inp.value = b.dataset.name || '';
         desc.value = b.dataset.desc || '';
+        var tg = document.getElementById('imgTagsInput');
+        if (tg) { tg.value = b.dataset.tags || ''; }
+        var au = document.getElementById('imgAuditSelect');
+        if (au) { au.value = b.dataset.audit || '1'; }
         m.hidden = false;
         inp.focus();
       });
@@ -1104,34 +1108,17 @@
       document.getElementById('imgTitleSave').onclick = function () {
         var t = (inp.value || '').trim();
         if (!t) { toast('标题不能为空'); return; }
-        fetch('/admin/image/title/' + curId, {
+        var tg = (document.getElementById('imgTagsInput') || {}).value || '';
+        var au = (document.getElementById('imgAuditSelect') || {}).value || '1';
+        fetch('/admin/image/update/' + curId, {
           method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'title=' + encodeURIComponent(t)
+          body: 'title=' + encodeURIComponent(t) + '&tags=' + encodeURIComponent(tg) + '&audit_status=' + encodeURIComponent(au)
         }).then(function (r) { return r.json(); }).then(function (d) {
           toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
         }).catch(function () { toast('保存失败：网络错误'); });
       };
     }
 
-    // 人工复审：通过 / 驳回
-    document.querySelectorAll('[data-img-approve]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        armConfirm(b, '通过该图的人工复审？（恢复为正常审核状态）', function () {
-          post('/admin/image/approve/' + b.dataset.imgApprove).then(function (d) {
-            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
-          });
-        });
-      });
-    });
-    document.querySelectorAll('[data-img-reject]').forEach(function (b) {
-      b.addEventListener('click', function () {
-        armConfirm(b, '驳回该图？（审核拒绝 + 冻结，外链立即失效）', function () {
-          post('/admin/image/reject/' + b.dataset.imgReject).then(function (d) {
-            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
-          });
-        });
-      });
-    });
   }
 
   /* ---------- 站币流水 ---------- */
