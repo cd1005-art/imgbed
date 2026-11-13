@@ -66,7 +66,8 @@ class GenManage extends Base
     {
         $id = (int)$this->request->post('id', 0);
         $prompts = trim((string)$this->request->post('prompts', ''));
-        $arr = array_values(array_filter(array_map('trim', preg_split('/[\n,，]+/u', $prompts) ?: [])));
+        // 一行一条提示词；保留逗号（逗号属于提示词内容，不能当分隔符）
+        $arr = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $prompts) ?: [])));
         if (!$arr) {
             return json(['status' => false, 'message' => '至少填一条提示词']);
         }

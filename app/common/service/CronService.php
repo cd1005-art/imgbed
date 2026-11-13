@@ -405,6 +405,78 @@ class CronService
         return "检查 " . count($users) . " 个到期用户，发送 {$sent} 封提醒";
     }
 
+    /** 调用图像生成模型（OpenAI 兼容 /images/generations）；无模型或失败时回退 GD 占位图 */
+    protected static function generateImage(int $modelId, string $prompt, string $outFile): string
+    {
+        if ($modelId > 0) {
+            $m = Db::name('audit_models')->where('id', $modelId)->find();
+            if ($m && ($m['purpose'] ?? '') === 'image_gen' && (string)$m['endpoint'] !== '') {
+                $url = rtrim((string)$m['endpoint'], '/');
+                if (!str_contains($url, '/images/generations')) {
+                    $url .= '/images/generations';
+                }
+                $ch = @curl_init($url);
+                if ($ch) {
+                    @curl_setopt_array($ch, [
+                        CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_TIMEOUT => 120,
+                        CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Authorization: Bearer ' . (string)$m['api_key']],
+                        CURLOPT_POSTFIELDS => json_encode([
+                            'model' => (string)$m['model_name'], 'prompt' => $prompt, 'n' => 1, 'size' => '1024x1024',
+                        ], JSON_UNESCAPED_UNICODE),
+                    ]);
+                    $raw = (string)@curl_exec($ch);
+                    $code = (int)@curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    @curl_close($ch);
+
+                    $data = json_decode($raw, true);
+                    $b64    = (string)($data['data'][0]['b64_json'] ?? '');
+                    $imgUrl = (string)($data['data'][0]['url'] ?? '');
+                    if ($b64 !== '' && @file_put_contents($outFile, base64_decode($b64)) !== false) {
+                        Db::name('audit_models')->where('id', $modelId)->update(['last_ok_time' => time()]);
+                        return 'model';
+                    }
+                    if ($imgUrl !== '') {
+                        $bin = @file_get_contents($imgUrl);
+                        if ($bin !== false && @file_put_contents($outFile, $bin) !== false) {
+                            Db::name('audit_models')->where('id', $modelId)->update(['last_ok_time' => time()]);
+                            return 'model';
+                        }
+                    }
+                    if ($code >= 400) {
+                        Db::name('audit_models')->where('id', $modelId)->update(['fail_count' => Db::raw('fail_count + 1')]);
+                    }
+                }
+            }
+        }
+        return self::placeholderImage($prompt, $outFile) ? 'placeholder' : '';
+    }
+
+    /** GD 占位图（无可用模型/调用失败时） */
+    protected static function placeholderImage(string $prompt, string $outFile): bool
+    {
+        $im = @imagecreatetruecolor(1024, 768);
+        if (!$im) {
+            return false;
+        }
+        mt_srand(abs(crc32($prompt)));
+        $c1 = [mt_rand(20, 120), mt_rand(40, 140), mt_rand(60, 160)];
+        $c2 = [mt_rand(80, 200), mt_rand(60, 180), mt_rand(90, 210)];
+        for ($y = 0; $y < 768; $y++) {
+            $k = $y / 768;
+            imageline($im, 0, $y, 1024, $y, imagecolorallocate($im,
+                (int)($c1[0] + ($c2[0] - $c1[0]) * $k),
+                (int)($c1[1] + ($c2[1] - $c1[1]) * $k),
+                (int)($c1[2] + ($c2[2] - $c1[2]) * $k)));
+        }
+        for ($j = 0; $j < 5; $j++) {
+            imagefilledellipse($im, mt_rand(0, 1024), mt_rand(0, 768), mt_rand(120, 420), mt_rand(120, 420),
+                imagecolorallocatealpha($im, mt_rand(120, 255), mt_rand(120, 255), mt_rand(120, 255), 90));
+        }
+        $ok = @imagejpeg($im, $outFile, 85);
+        @imagedestroy($im);
+        return (bool)$ok;
+    }
+
     /** 造图（与 gen:run 同逻辑的精简版，$limit 限制本次张数） */
     /**
      * 造图任务执行（web 触发与 CLI 共用调度语义）
@@ -451,27 +523,12 @@ class CronService
                 $prompt = $prompts[array_rand($prompts)];
                 $tmp = sys_get_temp_dir() . '/gen_' . uniqid() . '.jpg';
 
-                $im = @imagecreatetruecolor(1024, 768);
-                if (!$im) {
+                $made = self::generateImage((int)$task['model_id'], $prompt, $tmp);
+                if ($made === '') {
                     $fail++;
-                    $detail[] = 'GD 创建画布失败';
+                    $detail[] = '生成失败：' . mb_substr($prompt, 0, 20);
                     continue;
                 }
-                $c1 = [mt_rand(20, 120), mt_rand(40, 140), mt_rand(60, 160)];
-                $c2 = [mt_rand(80, 200), mt_rand(60, 180), mt_rand(90, 210)];
-                for ($y = 0; $y < 768; $y++) {
-                    $k = $y / 768;
-                    imageline($im, 0, $y, 1024, $y, imagecolorallocate($im,
-                        (int)($c1[0] + ($c2[0] - $c1[0]) * $k),
-                        (int)($c1[1] + ($c2[1] - $c1[1]) * $k),
-                        (int)($c1[2] + ($c2[2] - $c1[2]) * $k)));
-                }
-                for ($j = 0; $j < 5; $j++) {
-                    imagefilledellipse($im, mt_rand(0, 1024), mt_rand(0, 768), mt_rand(120, 420), mt_rand(120, 420),
-                        imagecolorallocatealpha($im, mt_rand(120, 255), mt_rand(120, 255), mt_rand(120, 255), 90));
-                }
-                @imagejpeg($im, $tmp, 85);
-                @imagedestroy($im);
                 $gen++;
 
                 try {
@@ -483,7 +540,7 @@ class CronService
                         \think\facade\Db::name('images')->where('id', $r['image']->id)->update(['is_public' => 1]);
                     }
                     $ok++;
-                    $detail[] = "OK #{$r['image']->id} " . mb_substr($prompt, 0, 20);
+                    $detail[] = "OK #{$r['image']->id} " . mb_substr($prompt, 0, 20) . ($made === 'placeholder' ? '（占位图）' : '');
                 } catch (\Throwable $e) {
                     $fail++;
                     $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);
