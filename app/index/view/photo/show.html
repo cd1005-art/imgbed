@@ -57,6 +57,18 @@
   </div>
 </div>
 
+<div class="modal-mask" id="reportModal" hidden>
+  <div class="modal">
+    <h3 class="modal-title">举报图片</h3>
+    <p class="field-hint">请说明举报理由（色情低俗 / 暴力血腥 / 侵权 / 其他）。恶意举报会被记录。</p>
+    <textarea id="reportReason" rows="4" class="modal-textarea" placeholder="填写理由…"></textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost-sm" type="button" id="reportCancel">取消</button>
+      <button class="btn btn-sm" type="button" id="reportSubmit">提交举报</button>
+    </div>
+  </div>
+</div>
+
 {if condition="$related"}
 <h2 class="page-title" style="font-size:15px;margin:26px 0 12px">同标签推荐</h2>
 <div class="grid">
