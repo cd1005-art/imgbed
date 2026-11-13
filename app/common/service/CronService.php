@@ -534,7 +534,7 @@ class CronService
      * 仅执行「到期」任务，执行后推进 next_run（上次执行 + 间隔），并写日志、计失败
      * @param int $limit 单任务单次最多生成张数
      */
-    public static function taskGen(int $limit = 0): string
+    public static function taskGen(int $limit = 0, int $onlyId = 0): string
     {
         // web 触发时可能生成多张（每张约 10 秒），放宽执行时间限制
         @set_time_limit(300);
@@ -549,12 +549,20 @@ class CronService
             }
         }
 
-        // 只取到期任务（next_run 为空视为立即执行）
-        $tasks = Db::name('gen_tasks')->where('status', 1)
-            ->where(function ($q) use ($now) { $q->where('next_run', '<=', $now)->whereOr('next_run', 0); })
-            ->select()->toArray();
-        if (!$tasks) {
-            return '无到期任务';
+        // $onlyId > 0：手动「立即执行」指定任务（忽略 next_run 与暂停状态）
+        if ($onlyId > 0) {
+            $tasks = Db::name('gen_tasks')->where('id', $onlyId)->select()->toArray();
+            if (!$tasks) {
+                return '任务不存在';
+            }
+        } else {
+            // 只取到期任务（next_run 为空视为立即执行）
+            $tasks = Db::name('gen_tasks')->where('status', 1)
+                ->where(function ($q) use ($now) { $q->where('next_run', '<=', $now)->whereOr('next_run', 0); })
+                ->select()->toArray();
+            if (!$tasks) {
+                return '无到期任务';
+            }
         }
 
         $total = 0;
@@ -621,6 +629,9 @@ class CronService
             $total += $ok;
         }
 
+        if ($onlyId > 0) {
+            return "任务 #{$onlyId} 已执行，生成 {$total} 张";
+        }
         return "生成 {$total} 张（到期任务 " . count($tasks) . ' 个）';
     }
 

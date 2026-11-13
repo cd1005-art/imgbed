@@ -122,6 +122,18 @@ class GenManage extends Base
         return json(['status' => true, 'message' => '已保存（目标账号：' . ($target['nickname'] ?: $target['email']) . '）']);
     }
 
+    /** 立即执行一次指定任务（测试用，忽略调度时间） */
+    public function runNow(int $id)
+    {
+        $task = Db::name('gen_tasks')->where('id', $id)->find();
+        if (!$task) {
+            return json(['status' => false, 'message' => '任务不存在']);
+        }
+        $msg = \app\common\service\CronService::taskGen(max(1, (int)$task['count_per_run']), $id);
+        $ok  = !preg_match('/失败|不存在|已达|无到期/', $msg);
+        return json(['status' => $ok, 'message' => $msg]);
+    }
+
     /** 批量操作任务：enable / disable / delete */
     public function batch()
     {

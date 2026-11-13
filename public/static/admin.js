@@ -50,6 +50,28 @@
     }).then(function (r) { return r.json(); });
   }
 
+  /* 造图任务：立即执行（单任务，忽略调度时间） */
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest ? e.target.closest('[data-gen-run]') : null;
+    if (!b) { return; }
+    if (b.dataset.busy === '1') { return; }
+    b.dataset.busy = '1';
+    var old = b.textContent;
+    b.textContent = '生成中…';
+    b.disabled = true;
+    toast('已提交通道，正在生成（约 10~60 秒）…');
+    fetch('/admin/gen/run/' + b.dataset.genRun, { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        toast(d.message);
+        setTimeout(function () { location.reload(); }, 900);
+      })
+      .catch(function () {
+        toast('执行失败：网络或超时（可稍后看执行日志）');
+        b.textContent = old; b.disabled = false; b.dataset.busy = '0';
+      });
+  });
+
   /* 订单操作：详情 / 补单 / 关闭（全局委托） */
   document.addEventListener('click', function (e) {
     var t = e.target;

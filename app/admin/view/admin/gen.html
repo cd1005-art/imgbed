@@ -94,6 +94,7 @@
             <td>{if condition="$vo.next_run gt 0"}{:date('m-d H:i', ts($vo.next_run))}{else /}-{/if}</td>
             <td class="td-actions">
               <button class="btn-ghost-sm" data-gen-toggle="{$vo.id}">{if condition="$vo.status eq 1"}暂停{else /}启用{/if}</button>
+              <button class="btn-ghost-sm" data-gen-run="{$vo.id}">立即执行</button>
               <button class="btn-ghost-sm" data-gen-edit="{$vo.id}">编辑</button>
               <button class="btn-ghost-sm btn-danger-sm" data-gen-del="{$vo.id}">删除</button>
             </td>

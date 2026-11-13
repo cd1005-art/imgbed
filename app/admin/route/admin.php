@@ -26,6 +26,7 @@ Route::group(function () {
     Route::post('withdraw/approve/:id', 'WithdrawManage/approve');
     Route::post('withdraw/paid/:id', 'WithdrawManage/paid');
     Route::post('withdraw/reject/:id', 'WithdrawManage/reject');
+    Route::post('gen/run/:id', 'GenManage/runNow');
     Route::post('gen/batch', 'GenManage/batch');
     Route::post('gen/settings', 'GenManage/saveSettings');
     Route::post('gen/delete-logs', 'GenManage/deleteLogs');
