@@ -80,9 +80,9 @@
         <option value="0" {if condition="($settings['seo_jsonld_enable'] ?? '1') eq '0'"}selected{/if}>关闭</option>
       </select>
     </label>
-    <div class="field" style="justify-content:flex-end">
-      <button type="button" class="btn-ghost-sm" id="seoRefresh">立即重建 sitemap</button>
-      <button type="submit" class="btn">保存 SEO 设置</button>
+    <div style="grid-column:span 2;display:flex;justify-content:flex-end;align-items:center;gap:10px">
+      <button type="submit" class="btn" style="width:168px;height:36px;justify-content:center;font-size:12px">保存 SEO 设置</button>
+      <button type="button" class="btn" id="seoRefresh" style="width:168px;height:36px;justify-content:center;font-size:12px">立即重建 sitemap</button>
     </div>
   </form>
   <p class="field-hint" style="margin-top:8px">
