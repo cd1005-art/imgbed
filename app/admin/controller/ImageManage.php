@@ -348,6 +348,37 @@ class ImageManage extends Base
         return json(['status' => true, 'message' => '已驳回并冻结该图']);
     }
 
+    /** 切换公开 / 私密（公开时若审核未通过或已冻结，一并放行） */
+    public function togglePublic(int $id)
+    {
+        $img = \think\facade\Db::name('images')->where('id', $id)->find();
+        if (!$img) {
+            return json(['status' => false, 'message' => '图片不存在']);
+        }
+        $toPublic = (int)$img['is_public'] !== 1;
+        $update = ['is_public' => $toPublic ? 1 : 0, 'update_time' => time()];
+        $notes = [];
+
+        if ($toPublic) {
+            if ((int)$img['status'] !== 1) {
+                $update['status'] = 1;
+                $notes[] = '已解冻';
+            }
+            if ((int)$img['audit_status'] !== 1) {
+                $update['audit_status'] = 1;
+                $notes[] = '审核置为通过（管理员背书）';
+            }
+        }
+
+        \think\facade\Db::name('images')->where('id', $id)->update($update);
+
+        $msg = $toPublic ? '已设为公开' : '已设为私密';
+        if ($notes) {
+            $msg .= '（' . implode('，', $notes) . '）';
+        }
+        return json(['status' => true, 'message' => $msg, 'is_public' => $toPublic ? 1 : 0]);
+    }
+
     public function toggle(int $id)
     {
         $image = Image::find($id);

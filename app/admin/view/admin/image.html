@@ -44,7 +44,7 @@
 </div>
 
 <table class="table">
-  <thead><tr><th style="width:28px"><input type="checkbox" id="checkAll"></th><th>ID</th><th>缩略</th><th>文件名</th><th>标签</th><th>用户</th><th>大小</th><th>存储</th><th>审核</th><th>状态</th><th>IP</th><th>上传时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="checkAll"></th><th>ID</th><th>缩略</th><th>文件名</th><th>标签</th><th>用户</th><th>大小</th><th>存储</th><th>审核</th><th>公开</th><th>状态</th><th>IP</th><th>上传时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr data-row="{$vo.id}">
@@ -63,6 +63,9 @@
           data-copy-desc="{$vo.audit_hint|htmlspecialchars}">
         {if condition="$vo.audit_status eq 0"}待审{elseif condition="$vo.audit_status eq 1"}<span class="ok">{$vo.audit_model|default='通过'}</span>{elseif condition="$vo.audit_status eq 2"}<span class="danger">{$vo.audit_model|default='拒绝'}</span>{else /}<b>复审</b>{/if}
       </td>
+      <td>
+        {if condition="$vo.is_public eq 1"}<span class="ok">公开</span>{else /}<span class="count">私密</span>{/if}
+      </td>
       <td>{if condition="$vo.status eq 1"}正常{else /}<span class="danger">冻结</span>{/if}</td>
       <td class="mono">{$vo.ip}</td>
       <td>{:date('m-d H:i', ts($vo.create_time))}</td>
@@ -74,6 +77,9 @@
                 data-desc="{$vo.audit_hint|htmlspecialchars}">编辑</button>
         <button class="btn-ghost-sm" data-toggle-status="{$vo.id}">{if condition="$vo.status eq 1"}冻结{else /}解冻{/if}</button>
         <button class="btn-ghost-sm btn-danger-sm" data-del="{$vo.id}">删除</button>
+        <button class="btn-ghost-sm" data-img-public="{$vo.id}" data-public="{$vo.is_public}">
+          {if condition="$vo.is_public eq 1"}设为私密{else /}设为公开{/if}
+        </button>
       </td>
     </tr>
     {/volist}

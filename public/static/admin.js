@@ -1231,8 +1231,21 @@
     });
   }
 
+  /* ---------- 图片管理：公开/私密切换 ---------- */
+  function adminImagePublic() {
+    document.querySelectorAll('[data-img-public]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        post('/admin/image/toggle-public/' + b.dataset.imgPublic).then(function (d) {
+          toast(d.message);
+          if (d.status) setTimeout(function () { location.reload(); }, 500);
+        });
+      });
+    });
+  }
+
   /* ---------- 图片管理：复制描述 / 编辑标题 / 人工复审 ---------- */
   function adminImageExtras() {
+    adminImagePublic();
     // 点击审核列复制描述
     document.querySelectorAll('[data-copy-desc]').forEach(function (td) {
       td.addEventListener('click', function () {

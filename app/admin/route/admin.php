@@ -54,6 +54,7 @@ Route::group(function () {
     Route::post('image/approve/:id', 'ImageManage/approve');
     Route::post('image/reject/:id', 'ImageManage/reject');
     Route::post('image/toggle/:id', 'ImageManage/toggle');
+    Route::post('image/toggle-public/:id', 'ImageManage/togglePublic');
     Route::post('image/delete/:id', 'ImageManage/delete');
     Route::post('image/batch', 'ImageManage/batch');
 
