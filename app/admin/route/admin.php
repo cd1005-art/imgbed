@@ -62,6 +62,7 @@ Route::group(function () {
     Route::post('user/credits/:id', 'UserManage/adjustCredits');
     Route::post('credit/delete', 'CreditManage/delete');
     Route::get('credit', 'FinanceManage/index');
+    Route::get('credit/export', 'CreditManage/export');
     Route::get('user', 'UserManage/index');
     Route::post('user/save/:id', 'UserManage/save');
     Route::post('user/batch', 'UserManage/batch');

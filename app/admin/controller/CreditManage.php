@@ -32,6 +32,59 @@ class CreditManage extends Base
         return json(['status' => true, 'message' => "已删除 {$n} 条流水（不影响用户当前余额）"]);
     }
 
+    /** 导出（沿用列表筛选） */
+    public function export()
+    {
+        $uw    = trim((string)$this->request->param('uw', ''));
+        $type  = trim((string)$this->request->param('type', ''));
+        $dfrom = trim((string)$this->request->param('dfrom', ''));
+        $dto   = trim((string)$this->request->param('dto', ''));
+
+        $q = Db::name('credit_logs');
+        if ($uw !== '') {
+            if (ctype_digit($uw)) {
+                $q->where('user_id', (int)$uw);
+            } else {
+                $uids = Db::name('users')->where(function ($qq) use ($uw) {
+                    $qq->where('email', 'like', '%' . $uw . '%')->whereOr('nickname', 'like', '%' . $uw . '%');
+                })->column('id');
+                $q->whereIn('user_id', $uids ?: [0]);
+            }
+        }
+        if ($type !== '') { $q->where('type', $type); }
+        if ($dfrom !== '') { $q->where('create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
+        if ($dto !== '')   { $q->where('create_time', '<=', strtotime($dto . ' 23:59:59')); }
+
+        $rows = $q->order('id', 'desc')->limit(20000)->select()->toArray();
+        $types = self::TYPES;
+        $uMap = [];
+        $ids = array_values(array_unique(array_map(fn($r) => (int)$r['user_id'], $rows)));
+        if ($ids) {
+            foreach (Db::name('users')->whereIn('id', $ids)->field('id,nickname,email')->select()->toArray() as $u) {
+                $uMap[(int)$u['id']] = ($u['nickname'] !== '' ? $u['nickname'] : $u['email']);
+            }
+        }
+
+        $out = "\xEF\xBB\xBFID,用户,账户,类型,变动,变动后余额,备注,时间\n";
+        foreach ($rows as $r) {
+            $uid = (int)$r['user_id'];
+            $out .= implode(',', [
+                $r['id'],
+                '"' . str_replace('"', '""', $uMap[$uid] ?? ('#' . $uid)) . '"',
+                ($r['account'] ?? 'credits') === 'earnings' ? '收益余额' : '充值余额',
+                $types[$r['type']] ?? $r['type'],
+                $r['amount'],
+                $r['balance_after'],
+                '"' . str_replace('"', '""', (string)$r['remark']) . '"',
+                date('Y-m-d H:i:s', (int)$r['create_time']),
+            ]) . "\n";
+        }
+        return response($out, 200, [
+            'Content-Type'        => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="credit-logs-' . date('Ymd-His') . '.csv"',
+        ]);
+    }
+
     public function index()
     {
         $page = max(1, (int)$this->request->param('page', 1));

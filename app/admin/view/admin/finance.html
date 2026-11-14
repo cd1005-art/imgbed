@@ -162,6 +162,16 @@
   <div class="tab-pane" data-pane="credits">
     <section class="panel">
       <h2 class="panel-title">站币流水 <span class="count">共 {$credits_total} 条 · 收入 {$credit_in} / 支出 {$credit_out}</span></h2>
+
+      <div class="batch-bar" style="background:#FAF9F7;color:#1C1B18;display:flex;margin-bottom:10px;gap:16px;flex-wrap:wrap">
+        <span>今日充值 <b>{$credit_stats.recharge}</b> 元</span>
+        <span>今日消费 <b>{$credit_stats.consume}</b> 币</span>
+        <span>今日分成 <b class="ok">{$credit_stats.share}</b> 币</span>
+        <span>待提现 <b class="danger">{$credit_stats.pending}</b> 元</span>
+        <span style="margin-left:auto">
+          <a class="btn btn-sm" href="/admin/finance?export=1&cuw={$cuw}&ctype={$ctype}&cfrom={$cfrom}&cto={$cto}">导出 CSV</a>
+        </span>
+      </div>
 <div class="batch-bar" id="creditBar" hidden>
   <span id="creditCount">已选 0 条</span>
   <button class="btn-ghost-sm btn-danger-sm" type="button" id="creditBatchDel">批量删除</button>
@@ -185,6 +195,23 @@
     {/volist}
   </tbody>
 </table>
+      <h2 class="panel-title" style="margin:18px 0 8px">图片销售排行（按解锁收入）</h2>
+      <table class="table">
+        <thead><tr><th>图片</th><th>解锁次数</th><th>作者收入（币）</th></tr></thead>
+        <tbody>
+          {volist name="top_images" id="ti"}
+          <tr>
+            <td class="td-clip" title="{$ti.name}">
+              <a href="/p/{$ti.image_id}" target="_blank">#{$ti.image_id} {$ti.name}</a>
+            </td>
+            <td>{$ti.cnt}</td>
+            <td><b>{$ti.total}</b></td>
+          </tr>
+          {/volist}
+          {if condition="count($top_images) eq 0"}<tr><td colspan="3" class="field-hint">暂无解锁销售数据</td></tr>{/if}
+        </tbody>
+      </table>
+
     </section>
   </div>
 
