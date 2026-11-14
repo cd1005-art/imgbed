@@ -145,8 +145,12 @@ class FinanceManage extends Base
                 ->where('create_time', '>=', $today)->sum('amount'),
             'pending'  => (int)Db::name('withdrawals')->whereIn('status', ['pending', 'approved'])->sum('real_amount'),
         ];
-        $topImages = Db::name('unlocks')->alias('u')->join('images i', 'i.id = u.image_id')
-            ->field('u.image_id, i.name, i.user_id AS author_id, COUNT(*) AS cnt, SUM(u.price) AS total, MAX(u.create_time) AS last_time')
+        $urange = (int)$this->request->param('urange', 0);   // 0=全部 7/30/90=近 N 天
+        $tq = Db::name('unlocks')->alias('u')->join('images i', 'i.id = u.image_id');
+        if ($urange > 0) {
+            $tq->where('u.create_time', '>=', time() - $urange * 86400);
+        }
+        $topImages = $tq->field('u.image_id, i.name, i.user_id AS author_id, COUNT(*) AS cnt, SUM(u.price) AS total, MAX(u.create_time) AS last_time')
             ->group('u.image_id')->order('total', 'desc')->limit(8)->select()->toArray();
         // 作者昵称
         $authorIds = array_values(array_unique(array_map(fn($r) => (int)$r['author_id'], $topImages)));
@@ -259,6 +263,7 @@ class FinanceManage extends Base
             'types' => self::TYPES, 'user_map' => $uMap,
             'credit_stats' => $creditStats, 'top_images' => $topImages,
             'unlocks' => $unlockRows, 'unlocks_total' => $unlockTotal,
+            'urange' => $urange,
             'uu' => $uu, 'ui' => $ui, 'ufrom' => $ufrom, 'uto' => $uto,
             'upage' => $upage, 'upages' => (int)ceil($unlockTotal / 40) ?: 1,
             'settings' => \app\common\model\Setting::allSettings(),

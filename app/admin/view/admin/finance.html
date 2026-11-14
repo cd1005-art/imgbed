@@ -198,7 +198,18 @@
     {/volist}
   </tbody>
 </table>
-      <h2 class="panel-title" style="margin:18px 0 8px">图片销售排行（按解锁收入）</h2>
+      <div class="panel-head" style="margin:18px 0 8px">
+        <h2 class="panel-title" style="margin:0">图片销售排行（按解锁收入）</h2>
+        <form method="get" action="/admin/finance" style="margin:0;display:flex;gap:8px;align-items:center">
+          <input type="hidden" name="tab" value="credits">
+          <select name="urange" class="filter-select" onchange="this.form.submit()">
+            <option value="0" {if condition="$urange eq 0"}selected{/if}>全部时间</option>
+            <option value="7" {if condition="$urange eq 7"}selected{/if}>近 7 天</option>
+            <option value="30" {if condition="$urange eq 30"}selected{/if}>近 30 天</option>
+            <option value="90" {if condition="$urange eq 90"}selected{/if}>近 90 天</option>
+          </select>
+        </form>
+      </div>
       <table class="table">
         <thead><tr><th>图片</th><th>作者</th><th>解锁次数</th><th>作者收入（币）</th><th>最近解锁</th></tr></thead>
         <tbody>
