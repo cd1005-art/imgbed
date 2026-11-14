@@ -333,10 +333,18 @@
       <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存提现设置</button></div>
     </form>
     <p class="field-hint">
-      提现比例与充值比例相互独立；<b>建议 M ≥ N</b>（充值 1 元得 N 币，提现 1 元需 M 币）：
-      M &lt; N 时用户可「充值 → 提现」套取差价（如充值 1 元得 10 币、提现 1 元只需 8 币，净赚 2 币/元）。<br>
-      当前：充值 1 元 = {$settings.credits_per_yuan|default='10'} 币，提现 1 元 = {$settings.withdraw_rate|default='10'} 币，
-      手续费 {$settings.withdraw_fee_pct|default='0'}%。<br>
+      提现比例与充值比例相互独立（充值 1 元得 N 币，提现 1 元需 M 币）。<br>
+      当前：N = <b>{$settings.credits_per_yuan|default='10'}</b> ｜ M = <b>{$settings.withdraw_rate|default='10'}</b>
+      ｜ 手续费 <b>{$settings.withdraw_fee_pct|default='0'}%</b><br>
+      充提净收益率 = (N / M) × (1 − 手续费%) − 1 =
+      {if condition="$arbitrage_pct gt 0"}
+        <b class="danger">+{$arbitrage_pct}%（存在套利空间：用户充值后提现可净赚，请提高 M 或手续费）</b>
+      {elseif condition="$arbitrage_pct eq 0"}
+        <b>0%（充提无损循环：不产生套利，但也没有价差收益）</b>
+      {else /}
+        <b class="ok">{$arbitrage_pct}%（提现会亏损，手续费/价差已覆盖成本）</b>
+      {/if}<br>
+      说明：M 与 N 相等时，只要手续费 &gt; 0 就不会无损套利；M &lt; N 时需手续费覆盖差价。修改配置不影响已提交的提现。
       手续费在<b>提交时</b>按当次比例与费率计入记录，之后修改配置不影响已提交的申请；关闭提现后前台隐藏标签且接口拒绝。
     </p>
   </div>

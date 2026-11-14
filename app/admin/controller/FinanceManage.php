@@ -174,6 +174,13 @@ class FinanceManage extends Base
             'types' => self::TYPES, 'user_map' => $uMap,
             'credit_stats' => $creditStats, 'top_images' => $topImages,
             'settings' => \app\common\model\Setting::allSettings(),
+            // 充提套利测算：充 1 元得 N 币 -> 可提 N/M 元 -> 扣手续费后实得 (N/M)*(1-fee%)
+            'arbitrage_pct' => (function () {
+                $n   = max(1, (int)\app\common\model\Setting::get('credits_per_yuan', 10));
+                $m   = max(1, (int)\app\common\model\Setting::get('withdraw_rate', 10));
+                $fee = max(0, min(100, (int)\app\common\model\Setting::get('withdraw_fee_pct', 0)));
+                return round(($n / $m) * (1 - $fee / 100) * 100 - 100, 2);
+            })(),
             'credit_plans' => Db::name('credit_plans')->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
             'page_no' => $page,
         ]);
