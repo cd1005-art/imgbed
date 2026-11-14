@@ -72,6 +72,13 @@ class Console extends Base
             'alipay_name'    => (string)($user->alipay_name ?? ''),
             'alipay_account' => (string)($user->alipay_account ?? ''),
             'min_recharge'   => (int)Setting::get('min_recharge', 10),
+            'withdraw_fee'   => (int)Setting::get('withdraw_fee_pct', 0),
+            'withdraw_monthly' => (int)Setting::get('withdraw_monthly_limit', 2),
+            'withdraw_used_this_month' => (int)Db::name('withdrawals')->where('user_id', $user->id)
+                ->where('create_time', '>', strtotime(date('Y-m-01')))->count(),
+            'share_user'     => (int)Setting::get('share_user', 70),
+            'share_ai'       => (int)Setting::get('share_ai', 50),
+            'split_mode'     => (string)Setting::get('revenue_split_mode', '0'),
             'credit_plans'   => Db::name('credit_plans')->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
             'recharge_bonus' => (int)Setting::get('recharge_bonus_pct', 0),
             'verify_mode'    => (string)Setting::get('verify_mode', 'none'),

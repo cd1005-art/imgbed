@@ -297,6 +297,24 @@
         form.appendChild(inp); document.body.appendChild(form); form.submit();
       });
     });
+    var crb = document.getElementById('customRechargeBtn');
+    if (crb) crb.addEventListener('click', function () {
+      var el = document.getElementById('customRecharge');
+      var v = parseInt(el.value || '0', 10);
+      var min = parseInt(el.getAttribute('min') || '1', 10);
+      if (!v || v < min) { toast('最低充值 ' + min + ' 元'); return; }
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/console/recharge';
+      [['yuan', v]].forEach(function (kv) {
+        var i = document.createElement('input');
+        i.type = 'hidden'; i.name = kv[0]; i.value = kv[1];
+        form.appendChild(i);
+      });
+      document.body.appendChild(form);
+      form.submit();
+    });
+
     var af = document.getElementById('alipayForm');
     if (af) af.addEventListener('submit', function (e) {
       e.preventDefault();

@@ -121,7 +121,17 @@
             <button class="btn-ghost-sm" type="button" data-recharge="100">100 元</button>
             {/if}
           </div>
-          <p class="field-hint">到账 {$credits_rate} 币 / 元{if condition="$recharge_bonus gt 0"}，活动期额外赠送 {$recharge_bonus}%{/if}。支付成功自动到账。</p>
+          <div class="model-inline-form" style="margin:10px 0;align-items:flex-end;flex-wrap:wrap">
+            <label class="field" style="margin:0;max-width:240px">
+              <span class="field-label">自定义金额（元，≥ {$min_recharge}）</span>
+              <input type="number" id="customRecharge" min="{$min_recharge}" placeholder="{$min_recharge}">
+            </label>
+            <button class="btn btn-sm" type="button" id="customRechargeBtn">按此金额充值</button>
+          </div>
+          <p class="field-hint">
+            到账计算：金额 × <b>{$credits_rate}</b> 币{if condition="$recharge_bonus gt 0"} × (1 + 活动 {$recharge_bonus}%){/if}{if condition="count($credit_plans) gt 0"} + 所选档位赠送{/if}。
+            最低充值 {$min_recharge} 元；支付成功自动到账，可在「充值记录」查看。
+          </p>
           {else /}
           <p class="field-hint" style="color:#d29922">支付通道维护中，暂时无法充值</p>
           {/if}
@@ -133,7 +143,12 @@
           <h2 class="panel-title">收益
             <span class="count">可提现 {$earnings} 币 · 累计收益 {$credits_total} 币 · 提现比例 1 元 = {$withdraw_rate} 币</span>
           </h2>
-          <p class="panel-sub">他人解锁你的付费图片时，分成进入收益余额；收益可提现，也可直接用于消费（消费时优先扣充值余额）。</p>
+          <p class="panel-sub">
+            分成比例：{if condition="$split_mode eq '1'"}用户自制图 <b>{$share_user}%</b> · AI 生成图 <b>{$share_ai}%</b>{else /}统一 <b>{$share_user}%</b>{/if}
+            ｜ 提现比例 1 元 = {$withdraw_rate} 币
+            {if condition="!$withdraw_enable"}<b style="color:#d29922">（提现功能暂未开放）</b>{/if}<br>
+            他人解锁你的付费图片时，分成进入收益余额；收益可提现，也可直接用于消费（消费时优先扣充值余额）。
+          </p>
           <table class="table" style="margin-top:12px">
             <thead><tr><th>我解锁的图</th><th>消耗</th><th>时间</th></tr></thead>
             <tbody>
@@ -219,8 +234,12 @@
       <div class="tab-pane" data-pane="apply">
         <section class="panel">
           <h2 class="panel-title">提现申请
-            <span class="count">可提现 {$earnings} 币 · 1 元 = {$withdraw_rate} 币 · 最低 {$min_withdraw} 元</span>
+            <span class="count">可提现 {$earnings} 币（≈ {:round($earnings / max(1, $withdraw_rate), 2)} 元）</span>
           </h2>
+          <p class="panel-sub">
+            提现比例 1 元 = {$withdraw_rate} 币 ｜ 最低 {$min_withdraw} 元 ｜ 手续费 {$withdraw_fee}%
+            ｜ 本月已提 {$withdraw_used_this_month} / {if condition="$withdraw_monthly gt 0"}{$withdraw_monthly}{else /}不限{/if} 次
+          </p>
           <form class="form form-grid" id="withdrawForm">
             <label class="field"><span class="field-label">提现金额（元）</span>
               <input type="number" name="amount" value="{$min_withdraw}" min="{$min_withdraw}">
@@ -233,7 +252,9 @@
             </label>
             <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">申请提现</button></div>
           </form>
-          <p class="field-hint">手续费与月限由站长配置；提交后进入人工审核，驳回将原额退回收益余额。</p>
+          <p class="field-hint">
+            实得 = 申请金额 − 手续费（{$withdraw_fee}%）；提交后进入人工审核，驳回将原额退回收益余额。
+          </p>
         </section>
       </div>
 
@@ -242,7 +263,7 @@
           <h2 class="panel-title">提现记录 <span class="count">最近 20 条</span></h2>
           {if condition="$has_withdraws"}
           <table class="table">
-            <thead><tr><th>金额</th><th>手续费</th><th>实得</th><th>状态</th><th>时间</th></tr></thead>
+            <thead><tr><th>金额</th><th>手续费</th><th>实得</th><th>状态</th><th>备注</th><th>时间</th></tr></thead>
             <tbody>
               {volist name="withdraws" id="w"}
               <tr>
@@ -250,6 +271,7 @@
                 <td>{$w.fee} 元</td>
                 <td><b>{$w.real_amount} 元</b></td>
                 <td>{if condition="$w.status eq 'pending'"}<span class="count">待审核</span>{elseif condition="$w.status eq 'approved'"}已通过，待打款{elseif condition="$w.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
+                <td class="td-clip" title="{$w.remark}">{$w.remark|default='-'}</td>
                 <td>{:date('m-d H:i', ts($w.create_time))}</td>
               </tr>
               {/volist}

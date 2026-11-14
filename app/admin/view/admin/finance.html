@@ -273,6 +273,10 @@
       <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存充值设置</button></div>
     </form>
 
+    <p class="field-hint" style="margin:-2px 0 6px">
+      到账公式：金额 × 充值比例{if condition="($settings['recharge_bonus_pct'] ?? '0') neq '0'"} × (1 + 活动赠送 %){/if} + 档位赠送币。
+      <b>档位金额应 ≥ 最低充值金额</b>，否则该档位下单会被拒绝。
+    </p>
     <h2 class="panel-title" style="margin:20px 0 8px">充值档位</h2>
     <table class="table" style="margin-bottom:10px">
       <thead><tr><th>金额（元）</th><th>额外赠送（币）</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
@@ -328,6 +332,10 @@
       </label>
       <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存提现设置</button></div>
     </form>
+    <p class="field-hint">
+      提现比例与充值比例相互独立（充值 1 元得 N 币，提现 1 元需 M 币，通常 M &gt; N 才有价差空间）。<br>
+      手续费在<b>提交时</b>按当次比例与费率计入记录，之后修改配置不影响已提交的申请；关闭提现后前台隐藏标签且接口拒绝。
+    </p>
   </div>
 
 
@@ -349,6 +357,7 @@
       <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存分成设置</button></div>
     </form>
     <p class="field-hint" style="margin-top:8px">
+      <b>统一模式</b>：所有图片按「作者分成」比例；<b>按来源模式</b>：用户自制图用「作者分成」、AI 生成图用「AI 图分成」。<br>
       分账规则：买家解锁扣除 <b>站币余额</b>（不足时用 <b>收益余额</b> 补）→ 作者分成进入 <b>收益余额</b>（可提现、可消费）。
       充值比例与提现比例相互独立：充值 1 元得到的币数，不等于提现 1 元所需的币数。
     </p>
