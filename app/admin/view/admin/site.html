@@ -93,9 +93,9 @@
 
 <section class="panel" style="margin-top:16px">
   <h2 class="panel-title">百度主动推送（普通收录 API）</h2>
-  <form class="form" id="baiduForm">
+  <form class="form form-grid" id="baiduForm">
     <!-- 第一行：5 个配置项 + 立即推送（与下方保存按钮同宽同列） -->
-    <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 168px;gap:12px 14px;align-items:end">
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 168px;gap:12px 14px;align-items:end">
       <label class="field" style="margin:0"><span class="field-label">启用推送</span>
         <select name="baidu_push_enable" style="width:100%;height:36px">
           <option value="1" {if condition="($settings['baidu_push_enable'] ?? '0') eq '1'"}selected{/if}>启用</option>
@@ -124,7 +124,7 @@
     </div>
 
     <!-- 第二行：站点地址 / Token / 保存（右侧 168px 列与上一行对齐） -->
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 168px;gap:14px;align-items:end;margin-top:12px">
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 168px;gap:14px;align-items:end;margin-top:12px">
       <div>
         <div class="field-label" style="display:block;margin-bottom:6px">站点地址（site 参数）</div>
         <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default=''}" placeholder="https://你的域名"
