@@ -103,6 +103,7 @@ class AdManage extends Base
             'sitemap_tag_min_use', 'sitemap_tag_limit', 'seo_jsonld_enable',
             // 百度主动推送
             'baidu_push_enable', 'baidu_push_token', 'baidu_push_site', 'baidu_push_auto',
+            'baidu_push_auto_count', 'baidu_push_auto_hours', 'baidu_push_daily_max',
         ];
         $all = $this->request->post();
         $saved = 0;

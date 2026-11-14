@@ -82,6 +82,70 @@ class BaiduPushService
         return $ret;
     }
 
+    /**
+     * 按「累积条数 + 最小间隔 + 每日上限」节流自动推送
+     * 由计划任务（每 5 分钟）驱动，避免打满每日配额
+     */
+    public static function maybeAutoPush(): void
+    {
+        if (!self::enabled() || (int)Setting::get('baidu_push_auto', 0) !== 1) {
+            return;
+        }
+        $minCount = max(1, (int)Setting::get('baidu_push_auto_count', 5));
+        $minHours = max(0, (int)Setting::get('baidu_push_auto_hours', 6));
+        $dailyMax = max(0, (int)Setting::get('baidu_push_daily_max', 10));
+
+        // 每日已推条数（跨天重置）
+        $today     = date('Y-m-d');
+        $pushedDay = (string)Setting::get('baidu_push_daily_date', '');
+        $pushedNum = $pushedDay === $today ? (int)Setting::get('baidu_push_daily_count', 0) : 0;
+        if ($dailyMax > 0 && $pushedNum >= $dailyMax) {
+            return;
+        }
+
+        // 最小间隔
+        $lastPush = (int)Setting::get('baidu_push_last_time', 0);
+        if ($minHours > 0 && $lastPush > 0 && (time() - $lastPush) < $minHours * 3600) {
+            return;
+        }
+
+        // 待推条数（update_time >= since 的公开通过图）
+        $since = (int)Setting::get('baidu_push_since', 0);
+        $q = function () use ($since) {
+            return \app\common\model\Image::where('is_public', 1)
+                ->where('audit_status', \app\common\model\Image::AUDIT_PASS)
+                ->where('status', \app\common\model\Image::ST_NORMAL)
+                ->where('update_time', '>=', $since);
+        };
+        if ($q()->count() < $minCount) {
+            return;
+        }
+
+        $limit = self::BATCH;
+        if ($dailyMax > 0) {
+            $limit = min($limit, $dailyMax - $pushedNum);
+        }
+        $rows = $q()->order('update_time', 'asc')->limit($limit)->field('id')->select();
+        $domain = rtrim((string)Setting::get('site_domain', ''), '/');
+        if ($domain === '') {
+            return;
+        }
+        $urls = [];
+        foreach ($rows as $r) {
+            $urls[] = $domain . '/p/' . (int)$r->id;
+        }
+        if (!$urls) {
+            return;
+        }
+
+        $res = self::push($urls);
+        if ($res['ok']) {
+            Setting::saveKey('baidu_push_since', (string)time());
+            Setting::saveKey('baidu_push_daily_date', $today);
+            Setting::saveKey('baidu_push_daily_count', (string)($pushedNum + max(0, $res['success'])));
+        }
+    }
+
     /** 生成新图后自动推送单条（失败静默，不影响生成） */
     public static function pushOne(string $url): void
     {

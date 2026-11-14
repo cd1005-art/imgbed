@@ -699,12 +699,8 @@ class CronService
                         . '｜审核:' . $auditTxt . $pubTxt;
                     self::applyAutoTags($task, (int)$r['image']->id);
                     self::applyAuditTitle((int)$r['image']->id);
-                    if ((int)($fresh['is_public'] ?? 0) === 1) {
-                        \app\common\service\BaiduPushService::pushOne(
-                            rtrim((string)\app\common\model\Setting::get('site_domain', ''), '/')
-                            . '/p/' . (int)$r['image']->id
-                        );
-                    }
+                    // 百度主动推送：按「累积条数 + 间隔 + 每日上限」节流（由本任务每 5 分钟检查）
+                    \app\common\service\BaiduPushService::maybeAutoPush();
                 } catch (\Throwable $e) {
                     $fail++;
                     $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);
