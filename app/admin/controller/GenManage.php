@@ -81,8 +81,26 @@ class GenManage extends Base
         $stats['passed'] = (int)Db::name('images')->where('origin', 'gen_bot')->where('create_time', '>=', $todayStart)->where('audit_status', 1)->count();
         $stats['rate']   = $stats['total'] > 0 ? (int)round($stats['passed'] * 100 / $stats['total']) : 0;
 
+        // 近 7 日趋势（生成/成功/失败）
+        $trend = [];
+        $maxGen = 1;
+        for ($i = 6; $i >= 0; $i--) {
+            $ds = strtotime(date('Y-m-d', strtotime("-{$i} day")));
+            $de = $ds + 86400;
+            $row = Db::name('gen_task_logs')->where('create_time', '>=', $ds)->where('create_time', '<', $de)
+                ->field('SUM(gen_count) g,SUM(success_count) ok,SUM(fail_count) f')->find();
+            $g = (int)($row['g'] ?? 0);
+            $maxGen = max($maxGen, $g);
+            $trend[] = ['day' => date('m-d', $ds), 'g' => $g, 'ok' => (int)($row['ok'] ?? 0), 'f' => (int)($row['f'] ?? 0)];
+        }
+        foreach ($trend as &$t) {
+            $t['h'] = (int)round($t['g'] * 100 / $maxGen);
+        }
+        unset($t);
+
         return $this->adminView('admin/gen', [
             'page'    => 'gen',
+            'trend'   => $trend,
             'stats'   => $stats,
             'tkw'     => $tkw,
             'tstatus' => $tstatus,
@@ -185,21 +203,33 @@ class GenManage extends Base
         if (!$task) {
             return json(['status' => false, 'message' => '任务不存在']);
         }
-        // 只取属于该任务的图：优先 gen_task_id；历史图回退到日志里解析出的图片 ID
-        $imgIds = Db::name('images')->where('gen_task_id', $id)
-            ->order('id', 'desc')->limit(12)->column('id');
-        if (!$imgIds) {
+        // 只取属于该任务的图：优先 gen_task_id（可翻页）；历史图回退到日志解析出的图片 ID
+        $page = max(1, (int)$this->request->param('page', 1));
+        $size = 12;
+        $total = (int)Db::name('images')->where('gen_task_id', $id)->count();
+        $pages = $total > 0 ? (int)ceil($total / $size) : 1;
+        $page  = min($page, max(1, $pages));
+        $imgs  = [];
+        if ($total > 0) {
+            $imgs = Db::name('images')->where('gen_task_id', $id)
+                ->order('id', 'desc')->page($page, $size)
+                ->field('id,path,audit_status,is_public,create_time')->select()->toArray();
+        } else {
             $logs = Db::name('gen_task_logs')->where('task_id', $id)
                 ->order('id', 'desc')->limit(200)->column('detail');
             $txt = implode("\n", array_map('strval', $logs));
+            $imgIds = [];
             if (preg_match_all('/OK #(\d+)/', $txt, $mm)) {
-                $imgIds = array_slice(array_values(array_unique(array_reverse($mm[1]))), 0, 12);
+                $imgIds = array_slice(array_values(array_unique(array_reverse($mm[1]))), 0, 200);
             }
-        }
-        $imgs = [];
-        if ($imgIds) {
-            $imgs = Db::name('images')->whereIn('id', $imgIds)
-                ->order('id', 'desc')->field('id,path,audit_status,is_public,create_time')->select()->toArray();
+            $total = count($imgIds);
+            $pages = max(1, (int)ceil($total / $size));
+            $page  = min($page, $pages);
+            $imgIds = array_slice($imgIds, ($page - 1) * $size, $size);
+            if ($imgIds) {
+                $imgs = Db::name('images')->whereIn('id', $imgIds)
+                    ->order('id', 'desc')->field('id,path,audit_status,is_public,create_time')->select()->toArray();
+            }
         }
         $auditMap = [0 => '待审', 1 => '通过', 2 => '拒绝', 3 => '人工'];
         foreach ($imgs as &$im) {
@@ -214,9 +244,12 @@ class GenManage extends Base
             'name'   => $task['name'],
             'info'   => '提示词 ' . count($pl) . ' 条 · 累计生成 ' . (int)$task['total_generated']
                         . ' 张 · 每 ' . (int)$task['interval_minutes'] . ' 分钟 × ' . (int)$task['count_per_run']
-                        . ' · 下列为最近 ' . count($imgs) . ' 张',
+                        . ($total > 0 ? ' · 共 ' . $total . ' 张，第 ' . $page . '/' . max(1, $pages) . ' 页' : ''),
             'images' => $imgs,
-            'message' => count($imgs) ? '' : '该账号下暂无造图记录',
+            'page'   => $page,
+            'pages'  => max(1, $pages),
+            'total'  => $total,
+            'message' => count($imgs) ? '' : '该任务暂无生成记录',
         ]);
     }
 
@@ -427,11 +460,19 @@ class GenManage extends Base
             if ($cnt > 0) { $usage[] = ['prompt' => $p, 'count' => $cnt]; }
         }
         usort($usage, function ($a, $b) { return $b['count'] <=> $a['count']; });
+        $usedText = [];
+        foreach ($usage as $u) { $usedText[$u['prompt']] = true; }
+        $unused = [];
+        foreach ($pool as $pp) {
+            if (!isset($usedText[$pp])) { $unused[] = $pp; }
+        }
         $used = count($usage);
         return json([
             'status' => true,
             'list'   => array_slice($usage, 0, 20),
-            'summary' => '池子共 ' . count($pool) . " 条，最近 " . count($logs) . " 条日志中命中 {$used} 条",
+            'unused' => array_slice($unused, 0, 50),
+            'unused_total' => count($unused),
+            'summary' => '池子共 ' . count($pool) . ' 条；最近 ' . count($logs) . " 条日志命中 {$used} 条，未命中 " . count($unused) . ' 条',
         ]);
     }
 

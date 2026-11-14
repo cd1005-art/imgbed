@@ -133,7 +133,8 @@
           <p class="field-hint" id="genDetailInfo" style="margin-bottom:10px"></p>
           <div id="genDetailGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>
           <p class="field-hint" id="genDetailEmpty" hidden></p>
-          <div class="modal-actions">
+          <div class="modal-actions" style="justify-content:space-between">
+            <span id="genDetailPager" class="count"></span>
             <button class="btn-ghost-sm" type="button" id="genDetailClose">关闭</button>
           </div>
         </div>
@@ -253,6 +254,18 @@
         <span>失败 <b class="danger">{$stats.fail}</b></span>
         <span>入库 {$stats.total} 张</span>
         <span>审核通过 {$stats.passed} 张（<b>{$stats.rate}%</b>）</span>
+      </div>
+
+      <div class="trend-wrap" style="margin:0 0 12px">
+        <div class="trend-bars">
+          {volist name="trend" id="d"}
+          <div class="trend-col" title="{$d.day}：生成 {$d.g} · 成功 {$d.ok} · 失败 {$d.f}">
+            <div class="trend-bar" style="height:{if condition="$d.h lt 3"}3{else /}{$d.h}{/if}%"></div>
+            <span class="trend-day">{$d.day}</span>
+          </div>
+          {/volist}
+        </div>
+        <p class="field-hint" style="margin:6px 0 0">近 7 日生成量（悬停看每日成功/失败）</p>
       </div>
 
       <div class="page-toolbar">

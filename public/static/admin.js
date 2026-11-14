@@ -810,29 +810,55 @@
 
     // 任务详情弹窗
     var dm = document.getElementById('genDetailModal');
+    var dCurId = 0;
+    function renderDetail(d, id) {
+      document.getElementById('genDetailTitle').textContent = '任务 #' + id + ' · ' + d.name;
+      document.getElementById('genDetailInfo').textContent = d.info;
+      var g = document.getElementById('genDetailGrid');
+      var e = document.getElementById('genDetailEmpty');
+      g.innerHTML = '';
+      (d.images || []).forEach(function (im) {
+        var cell = document.createElement('a');
+        cell.href = im.url; cell.target = '_blank';
+        cell.style.cssText = 'display:block;border:1px solid #E4E1DB;border-radius:8px;overflow:hidden;text-decoration:none;color:inherit';
+        cell.innerHTML = '<img src="' + im.url + '" style="width:100%;height:110px;object-fit:cover;display:block">'
+          + '<div style="padding:6px 8px;font-size:12px;line-height:1.5">#' + im.id + ' · ' + im.time
+          + '<br><span style="color:' + (im.audit_text === '通过' ? '#2E6B4F' : (im.audit_text === '拒绝' ? '#B3402A' : '#8A867E')) + '">'
+          + im.audit_text + (im.is_public == 1 ? ' · 已公开' : '') + '</span></div>';
+        g.appendChild(cell);
+      });
+      e.hidden = !!(d.images && d.images.length);
+      e.textContent = d.message || '';
+
+      var pager = document.getElementById('genDetailPager');
+      if (pager) {
+        pager.innerHTML = '';
+        if ((d.pages || 1) > 1) {
+          var prev = document.createElement('button');
+          prev.className = 'btn-ghost-sm'; prev.type = 'button'; prev.textContent = '上一页';
+          prev.disabled = d.page <= 1;
+          prev.onclick = function () { loadDetail(dCurId, d.page - 1); };
+          var info = document.createElement('span');
+          info.style.margin = '0 8px'; info.textContent = d.page + ' / ' + d.pages;
+          var next = document.createElement('button');
+          next.className = 'btn-ghost-sm'; next.type = 'button'; next.textContent = '下一页';
+          next.disabled = d.page >= d.pages;
+          next.onclick = function () { loadDetail(dCurId, d.page + 1); };
+          pager.appendChild(prev); pager.appendChild(info); pager.appendChild(next);
+        }
+      }
+    }
+    function loadDetail(id, page) {
+      dCurId = id;
+      fetch('/admin/gen/detail/' + id + '?page=' + (page || 1)).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.status) { toast(d.message); return; }
+        renderDetail(d, id);
+      }).catch(function () { toast('读取失败'); });
+    }
     document.querySelectorAll('[data-gen-detail]').forEach(function (b) {
       b.addEventListener('click', function () {
-        fetch('/admin/gen/detail/' + b.dataset.genDetail).then(function (r) { return r.json(); }).then(function (d) {
-          if (!d.status) { toast(d.message); return; }
-          document.getElementById('genDetailTitle').textContent = '任务 #' + b.dataset.genDetail + ' · ' + d.name;
-          document.getElementById('genDetailInfo').textContent = d.info;
-          var g = document.getElementById('genDetailGrid');
-          var e = document.getElementById('genDetailEmpty');
-          g.innerHTML = '';
-          (d.images || []).forEach(function (im) {
-            var cell = document.createElement('a');
-            cell.href = im.url; cell.target = '_blank';
-            cell.style.cssText = 'display:block;border:1px solid #E4E1DB;border-radius:8px;overflow:hidden;text-decoration:none;color:inherit';
-            cell.innerHTML = '<img src="' + im.url + '" style="width:100%;height:110px;object-fit:cover;display:block">'
-              + '<div style="padding:6px 8px;font-size:12px;line-height:1.5">#' + im.id + ' · ' + im.time
-              + '<br><span style="color:' + (im.audit_text === '通过' ? '#2E6B4F' : (im.audit_text === '拒绝' ? '#B3402A' : '#8A867E')) + '">'
-              + im.audit_text + (im.is_public == 1 ? ' · 已公开' : '') + '</span></div>';
-            g.appendChild(cell);
-          });
-          e.hidden = !!(d.images && d.images.length);
-          e.textContent = d.message || '';
-          dm.hidden = false;
-        }).catch(function () { toast('读取失败'); });
+        dm.hidden = false;
+        loadDetail(b.dataset.genDetail, 1);
       });
     });
     if (dm) document.getElementById('genDetailClose').onclick = function () { dm.hidden = true; };
@@ -918,10 +944,14 @@
       promptPost('/admin/gen/prompt/usage', 'task_id=' + sel.value).then(function (d) {
         var out = document.getElementById('usageOut');
         if (!d.status) { toast(d.message); if (out) { out.textContent = d.message || ''; } return; }
-        var lines = [d.summary, ''];
+        var lines = [d.summary, '', '— 最常用 —'];
         (d.list || []).forEach(function (x, i) {
           lines.push((i + 1) + '. [' + x.count + ' 次] ' + x.prompt);
         });
+        if (d.unused && d.unused.length) {
+          lines.push('', '— 从未抽到（共 ' + d.unused_total + ' 条，列前 ' + d.unused.length + ' 条） —');
+          d.unused.forEach(function (p, i) { lines.push((i + 1) + '. ' + p); });
+        }
         if (out) { out.textContent = lines.join('\n'); }
       }).catch(function () { toast('统计失败：网络错误'); })
         .finally(function () { ur.disabled = false; });
