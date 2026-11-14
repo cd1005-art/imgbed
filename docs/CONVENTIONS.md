@@ -219,4 +219,5 @@ function adminXxx() { initTabs('#xxxTabs'); /* 其余绑定 */ }
 - `initTabs(rootSel)` 只处理 `:scope > .tabs-nav .tab-btn` 与 `:scope > .tab-pane`，可安全嵌套；
 - 定位优先级 `#hash → ?tab= → 第一个`，**任何 GET 筛选表单必须带 `<input type="hidden" name="tab" value="当前tab">`**，否则提交后跳回第一个标签；
 - 列表型标签页保持三件套：**筛选 + 批量 + 单条操作**；
-- 现有参考实现：`finance.html`（五标签）、`gen.html`（四主标签 + 提示词四子标签）、`site.html`（基础/SEO）。
+- 现有参考实现：`finance.html`（五标签）、`gen.html`（四主标签 + 提示词四子标签）、`site.html`（基础/SEO）、`cron.html`（状态/配置）。
+- **例外（2026-11-15）**：**模型设置页**暂保留纵向卡片，不做标签页——该页功能待细化，过早分组反而割裂操作流；细化完成后统一改为「审核策略 / 审核模型 / 生成模型 / 提示词模型 / 新增」。
