@@ -87,7 +87,39 @@
   </form>
   <p class="field-hint" style="margin-top:8px">
     sitemap 地址：<a href="https://img.oddpp.com/sitemap.xml" target="_blank">https://img.oddpp.com/sitemap.xml</a>
-    —— 提交到百度搜索资源平台 / Google Search Console 后由搜索引擎抓取；收录范围仅公开且审核通过的图片。
+    —— Google Search Console 手动提交此地址即可；百度可用下方「主动推送」更快收录。
+  </p>
+</section>
+
+<section class="panel" style="margin-top:16px">
+  <h2 class="panel-title">百度主动推送（普通收录 API）</h2>
+  <form class="form form-grid" id="baiduForm">
+    <label class="field"><span class="field-label">启用推送</span>
+      <select name="baidu_push_enable">
+        <option value="1" {if condition="($settings['baidu_push_enable'] ?? '0') eq '1'"}selected{/if}>启用</option>
+        <option value="0" {if condition="($settings['baidu_push_enable'] ?? '0') eq '0'"}selected{/if}>关闭</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">生成新图后自动推送</span>
+      <select name="baidu_push_auto">
+        <option value="1" {if condition="($settings['baidu_push_auto'] ?? '0') eq '1'"}selected{/if}>是</option>
+        <option value="0" {if condition="($settings['baidu_push_auto'] ?? '0') eq '0'"}selected{/if}>否</option>
+      </select>
+    </label>
+    <label class="field field-wide"><span class="field-label">站点地址（site 参数）</span>
+      <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default='https://img.oddpp.com'}">
+    </label>
+    <label class="field field-wide"><span class="field-label">Token</span>
+      <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default='LJErC8cvlTle7Bxi'}">
+    </label>
+    <div class="field" style="justify-content:flex-end">
+      <button type="button" class="btn-ghost-sm" id="seoPushBaidu">立即推送（增量，最多 100 条）</button>
+      <button type="submit" class="btn">保存推送设置</button>
+    </div>
+  </form>
+  <p class="field-hint" style="margin-top:8px">
+    最近推送：{$settings.baidu_push_last_result|default='尚未推送'}{if condition="($settings['baidu_push_last_time'] ?? '') neq ''"}（{:date('m-d H:i', ts($settings['baidu_push_last_time']))}）{/if}
+    —— 接口：<code>POST data.zz.baidu.com/urls</code>；被推送的 URL 仅限公开且审核通过的图片详情页。
   </p>
 </section>
   </div>

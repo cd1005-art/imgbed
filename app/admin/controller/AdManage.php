@@ -34,6 +34,42 @@ class AdManage extends Base
     }
 
     /** 站点设置保存 */
+    /** 手动触发百度主动推送（增量：update_time 之后更新的公开图，最多 100 条） */
+    public function seoPushBaidu()
+    {
+        if (!\app\common\service\BaiduPushService::enabled()) {
+            return json(['status' => false, 'message' => '请先开启百度推送并填写 token']);
+        }
+        $since  = (int)Setting::get('baidu_push_since', 0);
+        $domain = rtrim((string)Setting::get('site_domain', ''), '/');
+        if ($domain === '') {
+            $domain = rtrim((string)request()->domain(), '/');
+        }
+
+        $rows = \app\common\model\Image::where('is_public', 1)
+            ->where('audit_status', \app\common\model\Image::AUDIT_PASS)
+            ->where('status', \app\common\model\Image::ST_NORMAL)
+            ->where('update_time', '>=', $since)
+            ->order('update_time', 'asc')->limit(100)->field('id')->select();
+
+        $urls = [];
+        foreach ($rows as $r) {
+            $urls[] = $domain . '/p/' . (int)$r->id;
+        }
+        if (!$urls) {
+            $urls = [$domain . '/', $domain . '/explore'];
+        }
+
+        $res = \app\common\service\BaiduPushService::push($urls);
+        if ($res['ok']) {
+            Setting::saveKey('baidu_push_since', (string)time());
+        }
+        return json([
+            'status'  => $res['ok'],
+            'message' => $res['message'] . '（本次提交 ' . count($urls) . ' 条）',
+        ]);
+    }
+
     /** 清除 sitemap 缓存并立即重建 */
     public function seoRefresh()
     {
@@ -64,6 +100,8 @@ class AdManage extends Base
             // SEO
             'sitemap_enable', 'sitemap_ttl', 'sitemap_pages', 'sitemap_include_tags',
             'sitemap_tag_min_use', 'sitemap_tag_limit', 'seo_jsonld_enable',
+            // 百度主动推送
+            'baidu_push_enable', 'baidu_push_token', 'baidu_push_site', 'baidu_push_auto',
         ];
         $all = $this->request->post();
         $saved = 0;

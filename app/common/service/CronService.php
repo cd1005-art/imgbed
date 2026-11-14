@@ -699,6 +699,12 @@ class CronService
                         . '｜审核:' . $auditTxt . $pubTxt;
                     self::applyAutoTags($task, (int)$r['image']->id);
                     self::applyAuditTitle((int)$r['image']->id);
+                    if ((int)($fresh['is_public'] ?? 0) === 1) {
+                        \app\common\service\BaiduPushService::pushOne(
+                            rtrim((string)\app\common\model\Setting::get('site_domain', 'https://img.oddpp.com'), '/')
+                            . '/p/' . (int)$r['image']->id
+                        );
+                    }
                 } catch (\Throwable $e) {
                     $fail++;
                     $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);

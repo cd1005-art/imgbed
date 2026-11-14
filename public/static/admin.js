@@ -627,6 +627,27 @@
       postForm('/admin/site/save', sf).then(function (d) { toast(d.message); });
     });
 
+    var bf = document.getElementById('baiduForm');
+    if (bf) bf.addEventListener('submit', function (e) {
+      e.preventDefault();
+      postForm('/admin/site/save', bf).then(function (d) { toast(d.message); });
+    });
+
+    var pb = document.getElementById('seoPushBaidu');
+    if (pb) pb.addEventListener('click', function () {
+      if (pb.dataset.busy === '1') { return; }
+      pb.dataset.busy = '1'; pb.disabled = true;
+      var oldTxt = pb.textContent;
+      pb.textContent = '推送中…';
+      post('/admin/site/seo-push').then(function (d) {
+        toast(d.message);
+        setTimeout(function () { location.reload(); }, 900);
+      }).catch(function () {
+        toast('推送失败：网络错误');
+        pb.disabled = false; pb.dataset.busy = '0'; pb.textContent = oldTxt;
+      });
+    });
+
     var sr = document.getElementById('seoRefresh');
     if (sr) sr.addEventListener('click', function () {
       sr.disabled = true; sr.textContent = '重建中…';
