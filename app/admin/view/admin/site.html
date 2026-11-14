@@ -12,7 +12,7 @@
   <div class="tab-pane" data-pane="basic">
 <section class="panel">
   <h2 class="panel-title">基础配置</h2>
-  <form class="form form-grid" id="siteForm" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+  <form class="form form-grid" id="siteForm" style="grid-template-columns:repeat(3,260px);justify-content:start;column-gap:26px;row-gap:14px">
     <label class="field"><span class="field-label">站点名</span><input type="text" name="site_name" value="{$settings.site_name|default='逍遥图床'}"></label>
     <label class="field"><span class="field-label">运营模式</span>
       <select name="operation_mode">
@@ -43,13 +43,12 @@
     </label>
     <label class="field"><span class="field-label">页码列表显示页数</span>
       <input type="number" name="pager_size" value="{$settings.pager_size|default='5'}" min="3" max="20">
+      <span class="field-hint">3~20（默认 5），当前页随页码滑动</span>
     </label>
     <label class="field"><span class="field-label">广场每页图片数</span>
       <input type="number" name="explore_per_page" value="{$settings.explore_per_page|default='30'}" min="1" max="200">
+      <span class="field-hint">1~200（默认 30）</span>
     </label>
-    <p class="field-hint" style="grid-column:1/-1;margin:0">
-      页码列表显示页数：3~20（默认 5），当前页会随页码滑动 ｜ 广场每页图片数：1~200（默认 30）
-    </p>
     <div style="grid-column:1/-1;display:flex;justify-content:flex-end">
       <button type="submit" class="btn">保存设置</button>
     </div>

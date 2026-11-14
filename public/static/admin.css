@@ -257,4 +257,5 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 .form-grid input:not([type="checkbox"]):not([type="radio"]),
 .form-grid select { max-width: 260px; }
 .form-grid textarea { max-width: 100%; }
-.form-grid .field .field-hint { font-size: 11px; line-height: 1.5; }
+.form-grid .field { align-items: flex-start; }
+.form-grid .field .field-hint { font-size: 11px; line-height: 1.5; margin-top: 3px; }
