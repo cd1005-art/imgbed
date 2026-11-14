@@ -104,6 +104,7 @@ class PaymentService
             'plan_id'     => (int)$plan->id,
             'type'        => 'vip',
             'amount'      => (int)$plan->price,
+            'pay_channel' => (string)$channelType,
             'status'      => Order::STATUS_UNPAID,
             'create_time' => time(),
             'update_time' => time(),
