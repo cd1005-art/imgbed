@@ -1,5 +1,10 @@
 # 待办清单
 
+> **当前状态：无未完成项**（2026-11-15 03:00 核对）
+> SEO 两项（sitemap、JSON-LD）+ 造图任务三项增强（详情翻页、7 日趋势、未使用列表）均已实现并实测。
+> 新增需求请追加到本文件，不要提前动工。
+
+
 ## SEO 增强 — 已完成（2026-11-15）
 
 ### 现状盘点
@@ -10,13 +15,13 @@
 
 ### ~~P1 sitemap.xml~~ ✅ 已完成
 - 新增 `app/index/controller/Sitemap.php::index()`
-  - 收录：首页 `/`、广场 `/explore`、广场分页 `/explore?page=N`（上限 20 页）、详情 `/p/{id}`、标签 `/tag?name=`（上限 500）
+  - 收录：首页 `/`、广场 `/explore`、广场分页 `/explore?page=N`（默认 20，后台可配）、详情 `/p/{id}`、标签 `/tag?name=`（默认 200，仅 `use_count>=2`，后台可配）
   - 详情筛选：`is_public=1 AND status=1 AND audit_status=1 AND delete_time IS NULL`；`lastmod=update_time`
   - 单文件 ≤ 50000 条；超出拆 `sitemap-1.xml` 并用索引 `sitemap.xml` 指向（当前量小，仅留扩展）
 - 路由：`Route::get('sitemap.xml', 'Sitemap/index')`
 - 缓存：输出写 `runtime/sitemap/sitemap.xml`，TTL 1800s；响应头 `X-Sitemap-Cache: hit|miss`、`Cache-Control: public,max-age=1800`
-- `robots.txt` 增加 `Sitemap: {domain}/sitemap.xml`
-- 不做：百度主动推送（需站长 token）、Google sitemap ping（2023 已停用）——仅在文档中说明手工提交
+- `robots.txt` 改为**动态路由**（`Robots/index`，按 request 域名生成，开源分发不写死域名）
+- 百度主动推送已实现（见下节）；Google sitemap ping 2023 已停用，仅手工提交
 
 ### ~~P2 详情页 JSON-LD~~ ✅ 已完成
 - `Photo::show` 组数据（`seo_jsonld`），模板 `head_extra` 输出 `<script type="application/ld+json">`
@@ -37,6 +42,17 @@
 - 标签页 URL 含中文需 `urlencode` + XML 转义
 - 广场分页只进前 20 页，避免 sitemap 被分页噪声占满
 
+
+## 百度主动推送 — 已完成（2026-11-15）
+
+- 服务：`app/common/service/BaiduPushService.php`（快照 `push()` / 节流 `maybeAutoPush()`）
+- 后台：站点设置 → SEO 设置 → 百度主动推送
+  - 配置：启用开关、site、token、自动推送、**累积条数 / 最小间隔小时 / 每日上限**
+  - 手动「立即推送」：增量取 `update_time >= since` 的公开通过图，单次上限 1000（百度规定）
+  - 游标：`baidu_push_since`；日计数：`baidu_push_daily_date` / `baidu_push_daily_count`
+- 节流规则：**待推 ≥ N 条 且 距上次 ≥ H 小时 且 当日未超上限** 才推，由现有 5 分钟任务驱动
+- 实测：4 个拦截分支全部通过（阈值不足/间隔未到/日上限满/开关关闭），未消耗配额
+- 安全：token 与域名**不再硬编码**（模板默认值清空、`robots.txt` 动态化）；历史提交中的旧 token 建议在百度平台重置
 
 ## 造图任务增强 — 已完成（2026-11-15）
 
