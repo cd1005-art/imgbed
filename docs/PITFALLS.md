@@ -63,3 +63,9 @@
 
 | 27 | 测试"状态型"功能后未回滚（心跳/告警去重/计数）| 用户看到"没操作却已生效"的假状态，误判功能故障 | 测完清理测试记录；或专用临时键/沙箱账号测试；交付时告知哪些记录是测试产生的 |
 | 28 | 宝塔 php 默认 disable_functions 禁 exec/shell_exec/system | web 端无法调用 CLI、无法探测 php 二进制 | 任务逻辑下沉服务层（web 同进程同步执行）；路径探测改静态候选，不依赖 is_file（open_basedir 会报警转异常，is_file 必须加 @）|
+
+| 29 | 多应用（TP8）下 `runtime_path()` 是 `runtime/{app}/`，在 admin 应用里删 `runtime/sitemap` 删不到 index 的缓存 | 改了代码却一直返回旧内容，误判"代码没生效" | sitemap 缓存固定用 `root_path().'runtime/index/sitemap/sitemap.xml'`；排查时先 `find / -name 'sitemap*.xml'` 确认实际路径 |
+| 30 | 百度主动推送把 `site` 参数做了 `rawurlencode` | 接口返回 `400 site init fail`（直连 curl 用原样 URL 却成功） | 百度接口要求 `site=https://域名` **原样传**，不要编码 |
+| 31 | ThinkPHP 模板里 `{volist name="tasks" id="t"}` 会注入 `$key`（循环索引），覆盖控制器同名的 `$key` | 页面显示"访问密钥：3"，反复检查 CSS 宽度无果 | 视图变量避开 `key/vo/id/mod` 等循环保留名（用 `cron_key`）；显示异常先 curl 看渲染后的原始值 |
+| 32 | 去掉 `<form class="form-grid">` 改为自定义栅格后，`.form-grid select/input` 的 `width:100%/border/radius` 规则整体失效 | 下拉框缩成浏览器默认宽度、出现黑色原生边框 | 自定义布局仍保留 `form-grid` 类，内部行用 `grid-column:1/-1` + 独立 `display:grid` |
+| 33 | 生成图标题取 `$img->create_time` 得到 0（JSON-LD 显示 1970） | 结构化数据日期错误 | 模型实例用 `$img->getData('create_time')` 取原始字段值 |
