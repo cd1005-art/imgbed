@@ -8,6 +8,8 @@
     <button class="tab-btn" type="button" data-tab="gateway">支付网关</button>
     <button class="tab-btn" type="button" data-tab="settings">站币设置</button>
     <button class="tab-btn" type="button" data-tab="plans">VIP 套餐</button>
+    <button class="tab-btn" type="button" data-tab="wdcfg">提现设置</button>
+    <button class="tab-btn" type="button" data-tab="sharecfg">作者分成</button>
     <button class="tab-btn" type="button" data-tab="orders">最近订单 <span class="count">{$total_orders}</span></button>
     <button class="tab-btn" type="button" data-tab="credits">站币流水 <span class="count">{$credits_total}</span></button>
     <button class="tab-btn" type="button" data-tab="withdraw">提现管理 <span class="count">{$withdraws_total}</span></button>
@@ -300,8 +302,11 @@
       </label>
       <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">新增 / 保存档位</button></div>
     </form>
+  </div>
 
-    <h2 class="panel-title" style="margin:20px 0 8px">提现设置</h2>
+
+  <div class="tab-pane" data-pane="wdcfg">
+    <h2 class="panel-title" style="margin:0 0 8px">提现设置</h2>
     <form class="form form-grid" id="withdrawCfgForm">
       <label class="field"><span class="field-label">提现功能</span>
         <select name="withdraw_enable">
@@ -323,8 +328,11 @@
       </label>
       <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存提现设置</button></div>
     </form>
+  </div>
 
-    <h2 class="panel-title" style="margin:20px 0 8px">作者分成设置</h2>
+
+  <div class="tab-pane" data-pane="sharecfg">
+    <h2 class="panel-title" style="margin:0 0 8px">作者分成设置</h2>
     <form class="form form-grid" id="shareCfgForm">
       <label class="field"><span class="field-label">分成模式</span>
         <select name="revenue_split_mode">
@@ -345,6 +353,7 @@
       充值比例与提现比例相互独立：充值 1 元得到的币数，不等于提现 1 元所需的币数。
     </p>
   </div>
+
 </div>
 {/block}
 
