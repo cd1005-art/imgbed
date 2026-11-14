@@ -3,6 +3,13 @@
 {block name="content"}
 <h1 class="page-title">站点设置</h1>
 
+<div id="siteTabs">
+  <nav class="tabs-nav">
+    <button class="tab-btn" type="button" data-tab="basic">基础配置</button>
+    <button class="tab-btn" type="button" data-tab="seo">SEO 设置</button>
+  </nav>
+
+  <div class="tab-pane" data-pane="basic">
 <section class="panel">
   <h2 class="panel-title">基础配置</h2>
   <form class="form form-grid" id="siteForm">
@@ -37,7 +44,9 @@
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存设置</button></div>
   </form>
 </section>
+  </div>
 
+  <div class="tab-pane" data-pane="seo">
 <section class="panel">
   <h2 class="panel-title">SEO 设置（sitemap / 结构化数据）</h2>
   <form class="form form-grid" id="seoForm">
@@ -81,6 +90,8 @@
     —— 提交到百度搜索资源平台 / Google Search Console 后由搜索引擎抓取；收录范围仅公开且审核通过的图片。
   </p>
 </section>
+  </div>
+</div>
 {/block}
 
 {block name="script"}

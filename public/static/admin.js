@@ -614,6 +614,7 @@
 
   /* ---------- 站点设置 / 审核设置 ---------- */
   function adminSite() {
+    initTabs('#siteTabs');
     var f = document.getElementById('siteForm');
     if (f) f.addEventListener('submit', function (e) {
       e.preventDefault();
