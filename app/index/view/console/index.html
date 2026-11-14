@@ -53,8 +53,8 @@
     <summary>怎么用？（点击展开）</summary>
     <div class="token-help-body">
       <p><b>① 命令行 / 脚本上传</b></p>
-      <code class="url-text" style="display:block; white-space:pre-wrap">curl -X POST "https://img.oddpp.com/api/v1/upload" -H "X-API-TOKEN: 你的Token" -F "file=@图片.jpg"</code>
-      <p><b>② PicGo / Typora</b>：安装 <b>lskypro</b> 兼容插件，API 地址填 <code class="inline-code">https://img.oddpp.com/api/v1</code>，Token 填生成的即可。</p>
+      <code class="url-text" style="display:block; white-space:pre-wrap">curl -X POST "{$domain}/api/v1/upload" -H "X-API-TOKEN: 你的Token" -F "file=@图片.jpg"</code>
+      <p><b>② PicGo / Typora</b>：安装 <b>lskypro</b> 兼容插件，API 地址填 <code class="inline-code">{$domain}/api/v1</code>，Token 填生成的即可。</p>
       <p><b>③ 接口文档</b>：完整接口说明见 <a href="https://github.com/cd1005-art/imgbed/blob/main/docs/API.md" target="_blank" rel="noopener">GitHub · docs/API.md</a>。</p>
       <p class="field-hint">提示：相同图片会自动秒传复用，不重复占用容量；Token 完整值只在生成时显示一次。</p>
     </div>

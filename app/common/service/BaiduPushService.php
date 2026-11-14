@@ -33,7 +33,7 @@ class BaiduPushService
         if (!$urls) {
             return ['ok' => false, 'message' => '没有可推送的 URL', 'success' => 0, 'remain' => 0];
         }
-        $site  = rtrim(trim((string)Setting::get('baidu_push_site', 'https://img.oddpp.com')), '/');
+        $site  = rtrim(trim((string)Setting::get('baidu_push_site', '')), '/');
         $token = trim((string)Setting::get('baidu_push_token', ''));
         if ($site === '' || $token === '') {
             return ['ok' => false, 'message' => '未配置 site 或 token', 'success' => 0, 'remain' => 0];

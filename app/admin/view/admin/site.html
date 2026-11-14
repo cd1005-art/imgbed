@@ -86,7 +86,7 @@
     </div>
   </form>
   <p class="field-hint" style="margin-top:8px">
-    sitemap 地址：<a href="https://img.oddpp.com/sitemap.xml" target="_blank">https://img.oddpp.com/sitemap.xml</a>
+    sitemap 地址：<a href="{$domain}/sitemap.xml" target="_blank">{$domain}/sitemap.xml</a>
     —— Google Search Console 手动提交此地址即可；百度可用下方「主动推送」更快收录。
   </p>
 </section>
@@ -107,10 +107,10 @@
       </select>
     </label>
     <label class="field field-wide"><span class="field-label">站点地址（site 参数）</span>
-      <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default='https://img.oddpp.com'}">
+      <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default=''}" placeholder="https://你的域名（须与百度平台添加的站点一致）">
     </label>
     <label class="field field-wide"><span class="field-label">Token</span>
-      <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default='LJErC8cvlTle7Bxi'}">
+      <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default=''}" placeholder="在百度搜索资源平台 → 普通收录 → API 提交 中获取">
     </label>
     <div class="field" style="justify-content:flex-end">
       <button type="button" class="btn-ghost-sm" id="seoPushBaidu">立即推送（增量，最多 100 条）</button>

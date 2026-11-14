@@ -30,6 +30,7 @@ class AdManage extends Base
             'page'     => 'site',
             'settings' => Setting::allSettings(),
             'groups'   => StrategyGroup::where('status', 1)->select(),
+            'domain'   => rtrim((string)request()->domain(), '/'),
         ]);
     }
 

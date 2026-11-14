@@ -17,6 +17,7 @@ class Base extends \app\BaseController
     {
         $uid = (int)session('user_id');
         $vars['site_name'] = $vars['site_name'] ?? Setting::get('site_name', '逍遥图床');
+        $vars['domain']    = $vars['domain'] ?? rtrim((string)request()->domain(), '/');
         $vars['user']      = $vars['user'] ?? ($uid > 0 ? User::findUser($uid) : null);
 
         // 广告位（后台开关控制；免费运营模式的变现入口）

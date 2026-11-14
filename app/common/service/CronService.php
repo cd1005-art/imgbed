@@ -701,7 +701,7 @@ class CronService
                     self::applyAuditTitle((int)$r['image']->id);
                     if ((int)($fresh['is_public'] ?? 0) === 1) {
                         \app\common\service\BaiduPushService::pushOne(
-                            rtrim((string)\app\common\model\Setting::get('site_domain', 'https://img.oddpp.com'), '/')
+                            rtrim((string)\app\common\model\Setting::get('site_domain', ''), '/')
                             . '/p/' . (int)$r['image']->id
                         );
                     }
