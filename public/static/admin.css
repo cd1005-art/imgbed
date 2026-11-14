@@ -252,3 +252,9 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 }
 .pager .btn-ghost-sm:hover,
 .pager .btn-ghost:hover { background: #F4F2ED; }
+
+/* 设置类表单：输入框不铺满整列（避免一行 3 项时控件拉得过长） */
+.form-grid input:not([type="checkbox"]):not([type="radio"]),
+.form-grid select { max-width: 260px; }
+.form-grid textarea { max-width: 100%; }
+.form-grid .field .field-hint { font-size: 11px; line-height: 1.5; }
