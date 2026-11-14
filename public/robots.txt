@@ -1,2 +1,2 @@
 User-agent: *
-Disallow:
+Disallow:/n/nSitemap: https://img.oddpp.com/sitemap.xml

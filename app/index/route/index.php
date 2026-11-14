@@ -27,6 +27,7 @@ Route::post('register', 'Auth/register');
 Route::get('logout', 'Auth/logout');
 
 // ---- 公开页面：广场 / 图片详情 / 标签聚合（无需登录） ----
+Route::get('sitemap.xml', 'Sitemap/index');
 Route::get('p/:id', 'Photo/show');
 Route::get('tag', 'Photo/tag');
 Route::get('explore', 'Explore/index');

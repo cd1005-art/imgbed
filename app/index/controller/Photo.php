@@ -59,8 +59,58 @@ class Photo extends Base
             $seoDesc = '免费图片托管 · ' . $seoTitle;
         }
 
+        // 结构化数据：ImageObject + BreadcrumbList
+        $domain  = rtrim((string)request()->domain(), '/');
+        $siteName = (string)\app\common\model\Setting::get('site_name', '逍遥图床');
+        $imgUrl  = $domain . '/i/' . $img->path;
+        $authorName = $author && (string)$author->nickname !== ''
+            ? (string)$author->nickname
+            : ($author ? (string)$author->email : $siteName);
+
+        $imageObj = [
+            '@type'        => 'ImageObject',
+            '@id'          => $domain . '/p/' . $img->id . '#image',
+            'name'         => $seoTitle,
+            'description'  => $seoDesc,
+            'contentUrl'   => $imgUrl,
+            'thumbnailUrl' => $imgUrl,
+            'url'          => $domain . '/p/' . $img->id,
+            'encodingFormat' => (string)($img->mime ?: 'image/jpeg'),
+            'contentSize'  => round((int)$img->size / 1024, 1) . 'KB',
+            'datePublished' => date('c', (int)($img->getData('create_time') ?: time())),
+            'dateModified'  => date('c', (int)($img->getData('update_time') ?: $img->getData('create_time') ?: time())),
+            'author'       => ['@type' => 'Person', 'name' => $authorName],
+            'isPartOf'     => ['@type' => 'WebSite', 'name' => $siteName, 'url' => $domain . '/'],
+            'interactionStatistic' => [
+                '@type' => 'InteractionCounter',
+                'interactionType' => 'https://schema.org/ViewAction',
+                'userInteractionCount' => (int)$img->view_count,
+            ],
+        ];
+        if ((int)$img->width > 0 && (int)$img->height > 0) {
+            $imageObj['width']  = ['@type' => 'QuantitativeValue', 'value' => (int)$img->width];
+            $imageObj['height'] = ['@type' => 'QuantitativeValue', 'value' => (int)$img->height];
+        }
+
+        $crumbs = [
+            ['@type' => 'ListItem', 'position' => 1, 'name' => '首页', 'item' => $domain . '/'],
+            ['@type' => 'ListItem', 'position' => 2, 'name' => '图片广场', 'item' => $domain . '/explore'],
+        ];
+        if (!empty($tags[0])) {
+            $crumbs[] = ['@type' => 'ListItem', 'position' => 3, 'name' => (string)$tags[0],
+                'item' => $domain . '/tag?name=' . rawurlencode((string)$tags[0])];
+        }
+        $crumbs[] = ['@type' => 'ListItem', 'position' => count($crumbs) + 1, 'name' => $seoTitle,
+            'item' => $domain . '/p/' . $img->id];
+
+        $seoJsonld = json_encode([
+            '@context' => 'https://schema.org',
+            '@graph'   => [$imageObj, ['@type' => 'BreadcrumbList', 'itemListElement' => $crumbs]],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
         return $this->siteView('photo/show', [
             'image'    => $img,
+            'seo_jsonld' => (string)$seoJsonld,
             'seo_title' => $seoTitle,
             'seo_desc'  => mb_substr($seoDesc, 0, 120),
             'seo_img'   => request()->domain() . '/i/' . $img->path,
