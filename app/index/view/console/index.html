@@ -108,7 +108,10 @@
           <h2 class="panel-title">充值站币
             <span class="count">1 元 = {$credits_rate} 币{if condition="$recharge_bonus gt 0"} · 活动赠送 {$recharge_bonus}%{/if} · 最低 {$min_recharge} 元</span>
           </h2>
-          <p class="panel-sub">充值余额 {$credits} 币（用于消费，不可提现）｜ 收益余额 {$earnings} 币（可提现）</p>
+          <p class="panel-sub">
+            <b>可用余额合计 {$credits + $earnings} 币</b> ＝ 充值余额 {$credits} + 收益余额 {$earnings}
+            （同一单位、同价，两者都可消费、都可提现；消费优先扣充值余额，提现优先扣收益余额）
+          </p>
           {if condition="isset($pay_available) && $pay_available"}
           <div class="model-inline-form" style="margin:12px 0;flex-wrap:wrap">
             <span class="field-hint">选择金额：</span>
