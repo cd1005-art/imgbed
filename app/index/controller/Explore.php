@@ -14,7 +14,7 @@ class Explore extends Base
     {
         $page = max(1, (int)$this->request->param('page', 1));
         $sort = (string)$this->request->param('sort', 'new');
-        $size = 30;
+        $size = max(1, min(200, (int)\app\common\model\Setting::get('explore_per_page', 30)));
 
         $q = Image::where('is_public', 1)
             ->where('audit_status', Image::AUDIT_PASS)
