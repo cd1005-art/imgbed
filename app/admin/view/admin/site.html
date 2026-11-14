@@ -12,35 +12,36 @@
   <div class="tab-pane" data-pane="basic">
 <section class="panel">
   <h2 class="panel-title">基础配置</h2>
-  <form class="form form-grid" id="siteForm" style="grid-template-columns:repeat(3,260px);justify-content:start;column-gap:26px;row-gap:14px">
-    <label class="field"><span class="field-label">站点名</span><input type="text" name="site_name" value="{$settings.site_name|default='逍遥图床'}"></label>
+  <form class="form" id="siteForm">
+    <label class="field"><span class="field-label">站点名</span><input type="text" name="site_name" value="{$settings.site_name|default='逍遥图床'}">
+      <span class="field-hint">显示在浏览器标题、页脚、邮件与支付商品名中</span></label>
     <label class="field"><span class="field-label">运营模式</span>
       <select name="operation_mode">
         <option value="free_ad" {if condition="($settings['operation_mode'] ?? '') eq 'free_ad'"}selected{/if}>纯免费+广告</option>
         <option value="free_pay" {if condition="($settings['operation_mode'] ?? 'free_pay') eq 'free_pay'"}selected{/if}>免费+付费双层</option>
         <option value="invite" {if condition="($settings['operation_mode'] ?? '') eq 'invite'"}selected{/if}>邀请制纯付费（禁游客上传）</option>
       </select>
-    </label>
+    <span class="field-hint">纯免费+广告 / 免费+付费双层 / 邀请制纯付费</span></label>
     <label class="field"><span class="field-label">开放注册</span>
       <select name="allow_register">
         <option value="1" {if condition="($settings['allow_register'] ?? '1') eq '1'"}selected{/if}>开放</option>
         <option value="0" {if condition="($settings['allow_register'] ?? '') eq '0'"}selected{/if}>关闭</option>
       </select>
-    </label>
+    <span class="field-hint">关闭后只能由管理员在后台创建用户</span></label>
     <label class="field"><span class="field-label">游客策略组</span>
       <select name="guest_group_id">
         {foreach $groups as $g}
         <option value="{$g.id}" {if condition="($settings['guest_group_id'] ?? '1') eq $g.id"}selected{/if}>{$g.name}</option>
         {/foreach}
       </select>
-    </label>
+    <span class="field-hint">未登录用户上传时使用的策略（容量/保留天数/审核）</span></label>
     <label class="field"><span class="field-label">注册默认组</span>
       <select name="register_group_id">
         {foreach $groups as $g}
         <option value="{$g.id}" {if condition="($settings['register_group_id'] ?? '2') eq $g.id"}selected{/if}>{$g.name}</option>
         {/foreach}
       </select>
-    </label>
+    <span class="field-hint">新注册用户自动加入的策略组</span></label>
     <label class="field"><span class="field-label">页码列表显示页数</span>
       <input type="number" name="pager_size" value="{$settings.pager_size|default='5'}" min="3" max="20">
       <span class="field-hint">3~20（默认 5），当前页随页码滑动</span>
