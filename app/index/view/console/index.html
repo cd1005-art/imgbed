@@ -276,13 +276,16 @@
           <h2 class="panel-title">提现记录 <span class="count">最近 20 条</span></h2>
           {if condition="$has_withdraws"}
           <table class="table">
-            <thead><tr><th>金额</th><th>手续费</th><th>实得</th><th>状态</th><th>备注</th><th>时间</th></tr></thead>
+            <thead><tr><th>金额</th><th>手续费</th><th>实得</th><th>扣除站币</th><th>状态</th><th>备注</th><th>时间</th></tr></thead>
             <tbody>
               {volist name="withdraws" id="w"}
               <tr>
                 <td>{:number_format((float)$w.amount, 2, ".", "")} 元</td>
                 <td>{:number_format((float)$w.fee, 2, ".", "")} 元</td>
                 <td><b>{:number_format((float)$w.real_amount, 2, ".", "")} 元</b></td>
+                <td><b>{$w.from_credits + $w.from_earnings}</b> 币
+                  <span class="count">（充 {$w.from_credits} / 收 {$w.from_earnings}）</span>
+                </td>
                 <td>{if condition="$w.status eq 'pending'"}<span class="count">待审核</span>{elseif condition="$w.status eq 'approved'"}已通过，待打款{elseif condition="$w.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
                 <td class="td-clip" title="{$w.remark}">{$w.remark|default='-'}</td>
                 <td>{:date('m-d H:i', ts($w.create_time))}</td>

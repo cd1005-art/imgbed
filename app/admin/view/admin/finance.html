@@ -227,7 +227,7 @@
   <button class="btn-ghost-sm" type="button" id="wdBatchClear">取消选择</button>
 </div>
 <table class="table">
-  <thead><tr><th style="width:28px"><input type="checkbox" id="wdCheckAll"></th><th>ID</th><th>用户</th><th>金额</th><th>手续费</th><th>实得</th><th>支付宝</th><th>状态</th><th>凭证</th><th>时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="wdCheckAll"></th><th>ID</th><th>用户</th><th>金额</th><th>手续费</th><th>实得</th><th>扣除站币</th><th>支付宝</th><th>状态</th><th>凭证</th><th>时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="withdraws" id="wv"}
     <tr>
@@ -237,6 +237,9 @@
       <td>{:number_format((float)$wv.amount, 2, ".", "")} 元</td>
       <td>{:number_format((float)$wv.fee, 2, ".", "")} 元</td>
       <td><b>{:number_format((float)$wv.real_amount, 2, ".", "")} 元</b></td>
+      <td><b>{$wv.from_credits + $wv.from_earnings}</b> 币
+        <br><span class="count">充 {$wv.from_credits} / 收 {$wv.from_earnings}</span>
+      </td>
       <td class="td-clip">{$wv.alipay_name} / {$wv.alipay_account}</td>
       <td>{if condition="$wv.status eq 'pending'"}<span class="badge badge-pending">待审核</span>{elseif condition="$wv.status eq 'approved'"}待打款{elseif condition="$wv.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
       <td class="mono">{$wv.voucher_no|default='-'}</td>
