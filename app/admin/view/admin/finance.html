@@ -10,6 +10,7 @@
     <button class="tab-btn" type="button" data-tab="orders">最近订单 <span class="count">{$total_orders}</span></button>
     <button class="tab-btn" type="button" data-tab="credits">站币流水 <span class="count">{$credits_total}</span></button>
     <button class="tab-btn" type="button" data-tab="withdraw">提现管理 <span class="count">{$withdraws_total}</span></button>
+    <button class="tab-btn" type="button" data-tab="settings">站币设置</button>
   </nav>
 
   <div class="tab-pane" data-pane="gateway">
@@ -254,6 +255,95 @@
   </tbody>
 </table>
     </section>
+  </div>
+  <div class="tab-pane" data-pane="settings">
+    <h2 class="panel-title" style="margin:0 0 8px">充值设置</h2>
+    <form class="form form-grid" id="creditCfgForm">
+      <label class="field"><span class="field-label">充值比例（1 元 = 多少站币）</span>
+        <input type="number" name="credits_per_yuan" value="{$settings.credits_per_yuan|default='10'}" min="1" max="1000">
+      </label>
+      <label class="field"><span class="field-label">最低充值金额（元）</span>
+        <input type="number" name="min_recharge" value="{$settings.min_recharge|default='10'}" min="1" max="10000">
+      </label>
+      <label class="field"><span class="field-label">充值赠送（%，0=无活动）</span>
+        <input type="number" name="recharge_bonus_pct" value="{$settings.recharge_bonus_pct|default='0'}" min="0" max="500">
+      </label>
+      <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存充值设置</button></div>
+    </form>
+
+    <h2 class="panel-title" style="margin:20px 0 8px">充值档位</h2>
+    <table class="table" style="margin-bottom:10px">
+      <thead><tr><th>金额（元）</th><th>额外赠送（币）</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>
+        {volist name="credit_plans" id="cp"}
+        <tr>
+          <td><b>{$cp.amount}</b> 元</td>
+          <td>{$cp.bonus} 币</td>
+          <td>{$cp.sort}</td>
+          <td>{if condition="$cp.status eq 1"}<span class="ok">上架</span>{else /}<span class="count">下架</span>{/if}</td>
+          <td class="td-actions">
+            <button class="btn-ghost-sm" data-plan-edit="{$cp.id}" data-amount="{$cp.amount}" data-bonus="{$cp.bonus}" data-sort="{$cp.sort}" data-status="{$cp.status}">编辑</button>
+            <button class="btn-ghost-sm btn-danger-sm" data-plan-del="{$cp.id}">删除</button>
+          </td>
+        </tr>
+        {/volist}
+        {if condition="count($credit_plans) eq 0"}<tr><td colspan="5" class="field-hint">暂无档位，前台将按输入金额充值</td></tr>{/if}
+      </tbody>
+    </table>
+    <form class="form form-grid" id="creditPlanForm">
+      <input type="hidden" name="id" value="0">
+      <label class="field"><span class="field-label">金额（元）</span><input type="number" name="amount" min="1" max="100000" placeholder="10"></label>
+      <label class="field"><span class="field-label">额外赠送（币，0=无）</span><input type="number" name="bonus" min="0" max="1000000" placeholder="0"></label>
+      <label class="field"><span class="field-label">排序（小的在前）</span><input type="number" name="sort" min="0" max="9999" placeholder="0"></label>
+      <label class="field"><span class="field-label">状态</span>
+        <select name="status"><option value="1">上架</option><option value="0">下架</option></select>
+      </label>
+      <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">新增 / 保存档位</button></div>
+    </form>
+
+    <h2 class="panel-title" style="margin:20px 0 8px">提现设置</h2>
+    <form class="form form-grid" id="withdrawCfgForm">
+      <label class="field"><span class="field-label">提现功能</span>
+        <select name="withdraw_enable">
+          <option value="1" {if condition="($settings['withdraw_enable'] ?? '1') eq '1'"}selected{/if}>开启</option>
+          <option value="0" {if condition="($settings['withdraw_enable'] ?? '1') eq '0'"}selected{/if}>关闭（前台隐藏提现标签）</option>
+        </select>
+      </label>
+      <label class="field"><span class="field-label">提现比例（1 元 = 多少站币）</span>
+        <input type="number" name="withdraw_rate" value="{$settings.withdraw_rate|default='10'}" min="1" max="1000">
+      </label>
+      <label class="field"><span class="field-label">最低提现金额（元）</span>
+        <input type="number" name="min_withdraw" value="{$settings.min_withdraw|default='50'}" min="1" max="100000">
+      </label>
+      <label class="field"><span class="field-label">每月提现次数上限（0=不限）</span>
+        <input type="number" name="withdraw_monthly_limit" value="{$settings.withdraw_monthly_limit|default='2'}" min="0" max="100">
+      </label>
+      <label class="field"><span class="field-label">手续费（%）</span>
+        <input type="number" name="withdraw_fee_pct" value="{$settings.withdraw_fee_pct|default='0'}" min="0" max="50">
+      </label>
+      <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存提现设置</button></div>
+    </form>
+
+    <h2 class="panel-title" style="margin:20px 0 8px">作者分成设置</h2>
+    <form class="form form-grid" id="shareCfgForm">
+      <label class="field"><span class="field-label">分成模式</span>
+        <select name="revenue_split_mode">
+          <option value="0" {if condition="($settings['revenue_split_mode'] ?? '0') eq '0'"}selected{/if}>统一比例</option>
+          <option value="1" {if condition="($settings['revenue_split_mode'] ?? '0') eq '1'"}selected{/if}>按来源区分（AI / 自制）</option>
+        </select>
+      </label>
+      <label class="field"><span class="field-label">作者分成（%，统一模式生效）</span>
+        <input type="number" name="share_user" value="{$settings.share_user|default='70'}" min="0" max="100">
+      </label>
+      <label class="field"><span class="field-label">AI 图分成（%，按来源模式生效）</span>
+        <input type="number" name="share_ai" value="{$settings.share_ai|default='50'}" min="0" max="100">
+      </label>
+      <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存分成设置</button></div>
+    </form>
+    <p class="field-hint" style="margin-top:8px">
+      分账规则：买家解锁扣除 <b>站币余额</b>（不足时用 <b>收益余额</b> 补）→ 作者分成进入 <b>收益余额</b>（可提现、可消费）。
+      充值比例与提现比例相互独立：充值 1 元得到的币数，不等于提现 1 元所需的币数。
+    </p>
   </div>
 </div>
 {/block}

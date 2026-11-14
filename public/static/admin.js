@@ -1069,6 +1069,42 @@
 
   /* ---------- 财务管理（网关/套餐/订单/站币/提现） ---------- */
   function adminFinance() {
+    // 站币设置（充值/提现/分成 + 档位）
+    ['creditCfgForm', 'withdrawCfgForm', 'shareCfgForm'].forEach(function (id) {
+      var fm = document.getElementById(id);
+      if (fm) fm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        postForm('/admin/site/save', fm).then(function (d) { toast(d.message); });
+      });
+    });
+    var pf = document.getElementById('creditPlanForm');
+    if (pf) {
+      pf.addEventListener('submit', function (e) {
+        e.preventDefault();
+        postForm('/admin/site/credit-plan', pf).then(function (d) {
+          toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+        });
+      });
+      document.querySelectorAll('[data-plan-edit]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          pf.querySelector('[name=id]').value = b.dataset.planEdit;
+          pf.querySelector('[name=amount]').value = b.dataset.amount || '';
+          pf.querySelector('[name=bonus]').value = b.dataset.bonus || '0';
+          pf.querySelector('[name=sort]').value = b.dataset.sort || '0';
+          pf.querySelector('[name=status]').value = b.dataset.status || '1';
+          pf.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+      });
+      document.querySelectorAll('[data-plan-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          armConfirm(b, '删除该充值档位？', function () {
+            post('/admin/site/credit-plan-del/' + b.dataset.planDel).then(function (d) {
+              toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+            });
+          });
+        });
+      });
+    }
     initTabs('#finTabs');
 
     // 订单批量

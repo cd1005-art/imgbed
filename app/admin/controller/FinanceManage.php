@@ -173,6 +173,8 @@ class FinanceManage extends Base
             'wstatus' => $wstatus, 'wuw' => $wuw, 'wfrom' => $wfrom, 'wto' => $wto,
             'types' => self::TYPES, 'user_map' => $uMap,
             'credit_stats' => $creditStats, 'top_images' => $topImages,
+            'settings' => \app\common\model\Setting::allSettings(),
+            'credit_plans' => Db::name('credit_plans')->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
             'page_no' => $page,
         ]);
     }
