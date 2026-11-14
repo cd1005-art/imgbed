@@ -173,9 +173,9 @@ class Console extends Base
         // 提现使用独立比例（与充值比例分开配置）
         $rate = max(1, (int)Setting::get('withdraw_rate', 10));
         $need = $amount * $rate;
-        $earn = (int)($user->earnings ?? 0);
-        if ($earn < $need) {
-            return json(['status' => false, 'message' => "可提现收益不足（需 {$need} 币，当前可提现 {$earn} 币）"]);
+        $total = (int)$user->credits + (int)($user->earnings ?? 0);
+        if ($total < $need) {
+            return json(['status' => false, 'message' => "余额不足（需 {$need} 币，可用 {$total} 币）"]);
         }
         $monthly = (int)Setting::get('withdraw_monthly_limit', 2);
         $cnt = Db::name('withdrawals')->where('user_id', $user->id)
@@ -194,7 +194,15 @@ class Console extends Base
                 'real_amount' => $amount - $fee, 'alipay_name' => $name, 'alipay_account' => $acct,
                 'status' => 'pending', 'create_time' => time(), 'update_time' => time(),
             ]);
-            \app\common\service\CreditsService::change((int)$user->id, -$need, 'withdraw', $wid, '提现申请冻结（' . $amount . ' 元）', 'earnings');
+            $pay = \app\common\service\CreditsService::withdrawPay((int)$user->id, $need, $wid, '提现申请冻结（' . $amount . ' 元）');
+            if (!$pay['ok']) {
+                Db::rollback();
+                return json(['status' => false, 'message' => $pay['message']]);
+            }
+            Db::name('withdrawals')->where('id', $wid)->update([
+                'from_earnings' => (int)$pay['from_earnings'],
+                'from_credits'  => (int)$pay['from_credits'],
+            ]);
             Db::name('users')->where('id', $user->id)->update(['alipay_name' => $name, 'alipay_account' => $acct]);
             Db::commit();
         } catch (\Throwable $e) {

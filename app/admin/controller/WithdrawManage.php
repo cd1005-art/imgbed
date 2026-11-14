@@ -115,7 +115,17 @@ class WithdrawManage extends Base
                 'remark' => (string)$this->request->post('remark', ''),
                 'update_time' => time(),
             ]);
-            CreditsService::change((int)$w['user_id'], $need, 'withdraw_refund', $id, '提现驳回退回', 'earnings');
+            $fe = (int)($w['from_earnings'] ?? 0);
+            $fc = (int)($w['from_credits'] ?? 0);
+            if ($fe + $fc <= 0) {          // 兼容历史记录：按整额退回收益余额
+                $fe = $need;
+            }
+            if ($fe > 0) {
+                CreditsService::change((int)$w['user_id'], $fe, 'withdraw_refund', $id, '提现驳回退回（收益部分）', 'earnings');
+            }
+            if ($fc > 0) {
+                CreditsService::change((int)$w['user_id'], $fc, 'withdraw_refund', $id, '提现驳回退回（充值余额部分）', 'credits');
+            }
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();

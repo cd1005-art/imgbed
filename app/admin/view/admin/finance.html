@@ -333,7 +333,10 @@
       <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存提现设置</button></div>
     </form>
     <p class="field-hint">
-      提现比例与充值比例相互独立（充值 1 元得 N 币，提现 1 元需 M 币，通常 M &gt; N 才有价差空间）。<br>
+      提现比例与充值比例相互独立；<b>建议 M ≥ N</b>（充值 1 元得 N 币，提现 1 元需 M 币）：
+      M &lt; N 时用户可「充值 → 提现」套取差价（如充值 1 元得 10 币、提现 1 元只需 8 币，净赚 2 币/元）。<br>
+      当前：充值 1 元 = {$settings.credits_per_yuan|default='10'} 币，提现 1 元 = {$settings.withdraw_rate|default='10'} 币，
+      手续费 {$settings.withdraw_fee_pct|default='0'}%。<br>
       手续费在<b>提交时</b>按当次比例与费率计入记录，之后修改配置不影响已提交的申请；关闭提现后前台隐藏标签且接口拒绝。
     </p>
   </div>

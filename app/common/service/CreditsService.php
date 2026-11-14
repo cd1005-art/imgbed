@@ -65,6 +65,32 @@ class CreditsService
         return ['ok' => true, 'message' => 'ok'];
     }
 
+    /**
+     * 提现扣款：收益余额优先，不足部分扣充值余额
+     * @return array{ok:bool,message?:string,from_earnings?:int,from_credits?:int}
+     */
+    public static function withdrawPay(int $userId, int $amount, int $wid, string $remark = ''): array
+    {
+        $user = Db::name('users')->where('id', $userId)->find();
+        if (!$user) {
+            return ['ok' => false, 'message' => '用户不存在'];
+        }
+        $earn    = (int)($user['earnings'] ?? 0);
+        $credits = (int)($user['credits'] ?? 0);
+        if ($earn + $credits < $amount) {
+            return ['ok' => false, 'message' => '余额不足（可用 ' . ($earn + $credits) . ' 币）'];
+        }
+        $fromE = min($earn, $amount);
+        $fromC = $amount - $fromE;
+        if ($fromE > 0) {
+            self::change($userId, -$fromE, 'withdraw', $wid, $remark . '（收益部分）', 'earnings');
+        }
+        if ($fromC > 0) {
+            self::change($userId, -$fromC, 'withdraw', $wid, $remark . '（充值余额部分）', 'credits');
+        }
+        return ['ok' => true, 'from_earnings' => $fromE, 'from_credits' => $fromC];
+    }
+
     /** 充值入账（订单回调） */
     public static function recharge(int $userId, int $yuan, int $orderId): int
     {

@@ -147,7 +147,9 @@
             分成比例：{if condition="$split_mode eq '1'"}用户自制图 <b>{$share_user}%</b> · AI 生成图 <b>{$share_ai}%</b>{else /}统一 <b>{$share_user}%</b>{/if}
             ｜ 提现比例 1 元 = {$withdraw_rate} 币
             {if condition="!$withdraw_enable"}<b style="color:#d29922">（提现功能暂未开放）</b>{/if}<br>
-            他人解锁你的付费图片时，分成进入收益余额；收益可提现，也可直接用于消费（消费时优先扣充值余额）。
+            他人解锁你的付费图片时，分成进入收益余额；收益可提现，也可直接用于消费（消费时优先扣充值余额）。<br>
+            充值获得的余额同样可以提现，但提现按 <b>1 元 = {$withdraw_rate} 币</b> 折算并扣 {$withdraw_fee}% 手续费，
+            若提现比例高于充值比例（1 元 = {$credits_rate} 币），提现充值余额会产生亏损。
           </p>
           <table class="table" style="margin-top:12px">
             <thead><tr><th>我解锁的图</th><th>消耗</th><th>时间</th></tr></thead>
@@ -234,9 +236,10 @@
       <div class="tab-pane" data-pane="apply">
         <section class="panel">
           <h2 class="panel-title">提现申请
-            <span class="count">可提现 {$earnings} 币（≈ {:round($earnings / max(1, $withdraw_rate), 2)} 元）</span>
+            <span class="count">可用 {$credits + $earnings} 币（≈ {:round(($credits + $earnings) / max(1, $withdraw_rate), 2)} 元）</span>
           </h2>
           <p class="panel-sub">
+            收益余额 {$earnings} 币 + 充值余额 {$credits} 币，<b>提现时优先扣收益余额</b>，不足部分扣充值余额<br>
             提现比例 1 元 = {$withdraw_rate} 币 ｜ 最低 {$min_withdraw} 元 ｜ 手续费 {$withdraw_fee}%
             ｜ 本月已提 {$withdraw_used_this_month} / {if condition="$withdraw_monthly gt 0"}{$withdraw_monthly}{else /}不限{/if} 次
           </p>
