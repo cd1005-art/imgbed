@@ -154,7 +154,7 @@ class PaymentService
             'out_trade_no' => $order->order_no,
             'notify_url'   => request()->domain() . '/pay/notify',
             'return_url'   => request()->domain() . '/console',
-            'name'         => '站币充值 ' . $yuan . ' 元',
+            'name'         => Setting::get('site_name', '逍遥图床') . ' - 站币充值 ' . $yuan . ' 元',
             'money'        => number_format($yuan, 2, '.', ''),
         ];
         $params['sign']        = $this->generateSign($params);
