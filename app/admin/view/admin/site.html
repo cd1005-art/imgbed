@@ -115,16 +115,18 @@
     <label class="field"><span class="field-label">每日推送上限（条，0=不限）</span>
       <input type="number" name="baidu_push_daily_max" value="{$settings.baidu_push_daily_max|default='10'}" min="0" max="1000">
     </label>
-    <div class="field" style="grid-column:1/-1;display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
-      <label class="field" style="margin:0;flex:1 1 0;min-width:220px">
-        <span class="field-label">站点地址（site 参数）</span>
-        <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default=''}" placeholder="https://你的域名">
-      </label>
-      <label class="field" style="margin:0;flex:1 1 0;min-width:220px">
-        <span class="field-label">Token</span>
-        <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default=''}" placeholder="普通收录 → API 提交 获取">
-      </label>
-      <div style="display:flex;flex-direction:column;gap:8px;flex:0 0 190px">
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 190px;gap:16px;align-items:end">
+      <div>
+        <div class="field-label" style="display:block;margin-bottom:6px">站点地址（site 参数）</div>
+        <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default=''}" placeholder="https://你的域名"
+               style="width:100%;height:36px;padding:0 10px;border:1px solid #E4E1DB;border-radius:8px;background:#fff;color:#1C1B18;font-size:13px">
+      </div>
+      <div>
+        <div class="field-label" style="display:block;margin-bottom:6px">Token</div>
+        <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default=''}" placeholder="普通收录 → API 提交 获取"
+               style="width:100%;height:36px;padding:0 10px;border:1px solid #E4E1DB;border-radius:8px;background:#fff;color:#1C1B18;font-size:13px">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
         <button type="button" class="btn-ghost-sm" id="seoPushBaidu" style="width:100%">立即推送（增量，单次上限 1000 条）</button>
         <button type="submit" class="btn" style="width:100%">保存推送设置</button>
       </div>
