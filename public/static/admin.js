@@ -1144,6 +1144,20 @@
     bindBatchDelete({checkAll:'#creditCheckAll', checkbox:'.credit-check', batchBtn:'#creditBatchDel',
       api:'/admin/credit/delete', label:'流水记录', batchBar:'#creditBar',
       barCount:'#creditCount', clearBtn:'#creditBatchClear', unit:'条'});
+    // 解锁记录批量
+    bindBatchDelete({checkAll:'#unlockCheckAll', checkbox:'.unlock-check', batchBtn:'#unlockBatchDel',
+      api:'/admin/finance/unlock-delete', label:'解锁记录', batchBar:'#unlockBar',
+      barCount:'#unlockCount', clearBtn:'#unlockBatchClear', unit:'条'});
+    document.querySelectorAll('[data-unlock-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        armConfirm(b, '确认删除？', function () {
+          postBody('/admin/finance/unlock-delete', 'ids=' + b.dataset.unlockDel).then(function (d) {
+            toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+          });
+        });
+      });
+    });
+
     // 提现批量
     bindBatchDelete({checkAll:'#wdCheckAll', checkbox:'.wd-check', batchBtn:'#wdBatchDel',
       api:'/admin/withdraw/delete', label:'提现记录', batchBar:'#wdBatchBar',

@@ -156,6 +156,56 @@ class FinanceManage extends Base
         }
         unset($or);
 
+        /* ---------- 解锁记录 ---------- */
+        $uu    = trim((string)$this->request->param('uu', ''));
+        $ui    = trim((string)$this->request->param('ui', ''));
+        $ufrom = trim((string)$this->request->param('ufrom', ''));
+        $uto   = trim((string)$this->request->param('uto', ''));
+        $upage = max(1, (int)$this->request->param('upage', 1));
+
+        $ubuild = function () use ($uu, $ui, $ufrom, $uto) {
+            $q = Db::name('unlocks');
+            if ($uu !== '') {
+                if (ctype_digit($uu)) {
+                    $q->where('user_id', (int)$uu);
+                } else {
+                    $ids = Db::name('users')->where(function ($qq) use ($uu) {
+                        $qq->where('email', 'like', '%' . $uu . '%')->whereOr('nickname', 'like', '%' . $uu . '%');
+                    })->column('id');
+                    $q->whereIn('user_id', $ids ?: [0]);
+                }
+            }
+            if ($ui !== '' && ctype_digit($ui)) { $q->where('image_id', (int)$ui); }
+            if ($ufrom !== '') { $q->where('create_time', '>=', strtotime($ufrom . ' 00:00:00')); }
+            if ($uto !== '')   { $q->where('create_time', '<=', strtotime($uto . ' 23:59:59')); }
+            return $q;
+        };
+        $unlockRows  = $ubuild()->order('id', 'desc')->page($upage, 40)->select()->toArray();
+        $unlockTotal = $ubuild()->count();
+
+        // 补买家昵称与图片名
+        $buyerIds = array_values(array_unique(array_map(fn($r) => (int)$r['user_id'], $unlockRows)));
+        $imgIds   = array_values(array_unique(array_map(fn($r) => (int)$r['image_id'], $unlockRows)));
+        $buyerMap = [];
+        if ($buyerIds) {
+            foreach (Db::name('users')->whereIn('id', $buyerIds)->field('id,nickname,email')->select()->toArray() as $u) {
+                $buyerMap[(int)$u['id']] = $u['nickname'] !== '' ? $u['nickname'] : $u['email'];
+            }
+        }
+        $imgMap = [];
+        if ($imgIds) {
+            foreach (Db::name('images')->whereIn('id', $imgIds)->field('id,name')->select()->toArray() as $im) {
+                $imgMap[(int)$im['id']] = (string)$im['name'];
+            }
+        }
+        foreach ($unlockRows as &$ur) {
+            $bid = (int)$ur['user_id'];
+            $iid = (int)$ur['image_id'];
+            $ur['buyer_label'] = $buyerMap[$bid] ?? ('#' . $bid);
+            $ur['image_name']  = $imgMap[$iid] ?? '';
+        }
+        unset($ur);
+
         // 站币流水：预计算用户显示名与类型名（模板不做数组下标运算）
         foreach ($credits as &$cr) {
             $uid = (int)$cr['user_id'];
@@ -181,6 +231,9 @@ class FinanceManage extends Base
             'wstatus' => $wstatus, 'wuw' => $wuw, 'wfrom' => $wfrom, 'wto' => $wto,
             'types' => self::TYPES, 'user_map' => $uMap,
             'credit_stats' => $creditStats, 'top_images' => $topImages,
+            'unlocks' => $unlockRows, 'unlocks_total' => $unlockTotal,
+            'uu' => $uu, 'ui' => $ui, 'ufrom' => $ufrom, 'uto' => $uto,
+            'upage' => $upage, 'upages' => (int)ceil($unlockTotal / 40) ?: 1,
             'settings' => \app\common\model\Setting::allSettings(),
             // 充提套利测算：充 1 元得 N 币 -> 可提 N/M 元 -> 扣手续费后实得 (N/M)*(1-fee%)
             'arbitrage_pct' => (function () {
@@ -244,5 +297,16 @@ class FinanceManage extends Base
             'Content-Type'        => 'text/csv; charset=utf-8',
             'Content-Disposition' => 'attachment; filename="credit-logs-' . date('Ymd-His') . '.csv"',
         ]);
+    }
+
+    /** 解锁记录：批量删除（不退款，删除后买家需重新付费解锁） */
+    public function unlockDelete()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择记录']);
+        }
+        $n = Db::name('unlocks')->whereIn('id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 条解锁记录（不退款，买家需重新付费）"]);
     }
 }

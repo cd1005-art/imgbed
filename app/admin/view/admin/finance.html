@@ -215,6 +215,50 @@
         </tbody>
       </table>
 
+      <h2 class="panel-title" style="margin:18px 0 8px">解锁记录 <span class="count">共 {$unlocks_total} 条</span></h2>
+      <form class="search-bar" method="get" action="/admin/finance">
+        <input type="hidden" name="tab" value="credits">
+        <input type="text" name="uu" value="{$uu}" placeholder="买家ID/邮箱/昵称" style="width:170px">
+        <input type="text" name="ui" value="{$ui}" placeholder="图片ID" style="width:100px">
+        <input type="date" name="ufrom" value="{$ufrom}" class="filter-select">
+        <span class="count">至</span>
+        <input type="date" name="uto" value="{$uto}" class="filter-select">
+        <button class="btn btn-sm" type="submit">筛选</button>
+      </form>
+
+      <div class="batch-bar" id="unlockBar" hidden>
+        <span id="unlockCount">已选 0 条</span>
+        <button class="btn-ghost-sm btn-danger-sm" type="button" id="unlockBatchDel">批量删除</button>
+        <button class="btn-ghost-sm" type="button" id="unlockBatchClear">取消选择</button>
+      </div>
+
+      <table class="table">
+        <thead><tr><th style="width:28px"><input type="checkbox" id="unlockCheckAll"></th><th>ID</th><th>图片</th><th>买家</th><th>扣除</th><th>作者分成</th><th>时间</th><th>操作</th></tr></thead>
+        <tbody>
+          {volist name="unlocks" id="uk"}
+          <tr>
+            <td><input type="checkbox" class="unlock-check" value="{$uk.id}"></td>
+            <td>{$uk.id}</td>
+            <td class="td-clip" title="{$uk.image_name}"><a href="/p/{$uk.image_id}" target="_blank">#{$uk.image_id} {$uk.image_name}</a></td>
+            <td class="td-clip">{$uk.buyer_label}</td>
+            <td>{$uk.price} 币</td>
+            <td>{$uk.author_share} 币</td>
+            <td>{:date('m-d H:i', ts($uk.create_time))}</td>
+            <td class="td-actions"><button class="btn-ghost-sm btn-danger-sm" data-unlock-del="{$uk.id}">删除</button></td>
+          </tr>
+          {/volist}
+          {if condition="count($unlocks) eq 0"}<tr><td colspan="8" class="field-hint">暂无解锁记录</td></tr>{/if}
+        </tbody>
+      </table>
+      {if condition="$upages gt 1"}
+      <div class="pager">
+        {if condition="$upage gt 1"}<a class="btn btn-sm" href="/admin/finance?tab=credits&upage={$upage-1}&uu={$uu}&ui={$ui}&ufrom={$ufrom}&uto={$uto}">上一页</a>{/if}
+        <span class="count">{$upage} / {$upages}</span>
+        {if condition="$upage lt $upages"}<a class="btn btn-sm" href="/admin/finance?tab=credits&upage={$upage+1}&uu={$uu}&ui={$ui}&ufrom={$ufrom}&uto={$uto}">下一页</a>{/if}
+      </div>
+      {/if}
+      <p class="field-hint">删除解锁记录<b>不会退款</b>：买家需重新付费才能查看该图；如需补偿请先在用户管理手动调整站币。</p>
+
     </section>
   </div>
 
