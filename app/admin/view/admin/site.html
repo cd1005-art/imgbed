@@ -93,29 +93,38 @@
 
 <section class="panel" style="margin-top:16px">
   <h2 class="panel-title">百度主动推送（普通收录 API）</h2>
-  <form class="form form-grid" id="baiduForm">
-    <label class="field"><span class="field-label">启用推送</span>
-      <select name="baidu_push_enable">
-        <option value="1" {if condition="($settings['baidu_push_enable'] ?? '0') eq '1'"}selected{/if}>启用</option>
-        <option value="0" {if condition="($settings['baidu_push_enable'] ?? '0') eq '0'"}selected{/if}>关闭</option>
-      </select>
-    </label>
-    <label class="field"><span class="field-label">生成新图后自动推送</span>
-      <select name="baidu_push_auto">
-        <option value="1" {if condition="($settings['baidu_push_auto'] ?? '0') eq '1'"}selected{/if}>是</option>
-        <option value="0" {if condition="($settings['baidu_push_auto'] ?? '0') eq '0'"}selected{/if}>否</option>
-      </select>
-    </label>
-    <label class="field"><span class="field-label">累积多少条新图后推一次</span>
-      <input type="number" name="baidu_push_auto_count" value="{$settings.baidu_push_auto_count|default='5'}" min="1" max="1000">
-    </label>
-    <label class="field"><span class="field-label">两次推送最小间隔（小时）</span>
-      <input type="number" name="baidu_push_auto_hours" value="{$settings.baidu_push_auto_hours|default='6'}" min="0" max="24">
-    </label>
-    <label class="field"><span class="field-label">每日推送上限（条，0=不限）</span>
-      <input type="number" name="baidu_push_daily_max" value="{$settings.baidu_push_daily_max|default='10'}" min="0" max="1000">
-    </label>
-    <div style="grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 190px;gap:16px;align-items:end">
+  <form class="form" id="baiduForm">
+    <!-- 第一行：5 个配置项 + 立即推送（与下方保存按钮同宽同列） -->
+    <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 168px;gap:12px 14px;align-items:end">
+      <label class="field" style="margin:0"><span class="field-label">启用推送</span>
+        <select name="baidu_push_enable">
+          <option value="1" {if condition="($settings['baidu_push_enable'] ?? '0') eq '1'"}selected{/if}>启用</option>
+          <option value="0" {if condition="($settings['baidu_push_enable'] ?? '0') eq '0'"}selected{/if}>关闭</option>
+        </select>
+      </label>
+      <label class="field" style="margin:0"><span class="field-label">生成新图后自动推送</span>
+        <select name="baidu_push_auto">
+          <option value="1" {if condition="($settings['baidu_push_auto'] ?? '0') eq '1'"}selected{/if}>是</option>
+          <option value="0" {if condition="($settings['baidu_push_auto'] ?? '0') eq '0'"}selected{/if}>否</option>
+        </select>
+      </label>
+      <label class="field" style="margin:0"><span class="field-label">累积多少条新图后推一次</span>
+        <input type="number" name="baidu_push_auto_count" value="{$settings.baidu_push_auto_count|default='5'}" min="1" max="1000">
+      </label>
+      <label class="field" style="margin:0"><span class="field-label">两次推送最小间隔（小时）</span>
+        <input type="number" name="baidu_push_auto_hours" value="{$settings.baidu_push_auto_hours|default='6'}" min="0" max="24">
+      </label>
+      <label class="field" style="margin:0"><span class="field-label">每日推送上限（条，0=不限）</span>
+        <input type="number" name="baidu_push_daily_max" value="{$settings.baidu_push_daily_max|default='10'}" min="0" max="1000">
+      </label>
+      <div>
+        <button type="button" class="btn-ghost-sm" id="seoPushBaidu"
+                style="width:168px;height:36px;justify-content:center;font-size:12px">立即推送</button>
+      </div>
+    </div>
+
+    <!-- 第二行：站点地址 / Token / 保存（右侧 168px 列与上一行对齐） -->
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 168px;gap:14px;align-items:end;margin-top:12px">
       <div>
         <div class="field-label" style="display:block;margin-bottom:6px">站点地址（site 参数）</div>
         <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default=''}" placeholder="https://你的域名"
@@ -126,9 +135,8 @@
         <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default=''}" placeholder="普通收录 → API 提交 获取"
                style="width:100%;height:36px;padding:0 10px;border:1px solid #E4E1DB;border-radius:8px;background:#fff;color:#1C1B18;font-size:13px">
       </div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button type="button" class="btn-ghost-sm" id="seoPushBaidu" style="width:100%">立即推送（增量，单次上限 1000 条）</button>
-        <button type="submit" class="btn" style="width:100%">保存推送设置</button>
+      <div style="display:flex;justify-content:flex-end">
+        <button type="submit" class="btn" style="width:168px;height:36px;justify-content:center;font-size:12px">保存推送设置</button>
       </div>
     </div>
   </form>
