@@ -195,3 +195,28 @@ ThinkPHP 模板中 `{volist name="xxx" id="vo"}` 会**自动注入 `$key`（循�
 - 传给视图的变量**避免使用** `key`、`vo`、`i`、`id`、`mod` 等 volist/循环保留名；
 - 需要展示密钥/ID 之类时用明确名（如 `cron_key`、`secret_value`）；
 - 页面元素显示异常时，**先用 curl 看渲染后的 HTML 原始值**，确认是数据问题还是样式问题，再改样式。
+
+## 十四、后台页面统一「标签页卡片布局」（★ 2026-11-15 用户要求）
+
+**后台同一页面存在两组及以上内容（设置分组、管理多视图）时，一律使用标签页卡片布局，不再纵向堆叠多个 section。**
+
+标准结构：
+```html
+<div id="xxxTabs">
+  <nav class="tabs-nav">
+    <button class="tab-btn" type="button" data-tab="a">A</button>
+    <button class="tab-btn" type="button" data-tab="b">B</button>
+  </nav>
+  <div class="tab-pane" data-pane="a"><section class="panel">…</section></div>
+  <div class="tab-pane" data-pane="b"><section class="panel">…</section></div>
+</div>
+```
+```js
+function adminXxx() { initTabs('#xxxTabs'); /* 其余绑定 */ }
+```
+
+要点：
+- `initTabs(rootSel)` 只处理 `:scope > .tabs-nav .tab-btn` 与 `:scope > .tab-pane`，可安全嵌套；
+- 定位优先级 `#hash → ?tab= → 第一个`，**任何 GET 筛选表单必须带 `<input type="hidden" name="tab" value="当前tab">`**，否则提交后跳回第一个标签；
+- 列表型标签页保持三件套：**筛选 + 批量 + 单条操作**；
+- 现有参考实现：`finance.html`（五标签）、`gen.html`（四主标签 + 提示词四子标签）、`site.html`（基础/SEO）。
