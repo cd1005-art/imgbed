@@ -72,6 +72,12 @@ class CreditManage extends Base
                 $uMap[(int)$u['id']] = $label;
             }
         }
+        foreach ($list as &$row) {
+            $uid = (int)$row['user_id'];
+            $row['user_label'] = $uMap[$uid] ?? ('#' . $uid);
+        }
+        unset($row);
+
         $sumIn  = (int)$build()->where('amount', '>', 0)->sum('amount');
         $sumOut = (int)$build()->where('amount', '<', 0)->sum('amount');
 

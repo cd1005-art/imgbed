@@ -174,12 +174,12 @@
     <tr>
       <td><input type="checkbox" class="credit-check" value="{$cv.id}"></td>
       <td>{$cv.id}</td>
-      <td class="td-clip">{$user_map[$vo.user_id] ?? ('#' . $vo.user_id)}</td>
-      <td>{$types[$vo.type] ?? $vo.type}</td>
-      <td>{if condition="$vo.amount gt 0"}<span class="ok">+{$cv.amount}</span>{else /}<span class="danger">{$cv.amount}</span>{/if}</td>
+      <td class="td-clip">{$cv.user_label}</td>
+      <td>{$cv.type_label}</td>
+      <td>{if condition="$cv.amount gt 0"}<span class="ok">+{$cv.amount}</span>{else /}<span class="danger">{$cv.amount}</span>{/if}</td>
       <td>{$cv.balance_after}</td>
       <td class="td-clip" title="{$cv.remark}">{$cv.remark|default='-'}</td>
-      <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+      <td>{:date('m-d H:i', ts($cv.create_time))}</td>
       <td class="td-actions"><button class="btn-ghost-sm btn-danger-sm" data-row-del="{$cv.id}">删除</button></td>
     </tr>
     {/volist}
@@ -206,19 +206,19 @@
       <td class="td-clip">{$wv.email|default='-'}</td>
       <td>{$wv.amount} 元</td>
       <td>{$wv.fee} 元</td>
-      <td><b>{$vo.real_amount} 元</b></td>
+      <td><b>{$wv.real_amount} 元</b></td>
       <td class="td-clip">{$wv.alipay_name} / {$wv.alipay_account}</td>
-      <td>{if condition="$vo.status eq 'pending'"}<span class="badge badge-pending">待审核</span>{elseif condition="$vo.status eq 'approved'"}待打款{elseif condition="$vo.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
+      <td>{if condition="$wv.status eq 'pending'"}<span class="badge badge-pending">待审核</span>{elseif condition="$wv.status eq 'approved'"}待打款{elseif condition="$wv.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
       <td class="mono">{$wv.voucher_no|default='-'}</td>
-      <td>{:date('m-d H:i', ts($vo.create_time))}</td>
+      <td>{:date('m-d H:i', ts($wv.create_time))}</td>
       <td class="td-actions">
-        {if condition="$vo.status eq 'paid' || $vo.status eq 'rejected'"}
+        {if condition="$wv.status eq 'paid' || $wv.status eq 'rejected'"}
         <button class="btn-ghost-sm btn-danger-sm" data-row-del="{$wv.id}">删除</button>
         {/if}
-        {if condition="$vo.status eq 'pending'"}
+        {if condition="$wv.status eq 'pending'"}
         <button class="btn-ghost-sm" data-wd-approve="{$wv.id}">通过</button>
         <button class="btn-ghost-sm btn-danger-sm" data-wd-reject="{$wv.id}">驳回</button>
-        {elseif condition="$vo.status eq 'approved'"}
+        {elseif condition="$wv.status eq 'approved'"}
         <button class="btn-ghost-sm" data-wd-paid="{$wv.id}">标记打款</button>
         {/if}
       </td>

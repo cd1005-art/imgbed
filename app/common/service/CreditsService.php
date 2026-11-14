@@ -10,27 +10,59 @@ use think\facade\Db;
 class CreditsService
 {
     /** 变动余额（正加负扣），返回新余额；余额不足抛异常 */
-    public static function change(int $userId, int $amount, string $type, int $refId = 0, string $remark = ''): int
+    /**
+     * 站币变动
+     * @param string $account credits=充值余额（仅消费、不可提现） | earnings=收益余额（可提现、可消费）
+     */
+    public static function change(int $userId, int $amount, string $type, int $refId = 0, string $remark = '', string $account = 'credits'): int
     {
+        $account = $account === 'earnings' ? 'earnings' : 'credits';
         $user = Db::name('users')->where('id', $userId)->find();
         if (!$user) {
             throw new \RuntimeException('用户不存在');
         }
-        $new = (int)$user['credits'] + $amount;
+        $new = (int)($user[$account] ?? 0) + $amount;
         if ($new < 0) {
-            throw new \RuntimeException('站币余额不足');
+            throw new \RuntimeException($account === 'earnings' ? '可提现收益不足' : '站币余额不足');
         }
-        Db::name('users')->where('id', $userId)->update(['credits' => $new]);
+        Db::name('users')->where('id', $userId)->update([$account => $new]);
         Db::name('credit_logs')->insert([
             'user_id'       => $userId,
             'type'          => $type,
             'amount'        => $amount,
             'balance_after' => $new,
+            'account'       => $account,
             'ref_id'        => $refId,
             'remark'        => mb_substr($remark, 0, 240),
             'create_time'   => time(),
         ]);
         return $new;
+    }
+
+    /**
+     * 支付：先扣充值余额，不足部分扣收益余额
+     * @return array ['ok'=>bool,'message'=>string]
+     */
+    public static function payFrom(int $userId, int $amount, string $type, int $refId = 0, string $remark = ''): array
+    {
+        $user = Db::name('users')->where('id', $userId)->find();
+        if (!$user) {
+            return ['ok' => false, 'message' => '用户不存在'];
+        }
+        $credits  = (int)($user['credits'] ?? 0);
+        $earnings = (int)($user['earnings'] ?? 0);
+        if ($credits + $earnings < $amount) {
+            return ['ok' => false, 'message' => '余额不足（可用 ' . ($credits + $earnings) . ' 币）'];
+        }
+        $fromCredits = min($credits, $amount);
+        $fromEarnings = $amount - $fromCredits;
+        if ($fromCredits > 0) {
+            self::change($userId, -$fromCredits, $type, $refId, $remark . ($fromEarnings > 0 ? '（充值余额部分）' : ''), 'credits');
+        }
+        if ($fromEarnings > 0) {
+            self::change($userId, -$fromEarnings, $type, $refId, $remark . '（收益部分）', 'earnings');
+        }
+        return ['ok' => true, 'message' => 'ok'];
     }
 
     /** 充值入账（订单回调） */
@@ -86,9 +118,14 @@ class CreditsService
 
         try {
             Db::startTrans();
-            self::change($buyerId, -$price, 'unlock', $imageId, '解锁图片 #' . $imageId);
+            $pay = self::payFrom($buyerId, $price, 'unlock', $imageId, '解锁图片 #' . $imageId);
+            if (!$pay['ok']) {
+                Db::rollback();
+                return ['ok' => false, 'message' => $pay['message']];
+            }
             if ($authorShare > 0) {
-                self::change((int)$img['user_id'], $authorShare, 'share', $imageId, '图片 #' . $imageId . ' 被解锁，分成 ' . $share . '%');
+                // 作者分成进「收益余额」：可提现，也可用于消费
+                self::change((int)$img['user_id'], $authorShare, 'share', $imageId, '图片 #' . $imageId . ' 被解锁，分成 ' . $share . '%', 'earnings');
                 Db::name('users')->where('id', (int)$img['user_id'])->inc('credits_total', $authorShare)->update();
             }
             Db::name('unlocks')->insert([

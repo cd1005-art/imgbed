@@ -106,7 +106,7 @@ class WithdrawManage extends Base
         if (!$w || (string)$w['status'] === 'paid') {
             return json(['status' => false, 'message' => '状态不允许驳回']);
         }
-        $rate = max(1, (int)\app\common\model\Setting::get('credits_per_yuan', 10));
+        $rate = max(1, (int)\app\common\model\Setting::get('withdraw_rate', 10));
         $need = (int)$w['amount'] * $rate;
         try {
             Db::startTrans();
@@ -115,7 +115,7 @@ class WithdrawManage extends Base
                 'remark' => (string)$this->request->post('remark', ''),
                 'update_time' => time(),
             ]);
-            CreditsService::change((int)$w['user_id'], $need, 'withdraw_refund', $id, '提现驳回退回');
+            CreditsService::change((int)$w['user_id'], $need, 'withdraw_refund', $id, '提现驳回退回', 'earnings');
             Db::commit();
         } catch (\Throwable $e) {
             Db::rollback();

@@ -129,6 +129,14 @@ class FinanceManage extends Base
             }
         }
 
+        // 站币流水：预计算用户显示名与类型名（模板不做数组下标运算）
+        foreach ($credits as &$cr) {
+            $uid = (int)$cr['user_id'];
+            $cr['user_label'] = $uMap[$uid] ?? ('#' . $uid);
+            $cr['type_label'] = self::TYPES[$cr['type']] ?? (string)$cr['type'];
+        }
+        unset($cr);
+
         return $this->adminView('admin/finance', [
             'page'    => 'finance',
             'gateway' => $gateway,

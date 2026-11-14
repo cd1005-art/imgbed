@@ -17,6 +17,12 @@ use think\facade\Db;
  */
 class Console extends Base
 {
+    /** 当前登录用户（中间件注入 loginUser） */
+    private function currentUser()
+    {
+        return $this->request->loginUser ?? null;
+    }
+
     public function index()
     {
         $user  = $this->request->loginUser;
@@ -45,6 +51,8 @@ class Console extends Base
             'token_used'  => ApiToken::where('user_id', $user->id)->count(),
             'email_verified' => (int)$user->email_verified === 1,
             'credits'        => (int)$user->credits,
+            'earnings'       => (int)($user->earnings ?? 0),
+            'withdraw_rate'  => max(1, (int)Setting::get('withdraw_rate', 10)),
             'credits_total'  => (int)$user->credits_total,
             'credits_rate'   => max(1, (int)Setting::get('credits_per_yuan', 10)),
             'pay_available'  => (new \app\common\service\PaymentService())->isAvailable(),
@@ -102,10 +110,12 @@ class Console extends Base
         if ($name === '' || $acct === '') {
             return json(['status' => false, 'message' => '请填写支付宝姓名与账号']);
         }
-        $rate = max(1, (int)Setting::get('credits_per_yuan', 10));
+        // 提现使用独立比例（与充值比例分开配置）
+        $rate = max(1, (int)Setting::get('withdraw_rate', 10));
         $need = $amount * $rate;
-        if ((int)$user->credits < $need) {
-            return json(['status' => false, 'message' => "余额不足（需 {$need} 站币）"]);
+        $earn = (int)($user->earnings ?? 0);
+        if ($earn < $need) {
+            return json(['status' => false, 'message' => "可提现收益不足（需 {$need} 币，当前可提现 {$earn} 币）"]);
         }
         $monthly = (int)Setting::get('withdraw_monthly_limit', 2);
         $cnt = Db::name('withdrawals')->where('user_id', $user->id)
@@ -124,7 +134,7 @@ class Console extends Base
                 'real_amount' => $amount - $fee, 'alipay_name' => $name, 'alipay_account' => $acct,
                 'status' => 'pending', 'create_time' => time(), 'update_time' => time(),
             ]);
-            \app\common\service\CreditsService::change((int)$user->id, -$need, 'withdraw', $wid, '提现申请冻结（' . $amount . ' 元）');
+            \app\common\service\CreditsService::change((int)$user->id, -$need, 'withdraw', $wid, '提现申请冻结（' . $amount . ' 元）', 'earnings');
             Db::name('users')->where('id', $user->id)->update(['alipay_name' => $name, 'alipay_account' => $acct]);
             Db::commit();
         } catch (\Throwable $e) {

@@ -627,6 +627,14 @@
       postForm('/admin/site/save', sf).then(function (d) { toast(d.message); });
     });
 
+    ['creditCfgForm', 'withdrawCfgForm', 'shareCfgForm'].forEach(function (id) {
+      var fm = document.getElementById(id);
+      if (fm) fm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        postForm('/admin/site/save', fm).then(function (d) { toast(d.message); });
+      });
+    });
+
     var bf = document.getElementById('baiduForm');
     if (bf) bf.addEventListener('submit', function (e) {
       e.preventDefault();
