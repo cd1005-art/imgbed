@@ -1195,8 +1195,9 @@
     });
     document.querySelectorAll('[data-wd-paid]').forEach(function (b) {
       b.addEventListener('click', function () {
-        var v = prompt('填写打款凭证/备注（可留空）：') || '';
         armConfirm(b, '确认已打款？', function () {
+          var v = prompt('填写打款凭证/备注（可留空）：');
+          if (v === null) { return; }   // 取消则不提交
           postBody('/admin/withdraw/paid/' + b.dataset.wdPaid, 'voucher=' + encodeURIComponent(v)).then(function (d) {
             toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
           });
@@ -1205,10 +1206,12 @@
     });
     document.querySelectorAll('[data-wd-reject]').forEach(function (b) {
       b.addEventListener('click', function () {
-        var r = prompt('驳回原因（必填）：') || '';
-        if (!r.trim()) { toast('请填写驳回原因'); return; }
+        armConfirm(b, '确认驳回？', function () {
+        var r = prompt('驳回原因（必填）：');
+        if (r === null || !String(r).trim()) { toast('已取消（需填写原因）'); return; }
         postBody('/admin/withdraw/reject/' + b.dataset.wdReject, 'reason=' + encodeURIComponent(r)).then(function (d) {
           toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+        });
         });
       });
     });

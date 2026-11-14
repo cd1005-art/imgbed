@@ -83,10 +83,14 @@ class WithdrawManage extends Base
         if (!$w) {
             return json(['status' => false, 'message' => '记录不存在']);
         }
+        if (!in_array((string)$w['status'], ['approved', 'paid'], true)) {
+            return json(['status' => false, 'message' => '请先审核通过再标记打款']);
+        }
         Db::name('withdrawals')->where('id', $id)->update([
             'status' => 'paid', 'voucher_no' => mb_substr($voucher, 0, 80),
             'handled_by' => (int)session('admin_id'), 'update_time' => time(),
         ]);
+        return json(['status' => true, 'message' => '已标记打款' . ($voucher !== '' ? '（凭证已记录）' : '')]);
         // 通知用户
         try {
             $u = Db::name('users')->where('id', (int)$w['user_id'])->find();
@@ -96,7 +100,6 @@ class WithdrawManage extends Base
             }
         } catch (\Throwable $e) {
         }
-        return json(['status' => true, 'message' => '已标记打款']);
     }
 
     /** 驳回并退币 */

@@ -124,6 +124,7 @@ class FinanceManage extends Base
         /* ---------- 用户昵称（流水用） ---------- */
         $uids = [];
         foreach ($credits as $r) { $uids[(int)$r['user_id']] = (int)$r['user_id']; }
+        foreach ($orders as $o1) { $uids[(int)$o1['user_id']] = (int)$o1['user_id']; }
         $uMap = [];
         if ($uids) {
             foreach (Db::name('users')->whereIn('id', array_values($uids))->field('id,nickname,email,status')->select()->toArray() as $u) {
@@ -147,6 +148,13 @@ class FinanceManage extends Base
         $topImages = Db::name('unlocks')->alias('u')->join('images i', 'i.id = u.image_id')
             ->field('u.image_id, i.name, COUNT(*) AS cnt, SUM(u.price) AS total')
             ->group('u.image_id')->order('total', 'desc')->limit(8)->select()->toArray();
+
+        // 订单：用户显示名
+        foreach ($orders as &$or) {
+            $uid = (int)$or['user_id'];
+            $or['user_label'] = $uMap[$uid] ?? ('#' . $uid);
+        }
+        unset($or);
 
         // 站币流水：预计算用户显示名与类型名（模板不做数组下标运算）
         foreach ($credits as &$cr) {

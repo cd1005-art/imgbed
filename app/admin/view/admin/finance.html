@@ -137,7 +137,7 @@
       <tr>
         <td><input type="checkbox" class="ord-check" value="{$o.id}" data-paid="{if condition="$o.status eq 1"}1{else /}0{/if}"></td>
         <td class="mono">{$o.order_no}</td>
-        <td>{$o.user_id}</td>
+        <td class="td-clip" title="{$o.user_id}">{$o.user_label}</td>
         <td>{if condition="$o.type eq 'vip'"}VIP{elseif condition="$o.type eq 'credits'"}站币{else /}{$o.type}{/if}</td>
         <td>{:round($o.amount / 100, 2)}</td>
         <td>{$o.pay_channel|default='-'}</td>
@@ -254,6 +254,7 @@
         {elseif condition="$wv.status eq 'approved'"}
         <button class="btn-ghost-sm" data-wd-paid="{$wv.id}">标记打款</button>
         {/if}
+        {if condition="$wv.status eq 'paid'"}<button class="btn-ghost-sm" data-wd-paid="{$wv.id}">补填凭证</button>{/if}
       </td>
     </tr>
     {/volist}
