@@ -34,9 +34,37 @@ class AdManage extends Base
     }
 
     /** 站点设置保存 */
+    /** 清除 sitemap 缓存并立即重建 */
+    public function seoRefresh()
+    {
+        $cache = root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'index' . DIRECTORY_SEPARATOR
+            . 'sitemap' . DIRECTORY_SEPARATOR . 'sitemap.xml';
+        @unlink($cache);
+        $domain = rtrim((string)request()->domain(), '/');
+        $ch = @curl_init($domain . '/sitemap.xml?refresh=1');
+        if ($ch) {
+            @curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 120,
+                CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => false,
+            ]);
+            $xml = (string)@curl_exec($ch);
+            @curl_close($ch);
+            $n = substr_count($xml, '<loc>');
+            if ($n > 0) {
+                return json(['status' => true, 'message' => "已重建 sitemap，共 {$n} 个 URL"]);
+            }
+        }
+        return json(['status' => true, 'message' => '已清除缓存；由于当前会话非管理员抓取，sitemap 将在下次访问时重建']);
+    }
+
     public function siteSave()
     {
-        $allowed = ['site_name', 'operation_mode', 'allow_register', 'guest_group_id', 'register_group_id'];
+        $allowed = [
+            'site_name', 'operation_mode', 'allow_register', 'guest_group_id', 'register_group_id',
+            // SEO
+            'sitemap_enable', 'sitemap_ttl', 'sitemap_pages', 'sitemap_include_tags',
+            'sitemap_tag_min_use', 'sitemap_tag_limit', 'seo_jsonld_enable',
+        ];
         $all = $this->request->post();
         $saved = 0;
         foreach ($allowed as $key) {

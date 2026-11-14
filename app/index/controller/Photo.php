@@ -103,7 +103,8 @@ class Photo extends Base
         $crumbs[] = ['@type' => 'ListItem', 'position' => count($crumbs) + 1, 'name' => $seoTitle,
             'item' => $domain . '/p/' . $img->id];
 
-        $seoJsonld = json_encode([
+        $jsonldOn = (int)\app\common\model\Setting::get('seo_jsonld_enable', 1) === 1;
+        $seoJsonld = !$jsonldOn ? '' : json_encode([
             '@context' => 'https://schema.org',
             '@graph'   => [$imageObj, ['@type' => 'BreadcrumbList', 'itemListElement' => $crumbs]],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

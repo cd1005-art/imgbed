@@ -4,6 +4,7 @@ declare (strict_types = 1);
 namespace app\index\controller;
 
 use app\common\model\Image;
+use app\common\model\Setting;
 use app\index\controller\Base;
 use think\facade\Db;
 use think\facade\Log;
@@ -14,13 +15,25 @@ use think\facade\Log;
  */
 class Sitemap extends Base
 {
+    /** 缓存文件路径（多应用下 runtime 目录为 runtime/{app}/，固定指向 index 应用） */
+    public static function cacheFile(): string
+    {
+        return root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'index' . DIRECTORY_SEPARATOR
+            . 'sitemap' . DIRECTORY_SEPARATOR . 'sitemap.xml';
+    }
+
     /** 单文件 URL 上限（协议限制 50000；留余量） */
     private const MAX_URLS = 49000;
 
     public function index()
     {
-        $cacheFile = runtime_path() . 'sitemap' . DIRECTORY_SEPARATOR . 'sitemap.xml';
-        $ttl       = 1800;
+        // 后台可关闭 sitemap（输出合法空 urlset，避免 robots 指向 404）
+        if ((int)Setting::get('sitemap_enable', 1) !== 1) {
+            return $this->xmlResponse($this->emptyXml(), 'disabled');
+        }
+
+        $cacheFile = self::cacheFile();
+        $ttl       = max(1, (int)Setting::get('sitemap_ttl', 30)) * 60;
         $force     = $this->request->param('refresh') === '1' && (int)session('admin_id') > 0;
 
         if (!$force && is_file($cacheFile) && (time() - (int)filemtime($cacheFile)) < $ttl) {
@@ -52,14 +65,15 @@ class Sitemap extends Base
         $items[] = ['loc' => $domain . '/', 'changefreq' => 'daily', 'priority' => '1.0', 'lastmod' => $today];
         $items[] = ['loc' => $domain . '/explore', 'changefreq' => 'daily', 'priority' => '0.9', 'lastmod' => $today];
 
-        // 广场分页（前 20 页）
+        // 广场分页（后台配置数量，0=不含）
         $publicWhere = function () {
             return Image::where('is_public', 1)
                 ->where('audit_status', Image::AUDIT_PASS)
                 ->where('status', Image::ST_NORMAL);
         };
         $total  = $publicWhere()->count();
-        $pages  = min(20, (int)ceil($total / 30));
+        $pagesLimit = max(0, (int)Setting::get('sitemap_pages', 20));
+        $pages  = min($pagesLimit, (int)ceil($total / 30));
         for ($i = 2; $i <= $pages; $i++) {
             $items[] = ['loc' => $domain . '/explore?page=' . $i, 'changefreq' => 'daily', 'priority' => '0.6', 'lastmod' => $today];
         }
@@ -78,11 +92,14 @@ class Sitemap extends Base
             Log::record('sitemap 达到上限 ' . self::MAX_URLS . ' 条，当前公开图 ' . $total . ' 张，超出部分未收录（需实现索引拆分）', 'warning');
         }
 
-        // 标签页（有图在用、前 500 个）
-        $tags = Db::name('tags')->where('status', 1)->where('use_count', '>=', 2)
-            ->order('use_count', 'desc')->limit(200)->field('name,use_count')->select()->toArray();
+        // 标签页（后台配置：是否收录 / 最小使用次数 / 上限）
+        $includeTags = (int)Setting::get('sitemap_include_tags', 1) === 1;
+        $tagMin      = max(1, (int)Setting::get('sitemap_tag_min_use', 2));
+        $tagLimit    = max(0, (int)Setting::get('sitemap_tag_limit', 200));
+        $tags = $includeTags ? Db::name('tags')->where('status', 1)->where('use_count', '>=', $tagMin)
+            ->order('use_count', 'desc')->limit($tagLimit)->field('name,use_count')->select()->toArray() : [];
         $left = max(0, self::MAX_URLS - count($items));
-        foreach (array_slice($tags, 0, min(200, $left)) as $t) {
+        foreach (array_slice($tags, 0, min($tagLimit, $left)) as $t) {
             $items[] = [
                 'loc'        => $domain . '/tag?name=' . rawurlencode((string)$t['name']),
                 'changefreq' => 'weekly',

@@ -619,6 +619,22 @@
       e.preventDefault();
       postForm('/admin/site/save', f).then(function (d) { toast(d.message); });
     });
+
+    var sf = document.getElementById('seoForm');
+    if (sf) sf.addEventListener('submit', function (e) {
+      e.preventDefault();
+      postForm('/admin/site/save', sf).then(function (d) { toast(d.message); });
+    });
+
+    var sr = document.getElementById('seoRefresh');
+    if (sr) sr.addEventListener('click', function () {
+      sr.disabled = true; sr.textContent = '重建中…';
+      post('/admin/site/seo-refresh').then(function (d) {
+        toast(d.message);
+        setTimeout(function () { location.reload(); }, 800);
+      }).catch(function () { toast('重建失败，请稍后重试'); })
+        .finally(function () { sr.disabled = false; sr.textContent = '立即重建 sitemap'; });
+    });
   }
   function adminAudit() {
     var f = document.getElementById('auditForm');

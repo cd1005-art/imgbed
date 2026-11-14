@@ -37,6 +37,50 @@
     <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存设置</button></div>
   </form>
 </section>
+
+<section class="panel">
+  <h2 class="panel-title">SEO 设置（sitemap / 结构化数据）</h2>
+  <form class="form form-grid" id="seoForm">
+    <label class="field"><span class="field-label">sitemap</span>
+      <select name="sitemap_enable">
+        <option value="1" {if condition="($settings['sitemap_enable'] ?? '1') eq '1'"}selected{/if}>启用</option>
+        <option value="0" {if condition="($settings['sitemap_enable'] ?? '1') eq '0'"}selected{/if}>关闭</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">缓存时长（分钟）</span>
+      <input type="number" name="sitemap_ttl" value="{$settings.sitemap_ttl|default='30'}" min="1" max="1440">
+    </label>
+    <label class="field"><span class="field-label">广场分页收录数（0=不含）</span>
+      <input type="number" name="sitemap_pages" value="{$settings.sitemap_pages|default='20'}" min="0" max="200">
+    </label>
+    <label class="field"><span class="field-label">收录标签页</span>
+      <select name="sitemap_include_tags">
+        <option value="1" {if condition="($settings['sitemap_include_tags'] ?? '1') eq '1'"}selected{/if}>收录</option>
+        <option value="0" {if condition="($settings['sitemap_include_tags'] ?? '1') eq '0'"}selected{/if}>不收录</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">标签最小使用次数</span>
+      <input type="number" name="sitemap_tag_min_use" value="{$settings.sitemap_tag_min_use|default='2'}" min="1" max="100">
+    </label>
+    <label class="field"><span class="field-label">标签数量上限</span>
+      <input type="number" name="sitemap_tag_limit" value="{$settings.sitemap_tag_limit|default='200'}" min="0" max="5000">
+    </label>
+    <label class="field"><span class="field-label">详情页结构化数据（JSON-LD）</span>
+      <select name="seo_jsonld_enable">
+        <option value="1" {if condition="($settings['seo_jsonld_enable'] ?? '1') eq '1'"}selected{/if}>启用</option>
+        <option value="0" {if condition="($settings['seo_jsonld_enable'] ?? '1') eq '0'"}selected{/if}>关闭</option>
+      </select>
+    </label>
+    <div class="field" style="justify-content:flex-end">
+      <button type="button" class="btn-ghost-sm" id="seoRefresh">立即重建 sitemap</button>
+      <button type="submit" class="btn">保存 SEO 设置</button>
+    </div>
+  </form>
+  <p class="field-hint" style="margin-top:8px">
+    sitemap 地址：<a href="https://img.oddpp.com/sitemap.xml" target="_blank">https://img.oddpp.com/sitemap.xml</a>
+    —— 提交到百度搜索资源平台 / Google Search Console 后由搜索引擎抓取；收录范围仅公开且审核通过的图片。
+  </p>
+</section>
 {/block}
 
 {block name="script"}

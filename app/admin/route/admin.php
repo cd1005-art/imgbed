@@ -104,6 +104,7 @@ Route::group(function () {
     Route::get('nav', 'NavManage/index');
     Route::get('site', 'AdManage/site');
     Route::post('site/save', 'AdManage/siteSave');
+    Route::post('site/seo-refresh', 'AdManage/seoRefresh');
     Route::get('ad', 'AdManage/index');
     Route::post('ad/slot', 'AdManage/saveSlot');
     Route::post('model/save', 'ModelManage/save');
