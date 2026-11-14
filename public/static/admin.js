@@ -1699,3 +1699,52 @@
     refresh();
   }
 })();
+
+/* ---------- 分页增强：跳转到指定页（所有 .pager 容器） ---------- */
+(function () {
+  function initPagerJump() {
+    document.querySelectorAll('.pager').forEach(function (box) {
+      if (box.querySelector('[data-pager-jump]')) { return; }
+      var param = null;
+      box.querySelectorAll('a[href]').forEach(function (x) {
+        if (param) { return; }
+        var href = x.getAttribute('href') || '';
+        var m = href.match(/[?&](page|upage|pno)=(\d+)/);
+        if (m) { param = m[1]; }
+      });
+      if (!param) { return; }
+      var txt = (box.textContent || '').replace(/\s+/g, ' ');
+      var tm = txt.match(/(\d+)\s*\/\s*(\d+)/);
+      if (!tm) { return; }
+      var cur = parseInt(tm[1], 10) || 1;
+      var total = parseInt(tm[2], 10) || 0;
+      if (total < 2) { return; }
+
+      var wrap = document.createElement('span');
+      wrap.setAttribute('data-pager-jump', '1');
+      wrap.style.cssText = 'margin-left:10px;display:inline-flex;align-items:center;gap:6px';
+      wrap.innerHTML = '<span class="count">跳至</span>'
+        + '<input type="number" min="1" max="' + total + '" value="' + cur + '" style="width:58px">'
+        + '<span class="count">/ ' + total + ' 页</span>'
+        + '<button type="button" class="btn btn-sm">跳转</button>';
+      var inp = wrap.querySelector('input');
+      var btn = wrap.querySelector('button');
+      function go() {
+        var v = parseInt(inp.value, 10) || 1;
+        v = Math.max(1, Math.min(total, v));
+        var u = new URL(location.href);
+        u.searchParams.set(param, v);
+        location.href = u.toString();
+      }
+      btn.addEventListener('click', go);
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { go(); } });
+      box.appendChild(wrap);
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPagerJump);
+  } else {
+    initPagerJump();
+  }
+  window.initPagerJump = initPagerJump;
+})();
