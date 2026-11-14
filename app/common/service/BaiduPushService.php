@@ -13,8 +13,11 @@ use think\facade\Log;
  */
 class BaiduPushService
 {
-    /** 单次推送上限（官方建议 ≤1000，这里保守 100，避免一次打满配额） */
-    public const BATCH = 100;
+    /**
+     * 单次推送上限：百度官方为 1000 条/次；
+     * 实际可推量由当日配额（返回体 remain）决定，与这里无关。
+     */
+    public const BATCH = 1000;
 
     public static function enabled(): bool
     {

@@ -35,7 +35,7 @@ class AdManage extends Base
     }
 
     /** 站点设置保存 */
-    /** 手动触发百度主动推送（增量：update_time 之后更新的公开图，最多 100 条） */
+    /** 手动触发百度主动推送（增量：update_time 之后更新的公开图，单次上限 1000，受百度配额约束） */
     public function seoPushBaidu()
     {
         if (!\app\common\service\BaiduPushService::enabled()) {
@@ -51,7 +51,7 @@ class AdManage extends Base
             ->where('audit_status', \app\common\model\Image::AUDIT_PASS)
             ->where('status', \app\common\model\Image::ST_NORMAL)
             ->where('update_time', '>=', $since)
-            ->order('update_time', 'asc')->limit(100)->field('id')->select();
+            ->order('update_time', 'asc')->limit(\app\common\service\BaiduPushService::BATCH)->field('id')->select();
 
         $urls = [];
         foreach ($rows as $r) {

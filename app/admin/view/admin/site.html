@@ -113,13 +113,14 @@
       <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default=''}" placeholder="在百度搜索资源平台 → 普通收录 → API 提交 中获取">
     </label>
     <div class="field" style="justify-content:flex-end">
-      <button type="button" class="btn-ghost-sm" id="seoPushBaidu">立即推送（增量，最多 100 条）</button>
+      <button type="button" class="btn-ghost-sm" id="seoPushBaidu">立即推送（增量，单次上限 1000 条）</button>
       <button type="submit" class="btn">保存推送设置</button>
     </div>
   </form>
   <p class="field-hint" style="margin-top:8px">
-    最近推送：{$settings.baidu_push_last_result|default='尚未推送'}{if condition="($settings['baidu_push_last_time'] ?? '') neq ''"}（{:date('m-d H:i', ts($settings['baidu_push_last_time']))}）{/if}
-    —— 接口：<code>POST data.zz.baidu.com/urls</code>；被推送的 URL 仅限公开且审核通过的图片详情页。
+    最近推送：{$settings.baidu_push_last_result|default='尚未推送'}{if condition="($settings['baidu_push_last_time'] ?? '') neq ''"}（{:date('m-d H:i', ts($settings['baidu_push_last_time']))}）{/if}<br>
+    接口单次最多 1000 条（百度规定）；<b>实际能推多少取决于当日配额</b>——返回体里的「剩余配额」才是瓶颈（新站通常每天 10 条左右）。
+    推送范围仅限公开且审核通过的图片详情页，按更新时间增量、已推过的不会重复消耗配额。
   </p>
 </section>
   </div>
