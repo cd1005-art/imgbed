@@ -416,19 +416,27 @@
   }
 })();
 
-/* ---------- 分页增强：跳转到指定页（所有 .pager 容器） ---------- */
+/* ---------- 分页增强：动态页码块（每块 5 页）+ 跳转指定页 ---------- */
 (function () {
+  function goToPage(param, page, total) {
+    var v = Math.max(1, Math.min(total, parseInt(page, 10) || 1));
+    var u = new URL(location.href);
+    u.searchParams.set(param, v);
+    location.href = u.toString();
+  }
+
   function initPagerJump() {
     document.querySelectorAll('.pager').forEach(function (box) {
-      if (box.querySelector('[data-pager-jump]')) { return; }
+      if (box.querySelector('[data-pager-pages]')) { return; }
+
       var param = null;
       box.querySelectorAll('a[href]').forEach(function (x) {
         if (param) { return; }
-        var href = x.getAttribute('href') || '';
-        var m = href.match(/[?&](page|upage|pno)=(\d+)/);
+        var m = (x.getAttribute('href') || '').match(/[?&](page|upage|pno)=(\d+)/);
         if (m) { param = m[1]; }
       });
       if (!param) { return; }
+
       var txt = (box.textContent || '').replace(/\s+/g, ' ');
       var tm = txt.match(/(\d+)\s*\/\s*(\d+)/);
       if (!tm) { return; }
@@ -436,6 +444,33 @@
       var total = parseInt(tm[2], 10) || 0;
       if (total < 2) { return; }
 
+      // 页码块：按 5 个一组（1-5 / 6-10 / 11-15 ...）
+      var PER = 5;
+      var start = Math.floor((cur - 1) / PER) * PER + 1;
+      var end = Math.min(start + PER - 1, total);
+
+      var pbox = document.createElement('span');
+      pbox.setAttribute('data-pager-pages', '1');
+      pbox.style.cssText = 'display:inline-flex;gap:4px;align-items:center;margin-left:10px';
+
+      var html = '';
+      if (start > 1) {
+        html += '<button type="button" class="btn-ghost-sm" data-pg="' + (start - 1) + '" title="上一组">«</button>';
+      }
+      for (var i = start; i <= end; i++) {
+        html += '<button type="button" class="' + (i === cur ? 'btn btn-sm' : 'btn-ghost-sm') + '" data-pg="' + i + '">' + i + '</button>';
+      }
+      if (end < total) {
+        html += '<button type="button" class="btn-ghost-sm" data-pg="' + (end + 1) + '" title="下一组">»</button>';
+      }
+      pbox.innerHTML = html;
+      pbox.addEventListener('click', function (e) {
+        var t = e.target.closest ? e.target.closest('[data-pg]') : null;
+        if (t) { goToPage(param, t.getAttribute('data-pg'), total); }
+      });
+      box.appendChild(pbox);
+
+      // 跳转输入框
       var wrap = document.createElement('span');
       wrap.setAttribute('data-pager-jump', '1');
       wrap.style.cssText = 'margin-left:10px;display:inline-flex;align-items:center;gap:6px';
@@ -445,22 +480,15 @@
         + '<button type="button" class="btn btn-sm">跳转</button>';
       var inp = wrap.querySelector('input');
       var btn = wrap.querySelector('button');
-      function go() {
-        var v = parseInt(inp.value, 10) || 1;
-        v = Math.max(1, Math.min(total, v));
-        var u = new URL(location.href);
-        u.searchParams.set(param, v);
-        location.href = u.toString();
-      }
-      btn.addEventListener('click', go);
-      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { go(); } });
+      btn.addEventListener('click', function () { goToPage(param, inp.value, total); });
+      inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { goToPage(param, inp.value, total); } });
       box.appendChild(wrap);
     });
   }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initPagerJump);
   } else {
     initPagerJump();
   }
-  window.initPagerJump = initPagerJump;
 })();
