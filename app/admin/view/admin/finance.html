@@ -200,18 +200,20 @@
 </table>
       <h2 class="panel-title" style="margin:18px 0 8px">图片销售排行（按解锁收入）</h2>
       <table class="table">
-        <thead><tr><th>图片</th><th>解锁次数</th><th>作者收入（币）</th></tr></thead>
+        <thead><tr><th>图片</th><th>作者</th><th>解锁次数</th><th>作者收入（币）</th><th>最近解锁</th></tr></thead>
         <tbody>
           {volist name="top_images" id="ti"}
           <tr>
             <td class="td-clip" title="{$ti.name}">
               <a href="/p/{$ti.image_id}" target="_blank">#{$ti.image_id} {$ti.name}</a>
             </td>
+            <td class="td-clip">{$ti.author_label}</td>
             <td>{$ti.cnt}</td>
             <td><b>{$ti.total}</b></td>
+            <td>{:date('m-d H:i', ts($ti.last_time))}</td>
           </tr>
           {/volist}
-          {if condition="count($top_images) eq 0"}<tr><td colspan="3" class="field-hint">暂无解锁销售数据</td></tr>{/if}
+          {if condition="count($top_images) eq 0"}<tr><td colspan="5" class="field-hint">暂无解锁销售数据</td></tr>{/if}
         </tbody>
       </table>
 
@@ -233,7 +235,7 @@
       </div>
 
       <table class="table">
-        <thead><tr><th style="width:28px"><input type="checkbox" id="unlockCheckAll"></th><th>ID</th><th>图片</th><th>买家</th><th>扣除</th><th>作者分成</th><th>时间</th><th>操作</th></tr></thead>
+        <thead><tr><th style="width:28px"><input type="checkbox" id="unlockCheckAll"></th><th>ID</th><th>图片</th><th>买家</th><th>卖家</th><th>扣除</th><th>作者分成</th><th>时间</th><th>操作</th></tr></thead>
         <tbody>
           {volist name="unlocks" id="uk"}
           <tr>
@@ -241,13 +243,14 @@
             <td>{$uk.id}</td>
             <td class="td-clip" title="{$uk.image_name}"><a href="/p/{$uk.image_id}" target="_blank">#{$uk.image_id} {$uk.image_name}</a></td>
             <td class="td-clip">{$uk.buyer_label}</td>
+            <td class="td-clip">{$uk.seller_label}</td>
             <td>{$uk.price} 币</td>
-            <td>{$uk.author_share} 币</td>
+            <td>{$uk.author_share} 币 <span class="count">({$uk.share_pct}%)</span></td>
             <td>{:date('m-d H:i', ts($uk.create_time))}</td>
             <td class="td-actions"><button class="btn-ghost-sm btn-danger-sm" data-unlock-del="{$uk.id}">删除</button></td>
           </tr>
           {/volist}
-          {if condition="count($unlocks) eq 0"}<tr><td colspan="8" class="field-hint">暂无解锁记录</td></tr>{/if}
+          {if condition="count($unlocks) eq 0"}<tr><td colspan="9" class="field-hint">暂无解锁记录</td></tr>{/if}
         </tbody>
       </table>
       {if condition="$upages gt 1"}

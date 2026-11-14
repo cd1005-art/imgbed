@@ -146,8 +146,21 @@ class FinanceManage extends Base
             'pending'  => (int)Db::name('withdrawals')->whereIn('status', ['pending', 'approved'])->sum('real_amount'),
         ];
         $topImages = Db::name('unlocks')->alias('u')->join('images i', 'i.id = u.image_id')
-            ->field('u.image_id, i.name, COUNT(*) AS cnt, SUM(u.price) AS total')
+            ->field('u.image_id, i.name, i.user_id AS author_id, COUNT(*) AS cnt, SUM(u.price) AS total, MAX(u.create_time) AS last_time')
             ->group('u.image_id')->order('total', 'desc')->limit(8)->select()->toArray();
+        // 作者昵称
+        $authorIds = array_values(array_unique(array_map(fn($r) => (int)$r['author_id'], $topImages)));
+        $authorMap = [];
+        if ($authorIds) {
+            foreach (Db::name('users')->whereIn('id', $authorIds)->field('id,nickname,email')->select()->toArray() as $a) {
+                $authorMap[(int)$a['id']] = $a['nickname'] !== '' ? $a['nickname'] : $a['email'];
+            }
+        }
+        foreach ($topImages as &$tp) {
+            $aid = (int)$tp['author_id'];
+            $tp['author_label'] = $authorMap[$aid] ?? ('#' . $aid);
+        }
+        unset($tp);
 
         // 订单：用户显示名
         foreach ($orders as &$or) {
@@ -194,15 +207,29 @@ class FinanceManage extends Base
         }
         $imgMap = [];
         if ($imgIds) {
-            foreach (Db::name('images')->whereIn('id', $imgIds)->field('id,name')->select()->toArray() as $im) {
-                $imgMap[(int)$im['id']] = (string)$im['name'];
+            foreach (Db::name('images')->whereIn('id', $imgIds)->field('id,name,user_id')->select()->toArray() as $im) {
+                $imgMap[(int)$im['id']] = $im;
+            }
+        }
+        // 卖家（作者）昵称
+        $sellerIds = [];
+        foreach ($imgMap as $im) { $sellerIds[(int)$im['user_id']] = (int)$im['user_id']; }
+        $sellerMap = [];
+        if ($sellerIds) {
+            foreach (Db::name('users')->whereIn('id', array_values($sellerIds))->field('id,nickname,email')->select()->toArray() as $s) {
+                $sellerMap[(int)$s['id']] = $s['nickname'] !== '' ? $s['nickname'] : $s['email'];
             }
         }
         foreach ($unlockRows as &$ur) {
             $bid = (int)$ur['user_id'];
             $iid = (int)$ur['image_id'];
-            $ur['buyer_label'] = $buyerMap[$bid] ?? ('#' . $bid);
-            $ur['image_name']  = $imgMap[$iid] ?? '';
+            $img = $imgMap[$iid] ?? null;
+            $ur['buyer_label']  = $buyerMap[$bid] ?? ('#' . $bid);
+            $ur['image_name']   = $img ? (string)$img['name'] : '';
+            $sid = $img ? (int)$img['user_id'] : 0;
+            $ur['seller_label'] = $sid > 0 ? ($sellerMap[$sid] ?? ('#' . $sid)) : '-';
+            $p1 = (int)$ur['price'];
+            $ur['share_pct'] = $p1 > 0 ? (int)round((int)$ur['author_share'] / $p1 * 100) : 0;
         }
         unset($ur);
 
