@@ -179,17 +179,18 @@
         <section class="panel">
           <h2 class="panel-title">充值记录 <span class="count">最近 20 条</span></h2>
           <table class="table">
-            <thead><tr><th>订单号</th><th>金额</th><th>状态</th><th>时间</th></tr></thead>
+            <thead><tr><th>订单号</th><th>充值金额</th><th>到账站币</th><th>状态</th><th>时间</th></tr></thead>
             <tbody>
               {volist name="credit_orders" id="o"}
               <tr>
                 <td class="mono">{$o.order_no}</td>
                 <td>{:round($o.amount / 100, 2)} 元</td>
+                <td>{if condition="$o.coins gt 0"}<b class="ok">{$o.coins}</b> 币{else /}<span class="count">-</span>{/if}</td>
                 <td>{if condition="$o.status eq 'paid'"}<span class="ok">已支付</span>{elseif condition="$o.status eq 'pending'"}待支付{else /}<span class="danger">已关闭</span>{/if}</td>
                 <td>{:date('m-d H:i', ts($o.create_time))}</td>
               </tr>
               {/volist}
-              {if condition="count($credit_orders) eq 0"}<tr><td colspan="4" class="field-hint">暂无充值记录</td></tr>{/if}
+              {if condition="count($credit_orders) eq 0"}<tr><td colspan="5" class="field-hint">暂无充值记录</td></tr>{/if}
             </tbody>
           </table>
         </section>

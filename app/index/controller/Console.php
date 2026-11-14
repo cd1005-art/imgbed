@@ -67,8 +67,22 @@ class Console extends Base
                 ->order('id', 'desc')->limit(20)->select()->toArray(),
             'unlock_logs'    => Db::name('credit_logs')->where('user_id', $user->id)->where('type', 'unlock')
                 ->order('id', 'desc')->limit(20)->select()->toArray(),
-            'credit_orders'  => Db::name('orders')->where('user_id', $user->id)->where('type', 'credits')
-                ->order('id', 'desc')->limit(20)->select()->toArray(),
+            'credit_orders'  => (function () use ($user) {
+                $rows = Db::name('orders')->where('user_id', $user->id)->where('type', 'credits')
+                    ->order('id', 'desc')->limit(20)->select()->toArray();
+                $ids = array_map(fn($r) => (int)$r['id'], $rows);
+                $coinMap = [];
+                if ($ids) {
+                    foreach (Db::name('credit_logs')->where('type', 'recharge')->whereIn('ref_id', $ids)
+                        ->field('ref_id,amount')->select()->toArray() as $l) {
+                        $coinMap[(int)$l['ref_id']] = (int)$l['amount'];
+                    }
+                }
+                foreach ($rows as &$r) {
+                    $r['coins'] = $coinMap[(int)$r['id']] ?? 0;
+                }
+                return $rows;
+            })(),
             'alipay_name'    => (string)($user->alipay_name ?? ''),
             'alipay_account' => (string)($user->alipay_account ?? ''),
             'min_recharge'   => (int)Setting::get('min_recharge', 10),
