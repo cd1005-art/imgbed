@@ -93,17 +93,29 @@ PHP 8.2 · ThinkPHP 8.1 · MIT License
 
 ## 界面预览
 
-| 前台上传 | 我的图库 |
+| 图片广场（标题 = 审核描述清洗结果） | 图片详情（标签 / 相关推荐） |
 |:---:|:---:|
-| ![上传](docs/screenshots/home-upload.png) | ![图库](docs/screenshots/gallery.png) |
+| ![广场](docs/screenshots/explore.png) | ![详情](docs/screenshots/photo-detail.png) |
 
-| VIP 套餐 | 后台仪表盘 |
+| 造图任务（任务列表 / 筛选 / 批量） | 提示词中心（AI 生成 / 模板 / 导入导出 / 图生文） |
 |:---:|:---:|
-| ![VIP](docs/screenshots/vip-plans.png) | ![仪表盘](docs/screenshots/admin-dashboard.png) |
+| ![造图任务](docs/screenshots/gen-tasks.png) | ![提示词中心](docs/screenshots/gen-prompts.png) |
 
-| 图片管理（多存储 · 模型名审计） | |
+| 执行日志（今日统计 + 近 7 日趋势 + 审核状态） | SEO 设置（sitemap / JSON-LD / 百度主动推送） |
 |:---:|:---:|
-| ![图片管理](docs/screenshots/admin-images.png) | |
+| ![执行日志](docs/screenshots/gen-logs.png) | ![SEO 设置](docs/screenshots/seo-settings.png) |
+
+| 图片管理（标题 / 标签 / 审核一键编辑） | 财务管理（网关 / 套餐 / 订单 / 站币 / 提现） |
+|:---:|:---:|
+| ![图片管理](docs/screenshots/admin-images.png) | ![财务管理](docs/screenshots/finance.png) |
+
+| 首页上传 | VIP 套餐 |
+|:---:|:---:|
+| ![上传](docs/screenshots/home-upload.png) | ![VIP](docs/screenshots/vip-plans.png) |
+
+| 后台仪表盘 | |
+|:---:|:---:|
+| ![仪表盘](docs/screenshots/admin-dashboard.png) | |
 
 ## 快速开始（三选一）
 

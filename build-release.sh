@@ -14,6 +14,7 @@ mkdir -p "$OUT/$NAME/runtime" "$OUT/$NAME/public/storage/images"
 rsync -a \
   --exclude '.git' --exclude 'runtime/*' --exclude 'public/storage/images/*' \
   --exclude 'dist' --exclude 'media' --exclude '.env' --exclude 'node_modules' \
+  --exclude 'docs/screenshots/*' --exclude 'docs/assets/*' \
   "$ROOT/" "$OUT/$NAME/"
 
 cd "$OUT"
