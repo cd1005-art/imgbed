@@ -358,6 +358,15 @@
       <label class="field"><span class="field-label">最低提现金额（元）</span>
         <input type="number" name="min_withdraw" value="{$settings.min_withdraw|default='50'}" min="1" max="100000">
       </label>
+      <label class="field"><span class="field-label">提现金额步长（元）</span>
+        <select name="withdraw_step">
+          <option value="1" {if condition="($settings['withdraw_step'] ?? '1') eq '1'"}selected{/if}>任意整数（1 元起）</option>
+          <option value="10" {if condition="($settings['withdraw_step'] ?? '1') eq '10'"}selected{/if}>10 的倍数</option>
+          <option value="50" {if condition="($settings['withdraw_step'] ?? '1') eq '50'"}selected{/if}>50 的倍数</option>
+          <option value="100" {if condition="($settings['withdraw_step'] ?? '1') eq '100'"}selected{/if}>100 的倍数</option>
+        </select>
+        <span class="field-hint">限制用户只能提整数倍金额，避免大量零碎提现单；1 = 不限制</span>
+      </label>
       <label class="field"><span class="field-label">每月提现次数上限（0=不限）</span>
         <input type="number" name="withdraw_monthly_limit" value="{$settings.withdraw_monthly_limit|default='2'}" min="0" max="100">
       </label>

@@ -74,6 +74,7 @@ class Console extends Base
             'min_recharge'   => (int)Setting::get('min_recharge', 10),
             'withdraw_fee'   => (int)Setting::get('withdraw_fee_pct', 0),
             'withdraw_monthly' => (int)Setting::get('withdraw_monthly_limit', 2),
+            'withdraw_step'  => max(1, (int)Setting::get('withdraw_step', 1)),
             'withdraw_used_this_month' => (int)Db::name('withdrawals')->where('user_id', $user->id)
                 ->where('create_time', '>', strtotime(date('Y-m-01')))->count(),
             'share_user'     => (int)Setting::get('share_user', 70),
@@ -168,6 +169,10 @@ class Console extends Base
         $min = (int)Setting::get('min_withdraw', 50);
         if ($amount < $min) {
             return json(['status' => false, 'message' => "最低提现 {$min} 元"]);
+        }
+        $step = max(1, (int)Setting::get('withdraw_step', 1));
+        if ($step > 1 && $amount % $step !== 0) {
+            return json(['status' => false, 'message' => "提现金额须为 {$step} 的整数倍"]);
         }
         if ($name === '' || $acct === '') {
             return json(['status' => false, 'message' => '请填写支付宝姓名与账号']);

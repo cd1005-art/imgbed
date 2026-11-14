@@ -249,12 +249,14 @@
           </h2>
           <p class="panel-sub">
             收益余额 {$earnings} 币 + 充值余额 {$credits} 币，<b>提现时优先扣收益余额</b>，不足部分扣充值余额<br>
-            提现比例 1 元 = {$withdraw_rate} 币 ｜ 最低 {$min_withdraw} 元 ｜ 手续费 {$withdraw_fee}%
+            提现比例 1 元 = {$withdraw_rate} 币 ｜ 最低 {$min_withdraw} 元
+            {if condition="$withdraw_step gt 1"}｜ <b>金额须为 {$withdraw_step} 的整数倍</b>{/if}
+            ｜ 手续费 {$withdraw_fee}%
             ｜ 本月已提 {$withdraw_used_this_month} / {if condition="$withdraw_monthly gt 0"}{$withdraw_monthly}{else /}不限{/if} 次
           </p>
           <form class="form form-grid" id="withdrawForm">
             <label class="field"><span class="field-label">提现金额（元）</span>
-              <input type="number" name="amount" value="{$min_withdraw}" min="{$min_withdraw}">
+              <input type="number" name="amount" value="{$min_withdraw}" min="{$min_withdraw}" step="{$withdraw_step}">
             </label>
             <label class="field"><span class="field-label">支付宝姓名</span>
               <input type="text" name="alipay_name" value="{$alipay_name}">

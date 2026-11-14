@@ -164,7 +164,7 @@ class AdManage extends Base
             'baidu_push_auto_count', 'baidu_push_auto_hours', 'baidu_push_daily_max',
             // 站币：充值 / 提现 / 分成
             'credits_per_yuan', 'min_recharge', 'recharge_bonus_pct',
-            'withdraw_enable', 'withdraw_rate', 'min_withdraw', 'withdraw_monthly_limit', 'withdraw_fee_pct',
+            'withdraw_enable', 'withdraw_rate', 'min_withdraw', 'withdraw_step', 'withdraw_monthly_limit', 'withdraw_fee_pct',
             'revenue_split_mode', 'share_user', 'share_ai',
         ];
         $all = $this->request->post();
