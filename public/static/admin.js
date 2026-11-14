@@ -1077,22 +1077,22 @@
         postForm('/admin/site/save', fm).then(function (d) { toast(d.message); });
       });
     });
-    var pf = document.getElementById('creditPlanForm');
-    if (pf) {
-      pf.addEventListener('submit', function (e) {
+    var cpf = document.getElementById('creditPlanForm');
+    if (cpf) {
+      cpf.addEventListener('submit', function (e) {
         e.preventDefault();
-        postForm('/admin/site/credit-plan', pf).then(function (d) {
+        postForm('/admin/site/credit-plan', cpf).then(function (d) {
           toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
         });
       });
       document.querySelectorAll('[data-plan-edit]').forEach(function (b) {
         b.addEventListener('click', function () {
-          pf.querySelector('[name=id]').value = b.dataset.planEdit;
-          pf.querySelector('[name=amount]').value = b.dataset.amount || '';
-          pf.querySelector('[name=bonus]').value = b.dataset.bonus || '0';
-          pf.querySelector('[name=sort]').value = b.dataset.sort || '0';
-          pf.querySelector('[name=status]').value = b.dataset.status || '1';
-          pf.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          cpf.querySelector('[name=id]').value = b.dataset.planEdit;
+          cpf.querySelector('[name=amount]').value = b.dataset.amount || '';
+          cpf.querySelector('[name=bonus]').value = b.dataset.bonus || '0';
+          cpf.querySelector('[name=sort]').value = b.dataset.sort || '0';
+          cpf.querySelector('[name=status]').value = b.dataset.status || '1';
+          cpf.scrollIntoView({ block: 'center', behavior: 'smooth' });
         });
       });
       document.querySelectorAll('[data-plan-del]').forEach(function (b) {
@@ -1107,6 +1107,35 @@
     }
     initTabs('#finTabs');
 
+    // 充值赠送活动
+    var bfm = document.getElementById('bonusForm');
+    if (bfm) {
+      bfm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        postForm('/admin/site/credit-bonus', bfm).then(function (d) {
+          toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+        });
+      });
+      document.querySelectorAll('[data-bonus-edit]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          bfm.querySelector('[name=id]').value = b.dataset.bonusEdit;
+          bfm.querySelector('[name=amount]').value = b.dataset.amount || '';
+          bfm.querySelector('[name=bonus]').value = b.dataset.bonus || '';
+          bfm.querySelector('[name=sort]').value = b.dataset.sort || '0';
+          bfm.querySelector('[name=status]').value = b.dataset.status || '1';
+          bfm.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+      });
+      document.querySelectorAll('[data-bonus-del]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          armConfirm(b, '删除该赠送活动？', function () {
+            post('/admin/site/credit-bonus-del/' + b.dataset.bonusDel).then(function (d) {
+              toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 600);
+            });
+          });
+        });
+      });
+    }
     // 订单批量
     bindBatchDelete({checkAll:'#ordCheckAll', checkbox:'.ord-check', batchBtn:'#ordDel',
       api:'/admin/payment/delete-orders', label:'订单', batchBar:'#ordBar',
