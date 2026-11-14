@@ -149,7 +149,7 @@ class PaymentService
         ]);
         $submitUrl = $this->resolveSubmitUrl();
         $params = [
-            'pid'          => (string)Setting::get('epay_pid', ''),
+            'pid'          => (string)($this->config['pid'] ?? ''),
             'type'         => $payChannel,
             'out_trade_no' => $order->order_no,
             'notify_url'   => request()->domain() . '/pay/notify',
