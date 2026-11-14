@@ -73,6 +73,14 @@ class AdManage extends Base
                 $saved++;
             }
         }
+        // 改了 SEO 相关配置：顺手清掉 sitemap 缓存，下次访问按新配置重建
+        foreach ($allowed as $k) {
+            if (str_starts_with($k, 'sitemap_') && array_key_exists($k, $all)) {
+                @unlink(root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'index' . DIRECTORY_SEPARATOR
+                    . 'sitemap' . DIRECTORY_SEPARATOR . 'sitemap.xml');
+                break;
+            }
+        }
         return json(['status' => true, 'message' => "已保存 {$saved} 项设置"]);
     }
 
