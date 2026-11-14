@@ -115,15 +115,19 @@
     <label class="field"><span class="field-label">每日推送上限（条，0=不限）</span>
       <input type="number" name="baidu_push_daily_max" value="{$settings.baidu_push_daily_max|default='10'}" min="0" max="1000">
     </label>
-    <label class="field"><span class="field-label">站点地址（site 参数）</span>
-      <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default=''}" placeholder="https://你的域名（与百度平台一致）">
-    </label>
-    <label class="field"><span class="field-label">Token</span>
-      <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default=''}" placeholder="普通收录 → API 提交 中获取">
-    </label>
-    <div class="field" style="display:flex;gap:10px;justify-content:flex-end;align-items:center;flex-wrap:wrap">
-      <button type="submit" class="btn">保存推送设置</button>
-      <button type="button" class="btn" id="seoPushBaidu">立即推送（增量，单次上限 1000 条）</button>
+    <div class="field" style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+      <label class="field" style="margin:0;width:300px">
+        <span class="field-label">站点地址（site 参数）</span>
+        <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default=''}" placeholder="https://你的域名">
+      </label>
+      <label class="field" style="margin:0;width:300px">
+        <span class="field-label">Token</span>
+        <input type="text" name="baidu_push_token" value="{$settings.baidu_push_token|default=''}" placeholder="普通收录 → API 提交 获取">
+      </label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button type="submit" class="btn">保存推送设置</button>
+        <button type="button" class="btn" id="seoPushBaidu">立即推送</button>
+      </div>
     </div>
   </form>
   <p class="field-hint" style="margin-top:8px">
