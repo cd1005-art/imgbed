@@ -242,3 +242,13 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 /* 紧凑表单：控件宽度收窄（站币/提现/分成设置用） */
 .form-grid.compact input,
 .form-grid.compact select { max-width: 180px; }
+
+/* 分页按钮：补实心底色（ghost 默认透明，看不清） */
+.pager .btn-ghost-sm,
+.pager .btn-ghost {
+  background: #FFFFFF;
+  border: 1px solid var(--line, #E4E1DB);
+  color: #1C1B18;
+}
+.pager .btn-ghost-sm:hover,
+.pager .btn-ghost:hover { background: #F4F2ED; }
