@@ -306,6 +306,40 @@
       </label>
       <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">新增 / 保存档位</button></div>
     </form>
+
+    <h2 class="panel-title" style="margin:20px 0 8px">充值赠送活动（满额送币）</h2>
+    <table class="table" style="margin-bottom:10px">
+      <thead><tr><th>充值满（元）</th><th>赠送（币）</th><th>排序</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody>
+        {volist name="recharge_bonus_list" id="rb"}
+        <tr>
+          <td><b>{$rb.amount}</b> 元</td>
+          <td>{$rb.bonus} 币</td>
+          <td>{$rb.sort}</td>
+          <td>{if condition="$rb.status eq 1"}<span class="ok">上架</span>{else /}<span class="count">下架</span>{/if}</td>
+          <td class="td-actions">
+            <button class="btn-ghost-sm" data-bonus-edit="{$rb.id}" data-amount="{$rb.amount}" data-bonus="{$rb.bonus}" data-sort="{$rb.sort}" data-status="{$rb.status}">编辑</button>
+            <button class="btn-ghost-sm btn-danger-sm" data-bonus-del="{$rb.id}">删除</button>
+          </td>
+        </tr>
+        {/volist}
+        {if condition="count($recharge_bonus_list) eq 0"}<tr><td colspan="5" class="field-hint">暂无赠送活动</td></tr>{/if}
+      </tbody>
+    </table>
+    <form class="form form-grid" id="bonusForm">
+      <input type="hidden" name="id" value="0">
+      <label class="field"><span class="field-label">充值满（元）</span><input type="number" name="amount" min="1" max="100000" placeholder="100"></label>
+      <label class="field"><span class="field-label">赠送（币）</span><input type="number" name="bonus" min="1" max="1000000" placeholder="10"></label>
+      <label class="field"><span class="field-label">排序</span><input type="number" name="sort" min="0" max="9999" placeholder="0"></label>
+      <label class="field"><span class="field-label">状态</span>
+        <select name="status"><option value="1">上架</option><option value="0">下架</option></select>
+      </label>
+      <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">新增 / 保存活动</button></div>
+    </form>
+    <p class="field-hint">
+      示例：满 100 送 10 → 充值 100 元，到账 = 100 × 充值比例 + 10 币；充值 150 元同样命中（取不超过金额的最高门槛）。
+      与「充值档位」赠送币<b>可叠加</b>，全局「充值赠送 %」作为加成也在到账时叠加。
+    </p>
   </div>
 
 

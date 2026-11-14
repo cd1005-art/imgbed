@@ -297,6 +297,27 @@
         form.appendChild(inp); document.body.appendChild(form); form.submit();
       });
     });
+    // 到账预估：金额 × 比例 + 满额赠送
+    var prev = document.getElementById('rechargePreview');
+    var rcInput = document.getElementById('customRecharge');
+    if (prev && rcInput) {
+      prev.dataset.baseText = prev.textContent;
+      var calcPreview = function () {
+        var v = parseInt(rcInput.value || '0', 10);
+        if (!v) { prev.textContent = prev.dataset.baseText; return; }
+        var rate = parseInt(prev.getAttribute('data-rate') || '10', 10);
+        var bonuses = [];
+        try { bonuses = JSON.parse(prev.getAttribute('data-bonus') || '[]') || []; } catch (e) { bonuses = []; }
+        var best = 0;
+        bonuses.forEach(function (b) {
+          if (v >= parseInt(b.amount || 0, 10)) { best = Math.max(best, parseInt(b.bonus || 0, 10)); }
+        });
+        var coins = v * rate + best;
+        prev.innerHTML = '到账预估：<b>' + coins + '</b> 币' + (best > 0 ? '（含满额赠送 ' + best + ' 币）' : '') + '，支付成功后自动到账。';
+      };
+      rcInput.addEventListener('input', calcPreview);
+    }
+
     var crb = document.getElementById('customRechargeBtn');
     if (crb) crb.addEventListener('click', function () {
       var el = document.getElementById('customRecharge');

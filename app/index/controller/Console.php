@@ -81,6 +81,8 @@ class Console extends Base
             'split_mode'     => (string)Setting::get('revenue_split_mode', '0'),
             'credit_plans'   => Db::name('credit_plans')->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
             'recharge_bonus' => (int)Setting::get('recharge_bonus_pct', 0),
+            'recharge_bonus_list' => Db::name('recharge_bonus')->where('status', 1)
+                ->order('amount', 'asc')->select()->toArray(),
             'verify_mode'    => (string)Setting::get('verify_mode', 'none'),
             'token_limit' => ($group && (int)$group->max_tokens > 0) ? (int)$group->max_tokens : 0,
             // 权益面板（与后台策略组同步展示）

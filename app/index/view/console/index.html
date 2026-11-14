@@ -128,9 +128,15 @@
             </label>
             <button class="btn btn-sm" type="button" id="customRechargeBtn">按此金额充值</button>
           </div>
-          <p class="field-hint">
-            到账计算：金额 × <b>{$credits_rate}</b> 币{if condition="$recharge_bonus gt 0"} × (1 + 活动 {$recharge_bonus}%){/if}{if condition="count($credit_plans) gt 0"} + 所选档位赠送{/if}。
-            最低充值 {$min_recharge} 元；支付成功自动到账，可在「充值记录」查看。
+          {if condition="count($recharge_bonus_list) gt 0"}
+          <p class="field-hint" style="color:#2E6B4F">
+            <b>充值活动：</b>{foreach name="recharge_bonus_list" item="rb" key="rk"}满 {$rb.amount} 送 <b>{$rb.bonus}</b> 币{if condition="$rk lt count($recharge_bonus_list) - 1"} ｜ {/if}{/foreach}
+          </p>
+          {/if}
+          <p class="field-hint" id="rechargePreview"
+             data-rate="{$credits_rate}"
+             data-bonus='{:json_encode($recharge_bonus_list)}'>
+            到账计算：金额 × <b>{$credits_rate}</b> 币{if condition="$recharge_bonus gt 0"} × (1 + 加成 {$recharge_bonus}%){/if} + 满额赠送；输入金额后显示预估。
           </p>
           {else /}
           <p class="field-hint" style="color:#d29922">支付通道维护中，暂时无法充值</p>

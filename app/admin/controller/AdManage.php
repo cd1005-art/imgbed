@@ -32,6 +32,7 @@ class AdManage extends Base
             'groups'   => StrategyGroup::where('status', 1)->select(),
             'domain'   => rtrim((string)request()->domain(), '/'),
             'credit_plans' => Db::name('credit_plans')->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
+            'recharge_bonus_list' => Db::name('recharge_bonus')->order('amount', 'asc')->order('sort', 'asc')->select()->toArray(),
         ]);
     }
 
@@ -61,6 +62,34 @@ class AdManage extends Base
     public function planDel(int $id)
     {
         Db::name('credit_plans')->where('id', $id)->delete();
+        return json(['status' => true, 'message' => '已删除']);
+    }
+
+    /** 充值赠送活动：保存 */
+    public function bonusSave()
+    {
+        $id     = (int)$this->request->post('id', 0);
+        $amount = (int)$this->request->post('amount', 0);
+        $bonus  = (int)$this->request->post('bonus', 0);
+        $sort   = (int)$this->request->post('sort', 0);
+        $status = (int)$this->request->post('status', 1) === 1 ? 1 : 0;
+        if ($amount <= 0 || $bonus <= 0) {
+            return json(['status' => false, 'message' => '满额与赠送金额必须大于 0']);
+        }
+        $data = ['amount' => $amount, 'bonus' => $bonus, 'sort' => $sort, 'status' => $status];
+        if ($id > 0) {
+            Db::name('recharge_bonus')->where('id', $id)->update($data);
+        } else {
+            $data['create_time'] = time();
+            Db::name('recharge_bonus')->insert($data);
+        }
+        return json(['status' => true, 'message' => '活动已保存']);
+    }
+
+    /** 充值赠送活动：删除 */
+    public function bonusDel(int $id)
+    {
+        Db::name('recharge_bonus')->where('id', $id)->delete();
         return json(['status' => true, 'message' => '已删除']);
     }
 

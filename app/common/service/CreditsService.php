@@ -104,9 +104,14 @@ class CreditsService
         if ($order && (int)($order['plan_id'] ?? 0) > 0) {
             $planBonus = (int)Db::name('credit_plans')->where('id', (int)$order['plan_id'])->value('bonus');
         }
-        $coins += $planBonus;
+        // 满额赠送活动（阶梯：取不超过充值金额的最高门槛）
+        $activityBonus = (int)Db::name('recharge_bonus')->where('status', 1)
+            ->where('amount', '<=', $yuan)->order('amount', 'desc')->value('bonus');
+        $coins += $planBonus + $activityBonus;
 
-        $remark = "充值 {$yuan} 元（1:{$rate}" . ($pct > 0 ? " +活动{$pct}%" : '') . ($planBonus > 0 ? " +档位赠{$planBonus}" : '') . '）';
+        $remark = "充值 {$yuan} 元（1:{$rate}" . ($pct > 0 ? " +加成{$pct}%" : '')
+            . ($planBonus > 0 ? " +档位赠{$planBonus}" : '')
+            . ($activityBonus > 0 ? " +充值满额赠{$activityBonus}" : '') . '）';
         $balance = self::change($userId, $coins, 'recharge', $orderId, $remark);
         try {
             $u = Db::name('users')->where('id', $userId)->find();

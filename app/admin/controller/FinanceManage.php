@@ -182,6 +182,7 @@ class FinanceManage extends Base
                 return round(($n / $m) * (1 - $fee / 100) * 100 - 100, 2);
             })(),
             'credit_plans' => Db::name('credit_plans')->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
+            'recharge_bonus_list' => Db::name('recharge_bonus')->order('amount', 'asc')->select()->toArray(),
             'page_no' => $page,
         ]);
     }
