@@ -458,13 +458,13 @@
 
       var html = '';
       if (start > 1) {
-        html += '<button type="button" class="btn-ghost-sm" data-pg="' + (start - 1) + '" title="上一组">«</button>';
+        html += '<button type="button" class="btn-ghost-sm" data-pg="' + Math.max(1, cur - PER) + '" title="上一组">«</button>';
       }
       for (var i = start; i <= end; i++) {
         html += '<button type="button" class="' + (i === cur ? 'btn btn-sm' : 'btn-ghost-sm') + '" data-pg="' + i + '">' + i + '</button>';
       }
       if (end < total) {
-        html += '<button type="button" class="btn-ghost-sm" data-pg="' + (end + 1) + '" title="下一组">»</button>';
+        html += '<button type="button" class="btn-ghost-sm" data-pg="' + Math.min(total, cur + PER) + '" title="下一组">»</button>';
       }
       pbox.innerHTML = html;
       pbox.addEventListener('click', function (e) {
