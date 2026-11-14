@@ -444,10 +444,13 @@
       var total = parseInt(tm[2], 10) || 0;
       if (total < 2) { return; }
 
-      // 页码块：按 5 个一组（1-5 / 6-10 / 11-15 ...）
-      var PER = 5;
-      var start = Math.floor((cur - 1) / PER) * PER + 1;
+      // 页码块：滑动窗口，起点=当前页，尾部不足时回退凑满
+      var PER = Math.max(3, Math.min(20, parseInt(window.PAGER_SIZE, 10) || 5));
+      var start = cur;
       var end = Math.min(start + PER - 1, total);
+      if (end - start + 1 < PER) {
+        start = Math.max(1, end - PER + 1);
+      }
 
       var pbox = document.createElement('span');
       pbox.setAttribute('data-pager-pages', '1');
@@ -486,6 +489,7 @@
     });
   }
 
+  window.initPagerJump = initPagerJump;
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initPagerJump);
   } else {

@@ -19,6 +19,7 @@ class Base extends \app\BaseController
         $vars['site_name'] = $vars['site_name'] ?? Setting::get('site_name', '逍遥图床');
         $vars['domain']    = $vars['domain'] ?? rtrim((string)request()->domain(), '/');
         $vars['user']      = $vars['user'] ?? ($uid > 0 ? User::findUser($uid) : null);
+        $vars['pager_size'] = $vars['pager_size'] ?? max(3, min(20, (int)Setting::get('pager_size', 5)));
 
         // 广告位（后台开关控制；免费运营模式的变现入口）
         $vars['ads_home_header'] = $vars['ads_home_header'] ?? self::adContent('home_header');

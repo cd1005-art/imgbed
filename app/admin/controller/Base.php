@@ -13,6 +13,7 @@ class Base extends \app\BaseController
         $vars['admin']      = $vars['admin'] ?? $this->request->loginAdmin ?? null;
         $vars['site_name']  = $vars['site_name'] ?? \app\common\model\Setting::get('site_name', '逍遥图床');
         $vars['page']       = $vars['page'] ?? '';
+        $vars['pager_size'] = $vars['pager_size'] ?? max(3, min(20, (int)\app\common\model\Setting::get('pager_size', 5)));
         return view($template, $vars);
     }
 }
