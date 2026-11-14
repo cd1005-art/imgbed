@@ -62,6 +62,7 @@ Route::get('gallery', 'Gallery/index');
     Route::post('console/resend-verify', 'Console/resendVerify');
     Route::post('console/recharge', 'Console/recharge');
     Route::post('console/withdraw', 'Console/withdraw');
+Route::post('console/alipay', 'Console/saveAlipay');
 Route::get('console', 'Console/index');
     Route::post('console/token/create', 'Console/tokenCreate');
     Route::post('console/token/delete/:id', 'Console/tokenDelete');

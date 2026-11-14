@@ -237,8 +237,8 @@
   function initTabs(rootSel) {
     var root = document.querySelector(rootSel);
     if (!root) return;
-    var btns = root.querySelectorAll('.tab-btn');
-    var panes = root.querySelectorAll('.tab-pane');
+    var btns = root.querySelectorAll(':scope > .tabs-nav .tab-btn');
+    var panes = root.querySelectorAll(':scope > .tab-pane');
     function show(name, push) {
       var found = false;
       btns.forEach(function (b) {
@@ -253,11 +253,14 @@
       if (push) { try { history.replaceState(null, '', '#' + name); } catch (e) {} }
     }
     btns.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-tab'), true); }); });
-    show((location.hash || '').replace('#', '') || (btns[0] ? btns[0].getAttribute('data-tab') : ''), false);
+    var qs = new URLSearchParams(location.search || '');
+    show((location.hash || '').replace('#', '') || qs.get('tab') || (btns[0] ? btns[0].getAttribute('data-tab') : ''), false);
   }
 
   function bootConsole() {
     initTabs('#consoleTabs');
+    initTabs('#creditSubTabs');
+    initTabs('#withdrawSubTabs');
     var createBtn = document.getElementById('tokenCreateBtn');
     if (createBtn) {
       createBtn.addEventListener('click', function () {
@@ -289,6 +292,19 @@
         form.appendChild(inp); document.body.appendChild(form); form.submit();
       });
     });
+    var af = document.getElementById('alipayForm');
+    if (af) af.addEventListener('submit', function (e) {
+      e.preventDefault();
+      fetch('/console/alipay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(new FormData(af)).toString()
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        toast(d.message);
+        if (d.status) setTimeout(function () { location.reload(); }, 700);
+      }).catch(function () { toast('保存失败：网络错误'); });
+    });
+
     var wf = document.getElementById('withdrawForm');
     if (wf) wf.addEventListener('submit', function (e) {
       e.preventDefault();

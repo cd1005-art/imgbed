@@ -57,8 +57,21 @@ class Console extends Base
             'credits_rate'   => max(1, (int)Setting::get('credits_per_yuan', 10)),
             'pay_available'  => (new \app\common\service\PaymentService())->isAvailable(),
             'min_withdraw'   => (int)Setting::get('min_withdraw', 50),
-            'withdraws'      => Db::name('withdrawals')->where('user_id', $user->id)->order('id', 'desc')->limit(5)->select(),
+            'withdraws'      => Db::name('withdrawals')->where('user_id', $user->id)->order('id', 'desc')->limit(20)->select(),
             'has_withdraws'  => (int)Db::name('withdrawals')->where('user_id', $user->id)->count() > 0,
+            // 站币四类记录
+            'recharge_logs'  => Db::name('credit_logs')->where('user_id', $user->id)->where('type', 'recharge')
+                ->order('id', 'desc')->limit(20)->select()->toArray(),
+            'earn_logs'      => Db::name('credit_logs')->where('user_id', $user->id)->where('type', 'share')
+                ->order('id', 'desc')->limit(20)->select()->toArray(),
+            'unlock_logs'    => Db::name('credit_logs')->where('user_id', $user->id)->where('type', 'unlock')
+                ->order('id', 'desc')->limit(20)->select()->toArray(),
+            'credit_orders'  => Db::name('orders')->where('user_id', $user->id)->where('type', 'credits')
+                ->order('id', 'desc')->limit(20)->select()->toArray(),
+            'alipay_name'    => (string)($user->alipay_name ?? ''),
+            'alipay_account' => (string)($user->alipay_account ?? ''),
+            'min_recharge'   => (int)Setting::get('min_recharge', 10),
+            'recharge_bonus' => (int)Setting::get('recharge_bonus_pct', 0),
             'verify_mode'    => (string)Setting::get('verify_mode', 'none'),
             'token_limit' => ($group && (int)$group->max_tokens > 0) ? (int)$group->max_tokens : 0,
             // 权益面板（与后台策略组同步展示）
@@ -90,6 +103,26 @@ class Console extends Base
         } catch (\Throwable $e) {
             return json(['status' => false, 'message' => $e->getMessage()]);
         }
+    }
+
+    /** 保存提现账号（支付宝） */
+    public function saveAlipay()
+    {
+        $user = $this->currentUser();
+        if (!$user) {
+            return json(['status' => false, 'message' => '请先登录']);
+        }
+        $name = trim((string)$this->request->post('alipay_name', ''));
+        $acct = trim((string)$this->request->post('alipay_account', ''));
+        if ($name === '' || $acct === '') {
+            return json(['status' => false, 'message' => '请填写支付宝姓名与账号']);
+        }
+        \think\facade\Db::name('users')->where('id', $user->id)->update([
+            'alipay_name' => mb_substr($name, 0, 30),
+            'alipay_account' => mb_substr($acct, 0, 60),
+            'update_time' => time(),
+        ]);
+        return json(['status' => true, 'message' => '提现账号已保存']);
     }
 
     /** 提现申请 */

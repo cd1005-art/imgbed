@@ -20,7 +20,8 @@
   <nav class="tabs-nav">
     <button class="tab-btn" type="button" data-tab="quota">配额</button>
     <button class="tab-btn" type="button" data-tab="token">API Token</button>
-    <button class="tab-btn" type="button" data-tab="credits">收益与站币</button>
+    <button class="tab-btn" type="button" data-tab="credits">站币</button>
+    <button class="tab-btn" type="button" data-tab="withdraw">提现</button>
     <button class="tab-btn" type="button" data-tab="account">修改密码</button>
   </nav>
   <div class="tab-pane" data-pane="quota">
@@ -94,47 +95,168 @@
 </section>
   </div>
   <div class="tab-pane" data-pane="credits">
-<section class="panel">
-  <h2 class="panel-title">收益与站币 <span class="count">余额 {$credits} 币 · 累计收益 {$credits_total} 币</span></h2>
-  <p class="panel-sub">1 元 = {$credits_rate} 站币。站币可用于解锁他人付费图片；作者收益可提现到支付宝。</p>
+    <div id="creditSubTabs">
+      <nav class="tabs-nav" style="margin-bottom:12px">
+        <button class="tab-btn" type="button" data-tab="recharge">充值</button>
+        <button class="tab-btn" type="button" data-tab="earn">收益</button>
+        <button class="tab-btn" type="button" data-tab="rlog">充值记录</button>
+        <button class="tab-btn" type="button" data-tab="elog">收益记录</button>
+      </nav>
 
-  <div class="model-inline-form" style="margin:10px 0 16px">
-    <span class="field-hint">充值：</span>
-    {if condition="isset($pay_available) && $pay_available"}
-    <button class="btn-ghost-sm" type="button" data-recharge="10">10 元</button>
-    <button class="btn-ghost-sm" type="button" data-recharge="50">50 元</button>
-    <button class="btn-ghost-sm" type="button" data-recharge="100">100 元</button>
-    {else /}
-    <span class="field-hint" style="color:#d29922">支付通道维护中，暂时无法充值</span>
-    {/if}
+      <div class="tab-pane" data-pane="recharge">
+        <section class="panel">
+          <h2 class="panel-title">充值站币
+            <span class="count">1 元 = {$credits_rate} 币{if condition="$recharge_bonus gt 0"} · 活动赠送 {$recharge_bonus}%{/if} · 最低 {$min_recharge} 元</span>
+          </h2>
+          <p class="panel-sub">充值余额 {$credits} 币（用于消费，不可提现）｜ 收益余额 {$earnings} 币（可提现）</p>
+          {if condition="isset($pay_available) && $pay_available"}
+          <div class="model-inline-form" style="margin:12px 0">
+            <span class="field-hint">选择金额：</span>
+            <button class="btn-ghost-sm" type="button" data-recharge="10">10 元</button>
+            <button class="btn-ghost-sm" type="button" data-recharge="50">50 元</button>
+            <button class="btn-ghost-sm" type="button" data-recharge="100">100 元</button>
+          </div>
+          <p class="field-hint">到账 {$credits_rate} 币 / 元{if condition="$recharge_bonus gt 0"}，活动期额外赠送 {$recharge_bonus}%{/if}。支付成功自动到账。</p>
+          {else /}
+          <p class="field-hint" style="color:#d29922">支付通道维护中，暂时无法充值</p>
+          {/if}
+        </section>
+      </div>
+
+      <div class="tab-pane" data-pane="earn">
+        <section class="panel">
+          <h2 class="panel-title">收益
+            <span class="count">可提现 {$earnings} 币 · 累计收益 {$credits_total} 币 · 提现比例 1 元 = {$withdraw_rate} 币</span>
+          </h2>
+          <p class="panel-sub">他人解锁你的付费图片时，分成进入收益余额；收益可提现，也可直接用于消费（消费时优先扣充值余额）。</p>
+          <table class="table" style="margin-top:12px">
+            <thead><tr><th>我解锁的图</th><th>消耗</th><th>时间</th></tr></thead>
+            <tbody>
+              {volist name="unlock_logs" id="u"}
+              <tr>
+                <td>{$u.remark}</td>
+                <td><span class="danger">{$u.amount} 币</span></td>
+                <td>{:date('m-d H:i', ts($u.create_time))}</td>
+              </tr>
+              {/volist}
+              {if condition="count($unlock_logs) eq 0"}<tr><td colspan="3" class="field-hint">暂无解锁记录</td></tr>{/if}
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="tab-pane" data-pane="rlog">
+        <section class="panel">
+          <h2 class="panel-title">充值记录 <span class="count">最近 20 条</span></h2>
+          <table class="table">
+            <thead><tr><th>订单号</th><th>金额</th><th>状态</th><th>时间</th></tr></thead>
+            <tbody>
+              {volist name="credit_orders" id="o"}
+              <tr>
+                <td class="mono">{$o.order_no}</td>
+                <td>{:round($o.amount / 100, 2)} 元</td>
+                <td>{if condition="$o.status eq 'paid'"}<span class="ok">已支付</span>{elseif condition="$o.status eq 'pending'"}待支付{else /}<span class="danger">已关闭</span>{/if}</td>
+                <td>{:date('m-d H:i', ts($o.create_time))}</td>
+              </tr>
+              {/volist}
+              {if condition="count($credit_orders) eq 0"}<tr><td colspan="4" class="field-hint">暂无充值记录</td></tr>{/if}
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="tab-pane" data-pane="elog">
+        <section class="panel">
+          <h2 class="panel-title">收益记录 <span class="count">最近 20 条分成</span></h2>
+          <table class="table">
+            <thead><tr><th>说明</th><th>变动</th><th>变动后收益</th><th>时间</th></tr></thead>
+            <tbody>
+              {volist name="earn_logs" id="e"}
+              <tr>
+                <td>{$e.remark}</td>
+                <td><span class="ok">+{$e.amount} 币</span></td>
+                <td>{$e.balance_after} 币</td>
+                <td>{:date('m-d H:i', ts($e.create_time))}</td>
+              </tr>
+              {/volist}
+              {if condition="count($earn_logs) eq 0"}<tr><td colspan="4" class="field-hint">暂无收益记录</td></tr>{/if}
+            </tbody>
+          </table>
+        </section>
+      </div>
+    </div>
   </div>
 
-  <form class="form form-grid" id="withdrawForm">
-    <label class="field"><span class="field-label">提现金额（元，最低 {$min_withdraw}）</span><input type="number" name="amount" value="{$min_withdraw}"></label>
-    <label class="field"><span class="field-label">支付宝姓名</span><input type="text" name="alipay_name" value="{$user.alipay_name|default=''}"></label>
-    <label class="field"><span class="field-label">支付宝账号</span><input type="text" name="alipay_account" value="{$user.alipay_account|default=''}"></label>
-    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">申请提现</button></div>
-  </form>
+  <div class="tab-pane" data-pane="withdraw">
+    <div id="withdrawSubTabs">
+      <nav class="tabs-nav" style="margin-bottom:12px">
+        <button class="tab-btn" type="button" data-tab="acct">提现账号</button>
+        <button class="tab-btn" type="button" data-tab="apply">提现申请</button>
+        <button class="tab-btn" type="button" data-tab="wlog">提现记录</button>
+      </nav>
 
-  {if condition="$has_withdraws"}
-  <table class="table" style="margin-top:14px">
-    <thead><tr><th>金额</th><th>实得</th><th>状态</th><th>时间</th></tr></thead>
-    <tbody>
-      {volist name="withdraws" id="w"}
-      <tr>
-        <td>{$w.amount} 元</td>
-        <td>{$w.real_amount} 元</td>
-        <td>{if condition="$w.status eq 'pending'"}<span class="count">待审核</span>{elseif condition="$w.status eq 'approved'"}已通过{elseif condition="$w.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
-        <td>{:date('m-d H:i', ts($w.create_time))}</td>
-      </tr>
-      {/volist}
-    </tbody>
-  </table>
-  {else /}
-  <p class="field-hint" style="margin-top:14px">暂无提现记录。作者收益可在此申请提现到支付宝。</p>
-  {/if}
-</section>
+      <div class="tab-pane" data-pane="acct">
+        <section class="panel">
+          <h2 class="panel-title">提现账号 <span class="count">保存一次，之后提现自动使用</span></h2>
+          <form class="form form-grid" id="alipayForm">
+            <label class="field"><span class="field-label">支付宝姓名</span>
+              <input type="text" name="alipay_name" value="{$alipay_name}" placeholder="与支付宝实名一致">
+            </label>
+            <label class="field"><span class="field-label">支付宝账号</span>
+              <input type="text" name="alipay_account" value="{$alipay_account}" placeholder="手机号或邮箱">
+            </label>
+            <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存账号</button></div>
+          </form>
+        </section>
+      </div>
+
+      <div class="tab-pane" data-pane="apply">
+        <section class="panel">
+          <h2 class="panel-title">提现申请
+            <span class="count">可提现 {$earnings} 币 · 1 元 = {$withdraw_rate} 币 · 最低 {$min_withdraw} 元</span>
+          </h2>
+          <form class="form form-grid" id="withdrawForm">
+            <label class="field"><span class="field-label">提现金额（元）</span>
+              <input type="number" name="amount" value="{$min_withdraw}" min="{$min_withdraw}">
+            </label>
+            <label class="field"><span class="field-label">支付宝姓名</span>
+              <input type="text" name="alipay_name" value="{$alipay_name}">
+            </label>
+            <label class="field"><span class="field-label">支付宝账号</span>
+              <input type="text" name="alipay_account" value="{$alipay_account}">
+            </label>
+            <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">申请提现</button></div>
+          </form>
+          <p class="field-hint">手续费与月限由站长配置；提交后进入人工审核，驳回将原额退回收益余额。</p>
+        </section>
+      </div>
+
+      <div class="tab-pane" data-pane="wlog">
+        <section class="panel">
+          <h2 class="panel-title">提现记录 <span class="count">最近 20 条</span></h2>
+          {if condition="$has_withdraws"}
+          <table class="table">
+            <thead><tr><th>金额</th><th>手续费</th><th>实得</th><th>状态</th><th>时间</th></tr></thead>
+            <tbody>
+              {volist name="withdraws" id="w"}
+              <tr>
+                <td>{$w.amount} 元</td>
+                <td>{$w.fee} 元</td>
+                <td><b>{$w.real_amount} 元</b></td>
+                <td>{if condition="$w.status eq 'pending'"}<span class="count">待审核</span>{elseif condition="$w.status eq 'approved'"}已通过，待打款{elseif condition="$w.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
+                <td>{:date('m-d H:i', ts($w.create_time))}</td>
+              </tr>
+              {/volist}
+            </tbody>
+          </table>
+          {else /}
+          <p class="field-hint">暂无提现记录</p>
+          {/if}
+        </section>
+      </div>
+    </div>
   </div>
+
   <div class="tab-pane" data-pane="account">
 <section class="panel">
   <h2 class="panel-title">修改密码</h2>
