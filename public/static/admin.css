@@ -241,4 +241,4 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 
 /* 紧凑表单：控件宽度收窄（站币/提现/分成设置用） */
 .form-grid.compact input,
-.form-grid.compact select { max-width: 150px; }
+.form-grid.compact select { max-width: 180px; }

@@ -260,7 +260,7 @@
   </div>
   <div class="tab-pane" data-pane="settings">
     <h2 class="panel-title" style="margin:0 0 8px">充值设置</h2>
-    <form class="form form-grid compact" id="creditCfgForm" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <form class="form form-grid compact" id="creditCfgForm" style="grid-template-columns:repeat(3,minmax(0,220px));justify-content:start;column-gap:28px">
       <label class="field"><span class="field-label">充值比例（1 元 = 多少站币）</span>
         <input type="number" name="credits_per_yuan" value="{$settings.credits_per_yuan|default='10'}" min="1" max="1000">
       </label>
@@ -347,7 +347,7 @@
 
   <div class="tab-pane" data-pane="wdcfg">
     <h2 class="panel-title" style="margin:0 0 8px">提现设置</h2>
-    <form class="form form-grid compact" id="withdrawCfgForm" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <form class="form form-grid compact" id="withdrawCfgForm" style="grid-template-columns:repeat(3,minmax(0,220px));justify-content:start;column-gap:28px">
       <label class="field"><span class="field-label">提现功能</span>
         <select name="withdraw_enable">
           <option value="1" {if condition="($settings['withdraw_enable'] ?? '1') eq '1'"}selected{/if}>开启</option>
@@ -399,7 +399,7 @@
 
   <div class="tab-pane" data-pane="sharecfg">
     <h2 class="panel-title" style="margin:0 0 8px">作者分成设置</h2>
-    <form class="form form-grid compact" id="shareCfgForm" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+    <form class="form form-grid compact" id="shareCfgForm" style="grid-template-columns:repeat(3,minmax(0,220px));justify-content:start;column-gap:28px">
       <label class="field"><span class="field-label">分成模式</span>
         <select name="revenue_split_mode">
           <option value="0" {if condition="($settings['revenue_split_mode'] ?? '0') eq '0'"}selected{/if}>统一比例</option>
