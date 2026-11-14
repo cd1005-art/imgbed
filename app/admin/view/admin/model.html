@@ -3,6 +3,16 @@
 {block name="content"}
 <h1 class="page-title">模型设置</h1>
 
+<div id="modelTabs">
+  <nav class="tabs-nav">
+    <button class="tab-btn" type="button" data-tab="policy">审核策略</button>
+    <button class="tab-btn" type="button" data-tab="audit">审核模型</button>
+    <button class="tab-btn" type="button" data-tab="gen">生成模型</button>
+    <button class="tab-btn" type="button" data-tab="prompt">提示词模型</button>
+    <button class="tab-btn" type="button" data-tab="new">新增模型</button>
+  </nav>
+
+  <div class="tab-pane" data-pane="policy">
 <section class="panel">
   <h2 class="panel-title">审核策略</h2>
   <p class="panel-sub">审核开启后使用下方模型卡片：按卡片顺序优先，失败自动切换；也可在协同模式选择并行投票。卡片全部失效时转人工复审（不冻结外链）。</p>
@@ -25,6 +35,9 @@
 
 <h2 class="page-title" style="font-size:16px; margin:24px 0 12px">审核模型（从上到下即优先级，供后台图片审核使用）</h2>
 
+  </div>
+
+  <div class="tab-pane" data-pane="audit">
 {volist name="models" id="m"}
 <section class="panel" data-model-panel="{$m.id}">
   <div class="panel-head">
@@ -63,6 +76,9 @@
 
 <h2 class="page-title" style="font-size:16px; margin:24px 0 12px">生成模型（文生图，供前台用户使用）</h2>
 
+  </div>
+
+  <div class="tab-pane" data-pane="gen">
 {volist name="gen_models" id="m"}
 <section class="panel" data-model-panel="{$m.id}">
   <div class="panel-head">
@@ -93,6 +109,9 @@
 </section>
 {/volist}
 
+  </div>
+
+  <div class="tab-pane" data-pane="prompt">
 <h2 class="panel-title" style="margin:22px 0 8px">提示词模型（可选，用于 AI 批量生成提示词）</h2>
 {volist name="prompt_models" id="m"}
 <section class="panel" data-model-panel="{$m.id}">
@@ -124,6 +143,9 @@
 </section>
 {/volist}
 
+  </div>
+
+  <div class="tab-pane" data-pane="new">
 <section class="panel">
   <h2 class="panel-title">新增模型卡片</h2>
   <form class="model-inline-form model-form" id="modelNewForm">
@@ -145,6 +167,8 @@
     <button type="submit" class="btn btn-sm">+ 新增卡片</button>
   </form>
 </section>
+  </div>
+</div>
 {/block}
 
 {block name="script"}

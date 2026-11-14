@@ -723,6 +723,7 @@
 
   /* ---------- 计划任务 ---------- */
   function adminCron() {
+    initTabs('#cronTabs');
     document.querySelectorAll('[data-cron-run]').forEach(function (b) {
       b.addEventListener('click', function () {
         b.disabled = true; var t0 = b.textContent; b.textContent = '执行中…';
@@ -1403,6 +1404,7 @@
 
   /* ---------- 模型设置：多卡片 ---------- */
   function adminModel() {
+    initTabs('#modelTabs');
     document.querySelectorAll('.model-form').forEach(function (form) {
       form.addEventListener('submit', function (e) {
         e.preventDefault();

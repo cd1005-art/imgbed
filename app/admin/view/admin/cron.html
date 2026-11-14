@@ -3,6 +3,14 @@
 {block name="content"}
 <h1 class="page-title">计划任务 <span class="count">状态灯：灰=未执行过 · 绿=最近执行成功 · 红=最近执行失败</span></h1>
 
+<div id="cronTabs">
+  <nav class="tabs-nav">
+    <button class="tab-btn" type="button" data-tab="status">任务状态</button>
+    <button class="tab-btn" type="button" data-tab="config">配置方式</button>
+  </nav>
+
+  <div class="tab-pane" data-pane="status">
+
 <section class="panel">
   <h2 class="panel-title">任务状态</h2>
   <table class="table">
@@ -43,6 +51,9 @@
     宝塔计划任务真实触发后，来源会变为「URL 调度 / CLI 调度」，同样按成败亮灯。执行需几秒，按钮会显示「执行中…」。
   </p>
 </section>
+  </div>
+
+  <div class="tab-pane" data-pane="config">
 
 <section class="panel">
   <h2 class="panel-title">配置方式（二选一）</h2>
@@ -81,6 +92,8 @@
     当前已用方式 A（CLI）的可放心重置。
   </p>
 </section>
+  </div>
+</div>
 <div class="modal-mask" id="cronLogModal" hidden>
   <div class="modal" style="width:min(760px,94vw)">
     <h3 class="modal-title" id="cronLogTitle">执行日志</h3>
