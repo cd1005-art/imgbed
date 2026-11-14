@@ -192,7 +192,7 @@ class Console extends Base
         }
 
         $feePct = (int)Setting::get('withdraw_fee_pct', 0);
-        $fee = (int)floor($amount * $feePct / 100);
+        $fee = round($amount * $feePct / 100, 2);   // 精确到分，避免 floor 把 1.5 变成 1
 
         try {
             Db::startTrans();

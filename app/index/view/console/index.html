@@ -280,9 +280,9 @@
             <tbody>
               {volist name="withdraws" id="w"}
               <tr>
-                <td>{$w.amount} 元</td>
-                <td>{$w.fee} 元</td>
-                <td><b>{$w.real_amount} 元</b></td>
+                <td>{:number_format((float)$w.amount, 2, ".", "")} 元</td>
+                <td>{:number_format((float)$w.fee, 2, ".", "")} 元</td>
+                <td><b>{:number_format((float)$w.real_amount, 2, ".", "")} 元</b></td>
                 <td>{if condition="$w.status eq 'pending'"}<span class="count">待审核</span>{elseif condition="$w.status eq 'approved'"}已通过，待打款{elseif condition="$w.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
                 <td class="td-clip" title="{$w.remark}">{$w.remark|default='-'}</td>
                 <td>{:date('m-d H:i', ts($w.create_time))}</td>

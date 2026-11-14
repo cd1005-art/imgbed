@@ -234,9 +234,9 @@
       <td><input type="checkbox" class="wd-check" value="{$wv.id}" data-status="{$wv.status}"></td>
       <td>{$wv.id}</td>
       <td class="td-clip">{$wv.email|default='-'}</td>
-      <td>{$wv.amount} 元</td>
-      <td>{$wv.fee} 元</td>
-      <td><b>{$wv.real_amount} 元</b></td>
+      <td>{:number_format((float)$wv.amount, 2, ".", "")} 元</td>
+      <td>{:number_format((float)$wv.fee, 2, ".", "")} 元</td>
+      <td><b>{:number_format((float)$wv.real_amount, 2, ".", "")} 元</b></td>
       <td class="td-clip">{$wv.alipay_name} / {$wv.alipay_account}</td>
       <td>{if condition="$wv.status eq 'pending'"}<span class="badge badge-pending">待审核</span>{elseif condition="$wv.status eq 'approved'"}待打款{elseif condition="$wv.status eq 'paid'"}<span class="ok">已打款</span>{else /}<span class="danger">已驳回</span>{/if}</td>
       <td class="mono">{$wv.voucher_no|default='-'}</td>
@@ -392,7 +392,7 @@
         <b class="ok">{$arbitrage_pct}%（提现会亏损，手续费/价差已覆盖成本）</b>
       {/if}<br>
       说明：M 与 N 相等时，只要手续费 &gt; 0 就不会无损套利；M &lt; N 时需手续费覆盖差价。修改配置不影响已提交的提现。
-      手续费在<b>提交时</b>按当次比例与费率计入记录，之后修改配置不影响已提交的申请；关闭提现后前台隐藏标签且接口拒绝。
+      手续费在<b>提交时</b>按当次比例与费率计算（<b>精确到分</b>，如 50 元 × 3% = 1.50 元）并计入记录，之后修改配置不影响已提交的申请；关闭提现后前台隐藏标签且接口拒绝。
     </p>
   </div>
 
