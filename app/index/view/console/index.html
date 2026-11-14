@@ -21,7 +21,7 @@
     <button class="tab-btn" type="button" data-tab="quota">配额</button>
     <button class="tab-btn" type="button" data-tab="token">API Token</button>
     <button class="tab-btn" type="button" data-tab="credits">站币</button>
-    <button class="tab-btn" type="button" data-tab="withdraw">提现</button>
+{if condition="$withdraw_enable"}<button class="tab-btn" type="button" data-tab="withdraw">提现</button>{/if}
     <button class="tab-btn" type="button" data-tab="account">修改密码</button>
   </nav>
   <div class="tab-pane" data-pane="quota">
@@ -110,11 +110,16 @@
           </h2>
           <p class="panel-sub">充值余额 {$credits} 币（用于消费，不可提现）｜ 收益余额 {$earnings} 币（可提现）</p>
           {if condition="isset($pay_available) && $pay_available"}
-          <div class="model-inline-form" style="margin:12px 0">
+          <div class="model-inline-form" style="margin:12px 0;flex-wrap:wrap">
             <span class="field-hint">选择金额：</span>
+            {volist name="credit_plans" id="p"}
+            <button class="btn-ghost-sm" type="button" data-recharge="{$p.amount}" data-plan="{$p.id}">{$p.amount} 元{if condition="$p.bonus gt 0"}（赠 {$p.bonus} 币）{/if}</button>
+            {/volist}
+            {if condition="count($credit_plans) eq 0"}
             <button class="btn-ghost-sm" type="button" data-recharge="10">10 元</button>
             <button class="btn-ghost-sm" type="button" data-recharge="50">50 元</button>
             <button class="btn-ghost-sm" type="button" data-recharge="100">100 元</button>
+            {/if}
           </div>
           <p class="field-hint">到账 {$credits_rate} 币 / 元{if condition="$recharge_bonus gt 0"}，活动期额外赠送 {$recharge_bonus}%{/if}。支付成功自动到账。</p>
           {else /}
@@ -187,6 +192,7 @@
     </div>
   </div>
 
+{if condition="$withdraw_enable"}
   <div class="tab-pane" data-pane="withdraw">
     <div id="withdrawSubTabs">
       <nav class="tabs-nav" style="margin-bottom:12px">
@@ -257,6 +263,7 @@
     </div>
   </div>
 
+{/if}
   <div class="tab-pane" data-pane="account">
 <section class="panel">
   <h2 class="panel-title">修改密码</h2>

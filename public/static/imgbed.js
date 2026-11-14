@@ -289,6 +289,11 @@
         form.method = 'POST'; form.action = '/console/recharge';
         var inp = document.createElement('input');
         inp.type = 'hidden'; inp.name = 'yuan'; inp.value = b.getAttribute('data-recharge');
+        if (b.getAttribute('data-plan')) {
+          var pi = document.createElement('input');
+          pi.type = 'hidden'; pi.name = 'plan_id'; pi.value = b.getAttribute('data-plan');
+          form.appendChild(pi);
+        }
         form.appendChild(inp); document.body.appendChild(form); form.submit();
       });
     });

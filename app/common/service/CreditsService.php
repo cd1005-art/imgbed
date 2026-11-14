@@ -69,7 +69,19 @@ class CreditsService
     public static function recharge(int $userId, int $yuan, int $orderId): int
     {
         $rate = max(1, (int)Setting::get('credits_per_yuan', 10));
-        $balance = self::change($userId, $yuan * $rate, 'recharge', $orderId, "充值 {$yuan} 元（1:{$rate}）");
+        $pct  = max(0, (int)Setting::get('recharge_bonus_pct', 0));
+        $coins = (int)floor($yuan * $rate * (1 + $pct / 100));
+
+        // 档位额外赠送
+        $planBonus = 0;
+        $order = Db::name('orders')->where('id', $orderId)->find();
+        if ($order && (int)($order['plan_id'] ?? 0) > 0) {
+            $planBonus = (int)Db::name('credit_plans')->where('id', (int)$order['plan_id'])->value('bonus');
+        }
+        $coins += $planBonus;
+
+        $remark = "充值 {$yuan} 元（1:{$rate}" . ($pct > 0 ? " +活动{$pct}%" : '') . ($planBonus > 0 ? " +档位赠{$planBonus}" : '') . '）';
+        $balance = self::change($userId, $coins, 'recharge', $orderId, $remark);
         try {
             $u = Db::name('users')->where('id', $userId)->find();
             if ($u) {

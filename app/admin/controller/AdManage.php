@@ -31,10 +31,39 @@ class AdManage extends Base
             'settings' => Setting::allSettings(),
             'groups'   => StrategyGroup::where('status', 1)->select(),
             'domain'   => rtrim((string)request()->domain(), '/'),
+            'credit_plans' => Db::name('credit_plans')->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
         ]);
     }
 
     /** 站点设置保存 */
+    /** 充值档位：保存（新增/编辑） */
+    public function planSave()
+    {
+        $id     = (int)$this->request->post('id', 0);
+        $amount = (int)$this->request->post('amount', 0);
+        $bonus  = max(0, (int)$this->request->post('bonus', 0));
+        $sort   = (int)$this->request->post('sort', 0);
+        $status = (int)$this->request->post('status', 1) === 1 ? 1 : 0;
+        if ($amount <= 0) {
+            return json(['status' => false, 'message' => '金额必须大于 0']);
+        }
+        $data = ['amount' => $amount, 'bonus' => $bonus, 'sort' => $sort, 'status' => $status];
+        if ($id > 0) {
+            Db::name('credit_plans')->where('id', $id)->update($data);
+        } else {
+            $data['create_time'] = time();
+            Db::name('credit_plans')->insert($data);
+        }
+        return json(['status' => true, 'message' => '档位已保存']);
+    }
+
+    /** 充值档位：删除 */
+    public function planDel(int $id)
+    {
+        Db::name('credit_plans')->where('id', $id)->delete();
+        return json(['status' => true, 'message' => '已删除']);
+    }
+
     /** 手动触发百度主动推送（增量：update_time 之后更新的公开图，单次上限 1000，受百度配额约束） */
     public function seoPushBaidu()
     {
@@ -106,7 +135,7 @@ class AdManage extends Base
             'baidu_push_auto_count', 'baidu_push_auto_hours', 'baidu_push_daily_max',
             // 站币：充值 / 提现 / 分成
             'credits_per_yuan', 'min_recharge', 'recharge_bonus_pct',
-            'withdraw_rate', 'min_withdraw', 'withdraw_monthly_limit', 'withdraw_fee_pct',
+            'withdraw_enable', 'withdraw_rate', 'min_withdraw', 'withdraw_monthly_limit', 'withdraw_fee_pct',
             'revenue_split_mode', 'share_user', 'share_ai',
         ];
         $all = $this->request->post();

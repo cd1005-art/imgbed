@@ -130,7 +130,7 @@ class PaymentService
      * 幂等：已支付订单重复回调直接返回 true
      */
     /** 站币充值订单（type=credits，amount 单位分） */
-    public function createCreditsOrder(User $user, int $yuan, string $payChannel = 'alipay'): array
+    public function createCreditsOrder(User $user, int $yuan, string $payChannel = 'alipay', int $planId = 0): array
     {
         if (!$this->isAvailable()) {
             throw new \RuntimeException('支付通道未开启，暂时无法充值');
@@ -139,7 +139,7 @@ class PaymentService
         $order = Order::create([
             'order_no'    => date('YmdHis') . mt_rand(1000, 9999),
             'user_id'     => (int)$user->id,
-            'plan_id'     => 0,
+            'plan_id'     => $planId,
             'type'        => 'credits',
             'amount'      => $yuan * 100,
             'status'      => Order::STATUS_UNPAID,

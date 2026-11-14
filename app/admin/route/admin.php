@@ -106,6 +106,8 @@ Route::group(function () {
     Route::post('site/save', 'AdManage/siteSave');
     Route::post('site/seo-refresh', 'AdManage/seoRefresh');
     Route::post('site/seo-push', 'AdManage/seoPushBaidu');
+    Route::post('site/credit-plan', 'AdManage/planSave');
+    Route::post('site/credit-plan-del/:id', 'AdManage/planDel');
     Route::get('ad', 'AdManage/index');
     Route::post('ad/slot', 'AdManage/saveSlot');
     Route::post('model/save', 'ModelManage/save');

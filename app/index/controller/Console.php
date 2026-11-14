@@ -53,6 +53,7 @@ class Console extends Base
             'credits'        => (int)$user->credits,
             'earnings'       => (int)($user->earnings ?? 0),
             'withdraw_rate'  => max(1, (int)Setting::get('withdraw_rate', 10)),
+            'withdraw_enable' => (int)Setting::get('withdraw_enable', 1) === 1,
             'credits_total'  => (int)$user->credits_total,
             'credits_rate'   => max(1, (int)Setting::get('credits_per_yuan', 10)),
             'pay_available'  => (new \app\common\service\PaymentService())->isAvailable(),
@@ -71,6 +72,7 @@ class Console extends Base
             'alipay_name'    => (string)($user->alipay_name ?? ''),
             'alipay_account' => (string)($user->alipay_account ?? ''),
             'min_recharge'   => (int)Setting::get('min_recharge', 10),
+            'credit_plans'   => Db::name('credit_plans')->where('status', 1)->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
             'recharge_bonus' => (int)Setting::get('recharge_bonus_pct', 0),
             'verify_mode'    => (string)Setting::get('verify_mode', 'none'),
             'token_limit' => ($group && (int)$group->max_tokens > 0) ? (int)$group->max_tokens : 0,
@@ -95,10 +97,25 @@ class Console extends Base
         if (!$user) {
             return redirect('/login');
         }
-        $yuan = max(1, min(10000, (int)$this->request->post('yuan', 10)));
+        $planId = (int)$this->request->post('plan_id', 0);
+        $yuan   = max(1, min(10000, (int)$this->request->post('yuan', 10)));
+        $minRecharge = max(1, (int)Setting::get('min_recharge', 10));
+
+        // 优先按档位下单
+        if ($planId > 0) {
+            $plan = \think\facade\Db::name('credit_plans')->where('id', $planId)->where('status', 1)->find();
+            if (!$plan) {
+                return json(['status' => false, 'message' => '充值档位不存在或已下架']);
+            }
+            $yuan = (int)$plan['amount'];
+        }
+        if ($yuan < $minRecharge) {
+            return json(['status' => false, 'message' => "最低充值 {$minRecharge} 元"]);
+        }
+
         try {
             $svc = new \app\common\service\PaymentService();
-            $r = $svc->createCreditsOrder($user, $yuan, 'alipay');
+            $r = $svc->createCreditsOrder($user, $yuan, 'alipay', $planId);
             return redirect($r['submit_url']);
         } catch (\Throwable $e) {
             return json(['status' => false, 'message' => $e->getMessage()]);
@@ -131,6 +148,9 @@ class Console extends Base
         $user = $this->currentUser();
         if (!$user) {
             return json(['status' => false, 'message' => '请先登录']);
+        }
+        if ((int)Setting::get('withdraw_enable', 1) !== 1) {
+            return json(['status' => false, 'message' => '提现功能暂未开放']);
         }
         $amount = (int)$this->request->post('amount', 0);
         $name   = trim((string)$this->request->post('alipay_name', ''));
