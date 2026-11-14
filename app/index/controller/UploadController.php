@@ -23,6 +23,7 @@ class UploadController extends Base
         $userId = (int)session('user_id');
         $user   = $userId > 0 ? User::findUser($userId) : null;
         $guestGroup = StrategyGroup::find((int)Setting::get('guest_group_id', 1));
+        $regGroup   = StrategyGroup::find((int)Setting::get('register_group_id', 2));
 
         $quotaTotal = 0;
         $quotaUsed  = 0;
@@ -52,6 +53,10 @@ class UploadController extends Base
                 : '每日上传不限',
             'quota_used_str'   => UploadService::formatSize($quotaUsed),
             'quota_total_str'  => UploadService::formatSize($group ? (int)$group->quota_total : 1073741824),
+            // 底部提示：游客保留天数 + 注册组容量（随策略组实时变化）
+            'guest_keep_days'  => $guestGroup ? (int)$guestGroup->keep_days : 0,
+            'reg_quota'        => $regGroup ? (int)$regGroup->quota_total : 0,
+            'reg_quota_str'    => UploadService::formatSize($regGroup ? (int)$regGroup->quota_total : 0),
         ]);
     }
 

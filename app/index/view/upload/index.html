@@ -41,7 +41,11 @@
   · 当前策略：{$group.name|default='默认'} · <a href="/gallery">管理图片</a>
 </p>
 {else /}
-<p class="quota-line">游客上传图片 30 天后清理 · <a href="/register">注册</a> 免费得 1GB 永久空间</p>
+<p class="quota-line">
+  {if condition="$guest_keep_days gt 0"}游客上传图片 {$guest_keep_days} 天后清理{else /}游客上传图片永久保留{/if}
+  · <a href="/register">注册</a>
+  {if condition="$reg_quota gt 0"}免费得 {$reg_quota_str} 永久空间{else /}免费得无限空间{/if}
+</p>
 {/if}
 {/block}
 
