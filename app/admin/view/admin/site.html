@@ -182,9 +182,8 @@
     </label>
     <label class="field"><span class="field-label">缩略图最长边（像素，0=不生成）</span>
       <input type="number" name="img_thumb_size" value="{$settings.img_thumb_size|default='480'}" min="0" max="2000">
-      <span class="field-hint">列表与广场用缩略图，详情页仍用原图。480 约 40KB</span>
+      <span class="field-hint">列表与广场用缩略图，详情页仍用原图；固定存本地 <code>public/thumbs/</code></span>
     </label>
-    <p class="field-hint">缩略图固定存本地 <code>public/thumbs/</code>。</p>
     <label class="field"><span class="field-label">水印文字（留空=不加水印）</span>
       <input type="text" name="img_watermark" value="{$settings.img_watermark|default=''}" placeholder="例如：逍遥图床">
       <span class="field-hint">白色半透明文字，字号随图片宽度自适应（14~40px）</span>
