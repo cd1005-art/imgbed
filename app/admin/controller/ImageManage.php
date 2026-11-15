@@ -106,7 +106,7 @@ class ImageManage extends Base
         $action = (string)$this->request->post('action', '');
         $ids    = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
 
-        if (!$ids || !in_array($action, ['freeze', 'unfreeze', 'delete', 'audit_pass'], true)) {
+        if (!$ids || !in_array($action, ['freeze', 'unfreeze', 'delete', 'audit_pass', 'audit_reject'], true)) {
             return json(['status' => false, 'message' => '参数错误']);
         }
 
@@ -114,7 +114,16 @@ class ImageManage extends Base
         foreach ($ids as $id) {
             $image = Image::find($id);
             if (!$image) { continue; }
-            if ($action === 'audit_pass') {
+            if ($action === 'audit_reject') {
+                // 人工批量拒绝：审核态置拒绝，同时冻结（外链立即断）
+                $image->save([
+                    'audit_status' => Image::AUDIT_REJECT,
+                    'audit_score'  => 0,
+                    'audit_time'   => time(),
+                    'status'       => Image::ST_FROZEN,
+                    'update_time'  => time(),
+                ]);
+            } elseif ($action === 'audit_pass') {
                 // 人工批量通过：审核态置为通过，评分记 100，标题保持原文件名
                 $image->save([
                     'audit_status' => Image::AUDIT_PASS,
@@ -135,7 +144,7 @@ class ImageManage extends Base
             $count++;
         }
 
-        $label = ['freeze' => '冻结', 'unfreeze' => '解冻', 'delete' => '删除', 'audit_pass' => '审核通过'][$action];
+        $label = ['freeze' => '冻结', 'unfreeze' => '解冻', 'delete' => '删除', 'audit_pass' => '审核通过', 'audit_reject' => '审核拒绝'][$action];
         return json(['status' => true, 'message' => "已{$label} {$count} 张"]);
     }
 
