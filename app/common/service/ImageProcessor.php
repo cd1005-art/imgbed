@@ -22,7 +22,10 @@ class ImageProcessor
      *   thumb:string|null, bytes:int
      * }
      */
-    public static function process(string $srcPath, string $ext): array
+    /**
+     * @param array $policy 策略组约束：max_mp / mp_action(reject|downscale|skip) / resize_side
+     */
+    public static function process(string $srcPath, string $ext, array $policy = []): array
     {
         $ext  = strtolower($ext);
         $info = @getimagesize($srcPath) ?: [0, 0];
@@ -36,11 +39,29 @@ class ImageProcessor
         ];
 
         // 超大尺寸图：解码一份就要 宽×高×4 字节，8000×6000 已 192MB，
-        // 叠加缩放/重编码副本很容易吃满 512M 并触发 500。
-        // 超过 80MP 直接原样上传（不压缩/不水印/不缩略图），保证能传上去。
+        // 叠加缩放/重编码副本很容易吃满内存并触发 500。
+        // 按策略组规则处理：downscale=先缩到指定长边再常规处理；skip=原样存；reject 已在上游拦截。
         $megapixels = ((int)$info[0] * (int)$info[1]) / 1000000;
-        if ($megapixels > 80) {
-            return $out;
+        $policyAction = (string)($policy['mp_action'] ?? 'skip');
+        $policyMaxMp  = (int)($policy['max_mp'] ?? 0);
+        $resizeSide   = max(1024, min(8192, (int)($policy['resize_side'] ?? 4096)));
+
+        // 未配置策略时的兜底：超过 80MP 直接原样存，避免把上传打回 500
+        $hardLimit = $policyMaxMp > 0 ? $policyMaxMp : 80;
+        if ($megapixels > $hardLimit) {
+            if ($policyAction !== 'downscale') {
+                return $out;   // skip：原图原样上传
+            }
+            // downscale：把长边缩到 resizeSide，再走后面的压缩/缩略图流程
+            $srcFile = self::downscaleTo($srcPath, $ext, (int)$info[0], (int)$info[1], $resizeSide);
+            if ($srcFile !== '') {
+                $srcPath = $srcFile;
+                $info = @getimagesize($srcPath) ?: [0, 0];
+                $out['width']  = (int)$info[0];
+                $out['height'] = (int)$info[1];
+                $out['bytes']  = (int)@filesize($srcPath);
+                $out['_temp']  = true;
+            }
         }
 
         $compress = (int)Setting::get('img_compress', 82);     // 0=不压缩
@@ -289,5 +310,54 @@ class ImageProcessor
             }
         }
         return $cached = '';
+    }
+
+    /** 把图长边缩到 $side，返回临时文件路径（失败返回空串） */
+    private static function downscaleTo(string $srcPath, string $ext, int $w, int $h, int $side): string
+    {
+        try {
+            $img = self::makeImage($srcPath, $ext);
+            if (!$img) {
+                return '';
+            }
+            $long = max($w, $h);
+            if ($long <= $side) {
+                imagedestroy($img);
+                return '';
+            }
+            $scale = $side / $long;
+            $nw = max(1, (int)round($w * $scale));
+            $nh = max(1, (int)round($h * $scale));
+            $dst = imagescale($img, $nw, $nh, IMG_BICUBIC);
+            imagedestroy($img);
+            if (!$dst) {
+                return '';
+            }
+            $tmp = (string)tempnam(sys_get_temp_dir(), 'mp_');
+            $ok = $ext === 'png' ? imagepng($dst, $tmp, 6) : imagejpeg($dst, $tmp, 90);
+            imagedestroy($dst);
+            return $ok ? $tmp : '';
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
+    /** 按扩展名解码为 GD 资源（失败返回 false） */
+    private static function makeImage(string $path, string $ext)
+    {
+        $ext = strtolower($ext);
+        if ($ext === 'jpg') { $ext = 'jpeg'; }
+        $fn = [
+            'jpeg' => 'imagecreatefromjpeg',
+            'png'  => 'imagecreatefrompng',
+            'webp' => 'imagecreatefromwebp',
+            'bmp'  => 'imagecreatefrombmp',
+            'gif'  => 'imagecreatefromgif',
+        ][$ext] ?? '';
+        if ($fn === '' || !function_exists($fn)) {
+            return false;
+        }
+        $img = @$fn($path);
+        return $img ?: false;
     }
 }

@@ -36,6 +36,17 @@
     <label class="field"><span class="field-label">组名</span><input type="text" name="name" id="g_name" required></label>
     <label class="field"><span class="field-label">备注</span><input type="text" name="remark" id="g_remark"></label>
     <label class="field"><span class="field-label">单图上限（MB）</span><input type="number" name="max_size_mb" id="g_max" value="5"></label>
+    <label class="field"><span class="field-label">最大像素（MP，0=不限）</span><input type="number" name="max_mp" id="g_max_mp" value="0" min="0" max="500">
+      <span class="field-hint">1MP≈100万像素；12000×12000≈144MP。超限按下面的方式处理</span>
+    </label>
+    <label class="field"><span class="field-label">超像素处理方式</span>
+      <select name="mp_action" id="g_mp_action">
+        <option value="skip">原图存储，不做处理（兼容性最好）</option>
+        <option value="downscale">自动缩到指定长边再处理</option>
+        <option value="reject">拒绝上传并提示用户</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">缩到长边（像素，仅 downscale 生效）</span><input type="number" name="resize_max_side" id="g_resize_side" value="4096" min="1024" max="8192"></label>
     <label class="field"><span class="field-label">单次批量上传上限（张，0=不限）</span><input type="number" name="max_batch" id="g_max_batch" value="100" min="0"></label>
     <label class="field"><span class="field-label">日上传次数（0=不限）</span><input type="number" name="daily_count" id="g_daily" value="100"></label>
     <label class="field"><span class="field-label">总容量（GB）</span><input type="number" name="quota_gb" id="g_quota" value="1"></label>

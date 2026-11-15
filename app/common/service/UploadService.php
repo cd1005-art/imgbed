@@ -169,10 +169,32 @@ class UploadService
             throw new UploadException($e->getMessage());
         }
 
+        // ---------- 4.0 像素上限（策略组可配） ----------
+        $imgInfo  = @getimagesize($file->getPathname()) ?: [0, 0];
+        $megapx   = ((int)$imgInfo[0] * (int)$imgInfo[1]) / 1000000;
+        $maxMp    = (int)($group->max_mp ?? 0);          // 0=不限
+        $mpAction = (string)($group->mp_action ?? 'skip'); // reject / downscale / skip
+        $resizeSide = max(1024, min(8192, (int)($group->resize_max_side ?? 4096)));
+        if ($maxMp > 0 && $megapx > $maxMp && $mpAction === 'reject') {
+            throw new UploadException(sprintf(
+                '图片像素过大（%.1f MP），上限 %.0f MP，请先压缩后再上传', $megapx, $maxMp
+            ));
+        }
+
         // ---------- 4.1 图片处理（压缩 / WebP / 水印 / 缩略图 / EXIF 清理） ----------
         $processed = ['path' => null, 'ext' => $ext, 'width' => $width, 'height' => $height, 'thumb' => null, 'bytes' => $size];
         try {
-            $processed = ImageProcessor::process($file->getPathname(), $ext);
+            $processed = ImageProcessor::process($file->getPathname(), $ext, [
+                'max_mp'      => $maxMp,
+                'mp_action'   => $mpAction,
+                'resize_side' => $resizeSide,
+            ]);
+            // downscale 产生的临时文件，用完即删
+            if (!empty($processed['_temp']) && !empty($processed['path'])) {
+                register_shutdown_function(function () use ($processed) {
+                    if (is_file((string)$processed['path'])) { @unlink((string)$processed['path']); }
+                });
+            }
         } catch (\Throwable $e) {
             // 图片处理遇到无法处理的图（CMYK / 超大幅面 / 损坏编码）时兜底：
             // 直接按原图上传，绝不因为"优化"把用户的上传打回 500

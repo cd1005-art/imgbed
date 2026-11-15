@@ -498,6 +498,9 @@
         document.getElementById('g_name').value = g.name;
         document.getElementById('g_remark').value = g.remark || '';
         document.getElementById('g_max').value = Math.round(g.max_size / 1048576);
+        var elMp = document.getElementById('g_max_mp'); if (elMp) elMp.value = g.max_mp || 0;
+        var elAct = document.getElementById('g_mp_action'); if (elAct) elAct.value = g.mp_action || 'skip';
+        var elRs = document.getElementById('g_resize_side'); if (elRs) elRs.value = g.resize_max_side || 4096;
         document.getElementById('g_daily').value = g.daily_count;
         document.getElementById('g_quota').value = Math.round(g.quota_total / 1073741824);
         document.getElementById('g_keep').value = g.keep_days;
