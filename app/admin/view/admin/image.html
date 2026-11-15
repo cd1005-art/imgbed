@@ -25,6 +25,11 @@
       <option value="1" {if condition="$status eq '1'"}selected{/if}>正常</option>
       <option value="2" {if condition="$status eq '2'"}selected{/if}>冻结</option>
     </select>
+    <select name="public" class="filter-select">
+      <option value="">公开状态</option>
+      <option value="1" {if condition="$public eq '1'"}selected{/if}>公开</option>
+      <option value="0" {if condition="$public eq '0'"}selected{/if}>私密</option>
+    </select>
     <input type="date" name="dfrom" value="{$dfrom}" class="filter-select">
     <input type="date" name="dto" value="{$dto}" class="filter-select">
     <span class="count">体积</span>
