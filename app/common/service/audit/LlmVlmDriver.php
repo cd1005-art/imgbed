@@ -31,6 +31,7 @@ class LlmVlmDriver implements AuditDriverInterface
 
     public function audit(string $localPath, string $mime): array
     {
+        $this->timeout = max(3, min(120, (int)\app\common\model\Setting::get('audit_timeout', 12)));
         if ($this->endpoint === '' || $this->model === '') {
             // 未配置完整 → 降级人工复审，不放行
             return ['result' => 'review', 'score' => 0, 'detail' => 'LLM 审核端点未配置完整，转人工'];
@@ -54,7 +55,7 @@ class LlmVlmDriver implements AuditDriverInterface
                 ],
             ],
             'temperature' => 0,
-            'max_tokens'  => 1024,   // 思考模式会消耗大量 token，120 会导致 content 为空
+            'max_tokens'  => max(200, (int)\app\common\model\Setting::get('audit_max_tokens', 1024)),
         ];
 
         // 优先关闭思考模式（deepseek-v4.1 支持 thinking.type=disabled，返回更快更稳）
@@ -173,6 +174,12 @@ class LlmVlmDriver implements AuditDriverInterface
 
     protected function prompt(): string
     {
+        // 自定义审核提示词（后台可改），未填则用内置模板
+        $custom = trim((string)\app\common\model\Setting::get('audit_prompt', ''));
+        if ($custom !== '') {
+            $count = max(1, (int)\app\common\model\Setting::get('audit_tag_count', 5));
+            return str_replace('{{N}}', (string)$count, $custom);
+        }
         $count = max(1, (int)\app\common\model\Setting::get('audit_tag_count', 5));
         $tpl = <<<'TXT'
 你是图床站点的内容审核员。审核这张图片是否允许公网托管。

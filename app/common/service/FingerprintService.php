@@ -95,7 +95,8 @@ class FingerprintService
         if ($fp['ahash'] !== '') {
             $cands = Db::name('banned_fingerprints')->where('phash', '<>', '')->field('id,phash,reason,hit_count')->select()->toArray();
             foreach ($cands as $c) {
-                if (self::distance($fp['ahash'], (string)$c['phash']) <= 8) {
+                $banDistance = max(0, min(32, (int)\app\common\model\Setting::get('fingerprint_ban_distance', 8)));
+                if (self::distance($fp['ahash'], (string)$c['phash']) <= $banDistance) {
                     Db::name('banned_fingerprints')->where('id', $c['id'])->inc('hit_count')->update();
                     return $c;
                 }

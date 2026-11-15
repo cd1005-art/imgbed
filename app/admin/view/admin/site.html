@@ -237,6 +237,74 @@
       <input type="number" name="audit_max_side" value="{$settings.audit_max_side|default='1024'}" min="256" max="4096">
       <span class="field-hint">送审前把图缩到该尺寸再 base64，避免超大图撑爆请求体（413/超时）。1024 约 1k token 足够判断；<b>填 0 = 不缩图</b>（原图送审，超大图容易失败，不推荐）</span>
     </label>
+    <h3 style="margin:22px 0 10px;font-size:14px">审核与去重策略</h3>
+
+    <label class="field"><span class="field-label">审核超时（秒）</span>
+      <input type="number" name="audit_timeout" value="{$settings.audit_timeout|default='12'}" min="3" max="120">
+      <span class="field-hint">单次模型调用最长等待；超时后切换到下一个模型或转人工</span>
+    </label>
+    <label class="field"><span class="field-label">审核最大返回 token</span>
+      <input type="number" name="audit_max_tokens" value="{$settings.audit_max_tokens|default='1024'}" min="200" max="4096">
+      <span class="field-hint">太小会导致模型只输出思考不输出结论（建议 1024）</span>
+    </label>
+    <label class="field"><span class="field-label">自定义审核提示词（留空用内置）</span>
+      <textarea name="audit_prompt" rows="5" style="width:100%;font-family:var(--font-mono);font-size:12px">{$settings.audit_prompt|default=''}</textarea>
+      <span class="field-hint">支持占位符 <code>{{N}}</code>=标签数量上限。内置规则：色情低俗/暴恐血腥/赌博诈骗/涉政 → reject；拿不准 → review；正常 → pass</span>
+    </label>
+    <label class="field"><span class="field-label">审核拒绝后处置</span>
+      <select name="audit_reject_action">
+        <option value="freeze" {if condition="($settings['audit_reject_action'] ?? 'freeze') eq 'freeze'"}selected{/if}>冻结外链（推荐）</option>
+        <option value="only_mark" {if condition="($settings['audit_reject_action'] ?? 'freeze') eq 'only_mark'"}selected{/if}>仅标记拒绝，保留外链</option>
+      </select>
+    </label>
+    <label class="field"><span class="field-label">违规累计处置</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" name="violation_limit" value="{$settings.violation_limit|default='3'}" min="0" max="99" style="width:90px">
+        <span class="field-hint">次后</span>
+        <select name="violation_action">
+          <option value="ban_user" {if condition="($settings['violation_action'] ?? 'ban_user') eq 'ban_user'"}selected{/if}>停用账号</option>
+          <option value="none" {if condition="($settings['violation_action'] ?? 'ban_user') eq 'none'"}selected{/if}>仅记录，不处置</option>
+        </select>
+      </div>
+      <span class="field-hint">0 = 不统计违规次数</span>
+    </label>
+    <label class="field"><span class="field-label">违规指纹拦截</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select name="fingerprint_on">
+          <option value="1" {if condition="($settings['fingerprint_on'] ?? '1') eq '1'"}selected{/if}>开启</option>
+          <option value="0" {if condition="($settings['fingerprint_on'] ?? '1') eq '0'"}selected{/if}>关闭</option>
+        </select>
+        <span class="field-hint">相似度阈值 ≤</span>
+        <input type="number" name="fingerprint_ban_distance" value="{$settings.fingerprint_ban_distance|default='8'}" min="0" max="32" style="width:80px">
+        <span class="field-hint">（越小越严格，8 较稳）</span>
+      </div>
+      <span class="field-hint">上传时与违规指纹库比对，命中直接拒绝，不调用模型</span>
+    </label>
+    <label class="field"><span class="field-label">审核白名单</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select name="whitelist_on">
+          <option value="1" {if condition="($settings['whitelist_on'] ?? '1') eq '1'"}selected{/if}>开启</option>
+          <option value="0" {if condition="($settings['whitelist_on'] ?? '1') eq '0'"}selected{/if}>关闭</option>
+        </select>
+        <span class="field-hint">相似度阈值 ≤</span>
+        <input type="number" name="whitelist_distance" value="{$settings.whitelist_distance|default='4'}" min="0" max="32" style="width:80px">
+      </div>
+      <span class="field-hint">人工批量通过会写入白名单，同图/相似图再次上传直接放行，不调用模型</span>
+    </label>
+    <label class="field"><span class="field-label">造图去重</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select name="gen_dup_on">
+          <option value="1" {if condition="($settings['gen_dup_on'] ?? '1') eq '1'"}selected{/if}>开启</option>
+          <option value="0" {if condition="($settings['gen_dup_on'] ?? '1') eq '0'"}selected{/if}>关闭</option>
+        </select>
+        <span class="field-hint">比对最近</span>
+        <input type="number" name="gen_dup_window" value="{$settings.gen_dup_window|default='50'}" min="5" max="500" style="width:80px">
+        <span class="field-hint">张，距离 ≤</span>
+        <input type="number" name="gen_dup_distance" value="{$settings.gen_dup_distance|default='6'}" min="0" max="32" style="width:70px">
+      </div>
+      <span class="field-hint">造图任务生成后与近期图比对，相似则丢弃重生成</span>
+    </label>
+
     <div style="padding:16px 0 3px">
       <button type="submit" class="btn">保存图片处理设置</button>
     </div>

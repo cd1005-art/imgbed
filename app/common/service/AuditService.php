@@ -23,6 +23,18 @@ class AuditService
     /** 审核一张图：返回 ['result' => ..., 'score' => ..., 'detail' => ...] */
     public static function audit(Image $image, string $localPath, string $mime): array
     {
+        // 白名单前置：人工复审通过过的图（SHA1/ahash 命中）直接放行，不再调用模型
+        $approved = ApprovedFingerprintService::match($localPath);
+        if ($approved !== null) {
+            $result = [
+                'result' => 'pass',
+                'score'  => 100,
+                'detail' => (string)($approved['note'] ?? '') !== '' ? (string)$approved['note'] : '白名单命中（人工已复审通过）',
+            ];
+            self::applyResult($image, 'whitelist', $result);
+            return $result;
+        }
+
         $driverKey = self::driverKey($image);
 
         if ($driverKey === '' || $driverKey === 'none') {
@@ -124,7 +136,37 @@ class AuditService
             }
         }
         if ($result['result'] === 'reject') {
-            $update['status'] = Image::ST_FROZEN;   // 拒绝即冻结，外链断
+            // 拒绝后的处置方式可配：freeze=冻结外链（默认）/ only_mark=仅标记不冻结
+            if ((string)Setting::get('audit_reject_action', 'freeze') !== 'only_mark') {
+                $update['status'] = Image::ST_FROZEN;
+            }
+
+            // 违规累计：达到上限后按设置处置上传者
+            try {
+                $limit  = (int)Setting::get('violation_limit', 0);      // 0=不统计
+                $action = (string)Setting::get('violation_action', 'ban_user');
+                if ($limit > 0 && (int)$image->user_id > 0) {
+                    Db::name('users')->where('id', (int)$image->user_id)->inc('violation_count')->update();
+                    $u = Db::name('users')->where('id', (int)$image->user_id)->find();
+                    if ($u && (int)($u['violation_count'] ?? 0) >= $limit && $action !== 'none') {
+                        if ($action === 'ban_user') {
+                            Db::name('users')->where('id', (int)$image->user_id)->update(['status' => 0]);
+                        } elseif ($action === 'freeze_all') {
+                            Db::name('users')->where('id', (int)$image->user_id)->update(['status' => 0]);
+                        }
+                        Db::name('audit_logs')->insert([
+                            'image_id'    => (int)$image->id,
+                            'driver'      => 'system',
+                            'result'      => 'reject',
+                            'score'       => 0,
+                            'detail'      => '违规累计 ' . (int)$u['violation_count'] . ' 次，处置：' . $action,
+                            'create_time' => time(),
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+            }
+
             // 审核拒绝通知上传者
             try {
                 if ((int)$image->user_id > 0) {

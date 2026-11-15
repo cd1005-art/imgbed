@@ -178,6 +178,14 @@ return $this->adminView('admin/site', [
             'img_compress', 'img_webp', 'img_thumb_size', 'img_watermark', 'img_watermark_pos', 'img_watermark_opacity', 'img_exif_clean',
             'img_watermark_font', 'thumb_storage_id', 'token_scopes', 'audit_max_side',
             'img_local_link', 'img_local_link_min', 'img_local_link_max',
+            // 指纹与白名单
+            'fingerprint_on', 'fingerprint_ban_distance',
+            'gen_dup_on', 'gen_dup_distance', 'gen_dup_window',
+            'whitelist_on', 'whitelist_distance',
+            // 违规处置
+            'violation_limit', 'violation_action',
+            // 审核行为
+            'audit_timeout', 'audit_max_tokens', 'audit_prompt', 'audit_reject_action',
             'credits_per_yuan', 'min_recharge', 'recharge_bonus_pct',
             'withdraw_enable', 'withdraw_rate', 'min_withdraw', 'withdraw_step', 'withdraw_monthly_limit', 'withdraw_fee_pct',
             'revenue_split_mode', 'share_user', 'share_ai',

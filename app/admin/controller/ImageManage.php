@@ -5,6 +5,7 @@ namespace app\admin\controller;
 
 use app\admin\controller\Base;
 use app\common\model\Image;
+use app\common\model\Setting;
 use app\common\model\UploadLog;
 use think\facade\Db;
 
@@ -158,16 +159,25 @@ class ImageManage extends Base
                 continue;
             }
             if ($action === 'audit_reject') {
-                // 人工批量拒绝：审核态置拒绝，同时冻结（外链立即断）
-                $image->save([
+                // 人工批量拒绝：审核态置拒绝；是否冻结由「拒绝后处置」决定
+                $keepFrozen = true;
+                $rejectAction = (string)Setting::get('audit_reject_action', 'freeze');
+                if ($rejectAction === 'only_mark') {
+                    $keepFrozen = false;
+                }
+                $upd = [
                     'audit_status' => Image::AUDIT_REJECT,
                     'audit_score'  => 0,
                     'audit_time'   => time(),
-                    'status'       => Image::ST_FROZEN,
                     'update_time'  => time(),
-                ]);
+                ];
+                if ($keepFrozen) {
+                    $upd['status'] = Image::ST_FROZEN;
+                }
+                $image->save($upd);
             } elseif ($action === 'audit_pass') {
-                // 人工批量通过：审核态置为通过，评分记 100，标题保持原文件名
+                // 人工批量通过：审核态置通过 + 写入白名单（同类图下次直接放行）
+                \app\common\service\ApprovedFingerprintService::add($image, (string)$image->name);
                 $image->save([
                     'audit_status' => Image::AUDIT_PASS,
                     'audit_score'  => 100,

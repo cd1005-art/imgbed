@@ -193,6 +193,9 @@ class GenRun extends Command
     /** 与最近图片比对去重 */
     protected function isDuplicate(string $file): bool
     {
+        if ((int)\app\common\model\Setting::get('gen_dup_on', 1) !== 1) {
+            return false;
+        }
         $sha1 = @sha1_file($file) ?: '';
         // 只与"仍在用"的图比较：已删除的图不应再挡住新的生成
         if ($sha1 !== '' && Db::name('images')->where('sha1', $sha1)->where('status', '<>', 0)->find()) {
@@ -202,7 +205,9 @@ class GenRun extends Command
         if ($ah === '') {
             return false;
         }
-        $recent = Db::name('images')->where('origin', 'gen_bot')->order('id', 'desc')->limit(50)->column('path,storage_id');
+        $window = max(5, min(500, (int)\app\common\model\Setting::get('gen_dup_window', 50)));
+        $dupDistance = max(0, min(32, (int)\app\common\model\Setting::get('gen_dup_distance', 6)));
+        $recent = Db::name('images')->where('origin', 'gen_bot')->order('id', 'desc')->limit($window)->column('path,storage_id');
         foreach ($recent as $path => $sid) {
             // 仅本地可算
             try {
@@ -213,7 +218,7 @@ class GenRun extends Command
                 $cfg = json_decode((string)$row['config'], true) ?: [];
                 $rootRel = trim(str_replace('\\', '/', (string)($cfg['root'] ?? 'storage/images')), '/');
                 $local = rtrim(public_path(), '/\\') . '/' . $rootRel . '/' . ltrim((string)$path, '/');
-                if (@is_file($local) && FingerprintService::distance($ah, FingerprintService::ahash($local)) <= 6) {
+                if (@is_file($local) && FingerprintService::distance($ah, FingerprintService::ahash($local)) <= $dupDistance) {
                     return true;
                 }
             } catch (\Throwable $e) {

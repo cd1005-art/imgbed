@@ -9,7 +9,7 @@
       adminImage: function () { adminImage(); adminImageExtras(); }, adminUser: adminUser, adminGroup: adminGroup,
       adminStorage: adminStorage, adminPayment: adminPayment,
       adminAd: adminAd, adminToken: adminToken, adminSite: adminSite, adminAudit: adminAudit,
-      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminCredit: adminCredit, adminFinance: adminFinance, adminNone: function () {}
+      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminCredit: adminCredit, adminFinance: adminFinance, adminWhitelist: adminWhitelist, adminNone: function () {}
     };
     if (map[page]) map[page]();
   };
@@ -1820,6 +1820,25 @@
     initPagerJump();
   }
 })();
+
+  function adminWhitelist() {
+    document.querySelectorAll('[data-wl-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        fetch('/admin/whitelist/delete/' + b.getAttribute('data-wl-del'), { method: 'POST' })
+          .then(function (r) { return r.json(); })
+          .then(function (d) { toast(d.message); if (d.status) { setTimeout(function () { location.reload(); }, 400); } })
+          .catch(function () { toast('网络错误'); });
+      });
+    });
+    var cl = document.getElementById('wlClear');
+    if (cl) cl.addEventListener('click', function () {
+      if (!confirm('清空所有白名单？此操作不可恢复')) { return; }
+      fetch('/admin/whitelist/clear', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { toast(d.message); if (d.status) { setTimeout(function () { location.reload(); }, 400); } })
+        .catch(function () { toast('网络错误'); });
+    });
+  }
 
 /* 通用「每页条数」：遍历所有列表表格，各自在表格下方生成工具条（可重复调用，供动态弹窗复用） */
 (function initPerPage() {

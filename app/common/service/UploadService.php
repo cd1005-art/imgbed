@@ -54,7 +54,9 @@ class UploadService
     {
         // 违规指纹前置匹配（sha1 精确 + ahash 近似）
         try {
-            $hit = FingerprintService::match($file->getPathname());
+            $hit = (int)Setting::get('fingerprint_on', 1) === 1
+                ? FingerprintService::match($file->getPathname())
+                : null;
             if ($hit) {
                 if ($userId > 0) {
                     Db::name('users')->where('id', $userId)->inc('violation_count')->update();

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$page_title|default='后台'} · {$site_name}</title>
 <link rel="stylesheet" href="/static/imgbed.css?v=51">
-<link rel="stylesheet" href="/static/admin.css?v=123">
+<link rel="stylesheet" href="/static/admin.css?v=124">
 </head>
 <body class="admin-body">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -38,6 +38,7 @@
     <a href="/admin/ad" class="{if condition="$page eq 'ad'"}active{/if}"><svg class="ic"><use href="#i-ad"/></svg> 广告管理</a>
     <a href="/admin/model" class="{if condition="$page eq 'model'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> 模型设置</a>
     <a href="/admin/tag" class="{if condition="$page eq 'tag'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 标签管理</a>
+    <a href="/admin/whitelist" class="{if condition="$page eq 'whitelist'"}active{/if}"><svg class="ic"><use href="#i-check"/></svg> 审核白名单</a>
     <a href="/admin/report" class="{if condition="$page eq 'report'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 举报管理</a>
     <a href="/admin/gen" class="{if condition="$page eq 'gen'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> 造图任务</a>
     <a href="/admin/nav" class="{if condition="$page eq 'nav'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 导航管理</a>
@@ -57,7 +58,7 @@
 <div id="toast" class="toast" hidden></div>
 <script>window.PAGER_SIZE = {$pager_size|default='5'};</script>
 <script src="/static/imgbed.js?v=51"></script>
-<script src="/static/admin.js?v=123"></script>
+<script src="/static/admin.js?v=124"></script>
 {block name="script"}{/block}
 </body>
 </html>
