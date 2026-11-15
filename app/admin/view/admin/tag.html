@@ -10,7 +10,7 @@
       <option value="1" {if condition="$tstatus eq '1'"}selected{/if}>启用</option>
       <option value="0" {if condition="$tstatus eq '0'"}selected{/if}>停用</option>
     </select>
-    <input type="number" name="min_use" value="{$min_use|default=1}" placeholder="最少使用次数（0=全部）" style="width:150px">
+    <input type="number" name="min_use" value="{$min_use|default=0}" placeholder="最少使用次数（0=全部）" style="width:150px">
     <select name="torder" class="filter-select">
       <option value="use_desc" {if condition="$torder eq 'use_desc'"}selected{/if}>使用次数降序</option>
       <option value="use_asc" {if condition="$torder eq 'use_asc'"}selected{/if}>使用次数升序</option>
