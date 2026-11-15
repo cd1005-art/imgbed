@@ -14,7 +14,7 @@
   <div class="tab-pane" data-pane="smtp">
     <section class="panel">
       <h2 class="panel-title">SMTP 配置</h2>
-      <form class="form form-grid settings-form" id="mailForm">
+      <form class="form form-grid" id="mailForm">
         <label class="field"><span class="field-label">SMTP 服务器</span><input type="text" name="smtp_host" value="{$settings.smtp_host|default=''}" placeholder="smtp.qq.com"></label>
         <label class="field"><span class="field-label">端口</span><input type="text" name="smtp_port" value="{$settings.smtp_port|default='465'}" style="width:100px"></label>
         <label class="field"><span class="field-label">加密方式</span>
@@ -29,7 +29,7 @@
         <label class="field"><span class="field-label">发件人名称</span><input type="text" name="smtp_from_name" value="{$settings.smtp_from_name|default='逍遥图床'}"></label>
         <label class="field"><span class="field-label">发件人邮箱（留空=账号）</span><input type="text" name="smtp_from_addr" value="{$settings.smtp_from_addr|default=''}"></label>
         <label class="field"><span class="field-label">管理员通知邮箱</span><input type="text" name="admin_mail_to" value="{$settings.admin_mail_to|default=''}" placeholder="接收告警与交易通知"></label>
-        <div style="display:flex;justify-content:flex-start;padding-top:12px"><button type="submit" class="btn">保存配置</button></div>
+        <div style="display:flex;justify-content:flex-end"><button type="submit" class="btn">保存配置</button></div>
       </form>
     </section>
 
@@ -56,11 +56,11 @@
         </span>
       </h2>
       <p class="panel-sub">下方三种阈值统一按所选口径判断（低于阈值即告警）；切换口径后请按新单位确认数值。告警邮件会同时附带百分比与绝对值。</p>
-      <form class="form form-grid settings-form" id="mailPolicyForm">
+      <form class="form form-grid" id="mailPolicyForm">
         <label class="field"><span class="field-label">磁盘剩余告警（<span class="unit-label">{if condition="($settings['alert_unit'] ?? 'pct') eq 'gb'"}GB{else /}%{/if}</span>）</span><input type="number" step="0.1" name="alert_disk_left_pct" value="{$settings.alert_disk_left_pct|default=10}"></label>
         <label class="field"><span class="field-label">配额剩余告警（<span class="unit-label">{if condition="($settings['alert_unit'] ?? 'pct') eq 'gb'"}GB{else /}%{/if}</span>）</span><input type="number" step="0.1" name="alert_quota_left_pct" value="{$settings.alert_quota_left_pct|default=10}"></label>
         <label class="field"><span class="field-label">网盘空间剩余告警（<span class="unit-label">{if condition="($settings['alert_unit'] ?? 'pct') eq 'gb'"}GB{else /}%{/if}</span>）</span><input type="number" step="0.1" name="alert_space_left_pct" value="{$settings.alert_space_left_pct|default=10}"></label>
-        <div style="display:flex;justify-content:flex-start;padding-top:12px"><button type="submit" class="btn">保存策略</button></div>
+        <div style="display:flex;justify-content:flex-end"><button type="submit" class="btn">保存策略</button></div>
       </form>
     </section>
 
