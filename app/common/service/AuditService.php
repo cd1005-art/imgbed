@@ -134,10 +134,16 @@ class AuditService
             'update_time'  => time(),
         ];
 
-        // 审核通过 / 待人工 → 审核描述清洗后作为图片标题（name）
-        // review 只是"内容需人工确认"，描述本身仍是有效的内容概括，标题照样可用
-        if (in_array($result['result'], ['pass', 'review'], true) && trim((string)($result['detail'] ?? '')) !== '') {
-            $title = self::cleanTitle((string)$result['detail'], (string)$image->name);
+        // 标题：优先用模型单独输出的 title（prompt 已要求它只描述画面、不含判定语）
+        // 模型没给 title 时，才回退到"从 reason 里正则剥离"的老办法
+        if (in_array($result['result'], ['pass', 'review'], true)) {
+            $title = trim((string)($result['title'] ?? ''));
+            if ($title !== '') {
+                // 双保险：万一模型仍在 title 里写了判定语，再过一次清洗
+                $title = self::cleanTitle($title, $title);
+            } else {
+                $title = self::cleanTitle((string)($result['detail'] ?? ''), '');
+            }
             if ($title !== '' && $title !== (string)$image->name) {
                 $update['name'] = $title;
             }

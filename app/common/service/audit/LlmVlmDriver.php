@@ -167,6 +167,7 @@ class LlmVlmDriver implements AuditDriverInterface
         return [
             'result' => $result,
             'score'  => max(0, min(100, (int)($verdict['score'] ?? 0))),
+            'title'  => mb_substr(trim((string)($verdict['title'] ?? '')), 0, 40),
             'detail' => mb_substr((string)($verdict['reason'] ?? ''), 0, 200),
             'tags'   => \app\common\service\TagService::parse($verdict['tags'] ?? [], 5),
         ];
@@ -178,7 +179,16 @@ class LlmVlmDriver implements AuditDriverInterface
         return <<<'TXT'
 你是图床站点的内容审核员。审核这张图片是否允许公网托管。
 判定标准：色情低俗、暴恐血腥、赌博诈骗宣传、涉政有害内容一律 reject；拿不准的给 review；正常图片 pass。
-只输出一行 JSON，格式：{"verdict":"pass|reject|review","score":0-100,"reason":"简短理由","tags":["标签1","标签2"]}
+只输出一行 JSON，格式：
+{"verdict":"pass|reject|review","score":0-100,"title":"图片标题","reason":"判定理由","tags":["标签1","标签2"]}
+
+title 要求（会被直接用作图片标题，务必干净）：
+- 20 字以内，只描述画面主体、风格、用途或色调，例如「动漫少女坐书桌旁」「深色渐变几何壁纸」
+- 严禁出现任何判定/审核用语，如正常、违规、合规、需复核、建议人工、疑似、可能被联想为、无不当内容等
+- 不要写句号，不要写"这张图片是…"这类开头
+
+reason 要求：可以写判定理由和不确定点（如"人物着装暴露，建议人工复核"），这部分只进审核日志，不会作为标题。
+
 标签要求：{{N}} 个以内，2~6 个汉字，描述主体/风格/用途/色调（如：猫、插画、壁纸、深色），禁止人名身份隐私；无合适标签输出空数组。
 TXT;
     }
