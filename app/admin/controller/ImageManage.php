@@ -132,7 +132,7 @@ class ImageManage extends Base
         $action = (string)$this->request->post('action', '');
         $ids    = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
 
-        if (!$ids || !in_array($action, ['freeze', 'unfreeze', 'delete', 'audit_pass', 'audit_reject', 'reaudit'], true)) {
+        if (!$ids || !in_array($action, ['freeze', 'unfreeze', 'delete', 'audit_pass', 'audit_reject', 'reaudit', 'public', 'private'], true)) {
             return json(['status' => false, 'message' => '参数错误']);
         }
 
@@ -200,6 +200,12 @@ class ImageManage extends Base
                     'audit_time'   => time(),
                     'update_time'  => time(),
                 ]);
+            } elseif ($action === 'public' || $action === 'private') {
+                // 公开/私密：只改可见性，不动审核结论与冻结状态
+                $image->save([
+                    'is_public'   => $action === 'public' ? 1 : 0,
+                    'update_time' => time(),
+                ]);
             } elseif ($action === 'delete') {
                 $image->save(['status' => Image::ST_DELETED, 'delete_time' => time()]);
                 if ((int)$image->user_id > 0) {
@@ -221,7 +227,7 @@ class ImageManage extends Base
         if ($action === 'reaudit') {
             return json(['status' => true, 'message' => "已重新审核 {$reauditOk} 张（失败 {$reauditFail}）"]);
         }
-        $label = ['freeze' => '冻结', 'unfreeze' => '解冻', 'delete' => '删除', 'audit_pass' => '审核通过', 'audit_reject' => '审核拒绝'][$action];
+        $label = ['freeze' => '冻结', 'unfreeze' => '解冻', 'delete' => '删除', 'audit_pass' => '审核通过', 'audit_reject' => '审核拒绝', 'public' => '设为公开', 'private' => '设为私密'][$action];
         $msg = "已{$label} {$count} 张";
         if ($action === 'delete' && $fileFail > 0) {
             $msg .= "（其中 {$fileFail} 张的存储文件删除失败，存储实例可能不可用）";
