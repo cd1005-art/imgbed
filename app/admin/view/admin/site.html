@@ -51,16 +51,7 @@
       <input type="number" name="explore_per_page" value="{$settings.explore_per_page|default='30'}" min="1" max="200">
       <span class="field-hint">1~200（默认 30）</span>
     </label>
-    <label class="field"><span class="field-label">允许生成的 Token 权限</span>
-      <select name="token_scopes">
-        <option value="" {if condition="($settings['token_scopes'] ?? '') eq ''"}selected{/if}>上传+列表+详情+删除</option>
-        <option value="upload,list,info" {if condition="($settings['token_scopes'] ?? '') eq 'upload,list,info'"}selected{/if}>上传+列表+详情</option>
-        <option value="upload,list" {if condition="($settings['token_scopes'] ?? '') eq 'upload,list'"}selected{/if}>上传+列表</option>
-        <option value="upload" {if condition="($settings['token_scopes'] ?? '') eq 'upload'"}selected{/if}>上传</option>
-        <option value="__none__" {if condition="($settings['token_scopes'] ?? '') eq '__none__'"}selected{/if}>关闭 Token 生成</option>
-      </select>
-      <span class="field-hint">前台生成 Token 时只能勾选这里开放的权限；选「关闭」后前台不再显示生成入口</span>
-    </label>
+    <p class="field-hint">Token 权限已改为按策略组配置（策略组 → 编辑 → Token 允许权限）。</p>
     <div style="padding:16px 0 3px">
       <button type="submit" class="btn">保存设置</button>
     </div>
@@ -193,15 +184,7 @@
       <input type="number" name="img_thumb_size" value="{$settings.img_thumb_size|default='480'}" min="0" max="2000">
       <span class="field-hint">列表与广场用缩略图，详情页仍用原图。480 约 40KB</span>
     </label>
-    <label class="field"><span class="field-label">缩略图存储位置</span>
-      <select name="thumb_storage_id">
-        <option value="0" {if condition="($settings['thumb_storage_id'] ?? '0') eq '0'"}selected{/if}>本地（public/thumbs）</option>
-        {foreach $storages_for_thumb as $st}
-        <option value="{$st.id}" {if condition="($settings['thumb_storage_id'] ?? '0') eq $st.id"}selected{/if}>{$st.name}（{$st.driver}）</option>
-        {/foreach}
-      </select>
-      <span class="field-hint">缩略图放哪个存储实例；选网盘时该实例不可用时自动回退本地</span>
-    </label>
+    <p class="field-hint">缩略图固定存本地 <code>public/thumbs/</code>（网盘缩略图无法通过 /i/ 直出，已取消该选项）。</p>
     <label class="field"><span class="field-label">水印文字（留空=不加水印）</span>
       <input type="text" name="img_watermark" value="{$settings.img_watermark|default=''}" placeholder="例如：逍遥图床">
       <span class="field-hint">白色半透明文字，字号随图片宽度自适应（14~40px）</span>

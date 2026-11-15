@@ -88,7 +88,15 @@ class ImageProcessor
         }
 
         // 3) 重编码（压缩 + 转格式 + EXIF 清除；GD 重编码天然不保留 EXIF）
-        $targetExt  = $toWebp ? 'webp' : ($ext === 'jpeg' ? 'jpg' : $ext);
+        $realMime = (string)($info['mime'] ?? '');
+        $baseExt  = match ($realMime) {
+            'image/png'  => 'png',
+            'image/webp' => 'webp',
+            'image/gif'  => 'gif',
+            'image/bmp'  => 'bmp',
+            default      => ($ext === 'jpeg' ? 'jpg' : $ext),
+        };
+        $targetExt  = $toWebp ? 'webp' : $baseExt;
         $tmpOut     = tempnam(sys_get_temp_dir(), 'img_');
         $quality    = $compress > 0 ? $compress : 85;
         $ok         = false;
@@ -140,22 +148,30 @@ class ImageProcessor
         return $out;
     }
 
-    /** 按扩展名加载为 GD 资源 */
+    /** 按真实 MIME 加载为 GD 资源（扩展名可能是伪装的，例如 PNG 存成 .jpeg） */
     private static function load(string $path, string $ext)
     {
         try {
-            $img = match ($ext) {
-                'jpg', 'jpeg' => @imagecreatefromjpeg($path),
-                'png'         => @imagecreatefrompng($path),
-                'webp'        => @imagecreatefromwebp($path),
-                'bmp'         => @imagecreatefrombmp($path),
-                default       => false,
+            $info = @getimagesize($path);
+            $mime = (string)($info['mime'] ?? '');
+            $img = match (true) {
+                $mime === 'image/jpeg' => @imagecreatefromjpeg($path),
+                $mime === 'image/png'  => @imagecreatefrompng($path),
+                $mime === 'image/webp' => @imagecreatefromwebp($path),
+                $mime === 'image/bmp'  => @imagecreatefrombmp($path),
+                $mime === 'image/gif'  => @imagecreatefromgif($path),
+                default                => match ($ext) {
+                    'jpg', 'jpeg' => @imagecreatefromjpeg($path),
+                    'png'         => @imagecreatefrompng($path),
+                    'webp'        => @imagecreatefromwebp($path),
+                    default       => false,
+                },
             };
             if (!$img) {
                 return false;
             }
             // 处理带透明通道的图（PNG/WebP）
-            if ($ext === 'png' || $ext === 'webp') {
+            if (in_array($mime, ['image/png', 'image/webp'], true) || in_array($ext, ['png', 'webp'], true)) {
                 imagealphablending($img, false);
                 imagesavealpha($img, true);
             }
