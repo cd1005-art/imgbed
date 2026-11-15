@@ -106,14 +106,47 @@ class ImageManage extends Base
         $action = (string)$this->request->post('action', '');
         $ids    = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
 
-        if (!$ids || !in_array($action, ['freeze', 'unfreeze', 'delete', 'audit_pass', 'audit_reject'], true)) {
+        if (!$ids || !in_array($action, ['freeze', 'unfreeze', 'delete', 'audit_pass', 'audit_reject', 'reaudit'], true)) {
             return json(['status' => false, 'message' => '参数错误']);
         }
 
         $count = 0;
+        $reauditOk = 0;
+        $reauditFail = 0;
         foreach ($ids as $id) {
             $image = Image::find($id);
             if (!$image) { continue; }
+            if ($action === 'reaudit') {
+                // 调用审核模型重新审：会重新写审核态、评分、清洗出的标题与标签
+                @set_time_limit(0);
+                $tmpFile = null;
+                $localLink = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, (string)$image->path);
+                try {
+                    if (is_file($localLink)) {
+                        $tmpFile = $localLink;
+                    } else {
+                        $content = \app\common\service\storage\StorageManager::driver((int)$image->storage_id)
+                            ->getContent((string)$image->path);
+                        if ($content === null || $content === '') {
+                            $reauditFail++;
+                            continue;
+                        }
+                        $tmpFile = tempnam(sys_get_temp_dir(), 'reaudit_');
+                        file_put_contents($tmpFile, $content);
+                    }
+                    $mime = trim((string)($image->mime ?? '')) ?: 'image/jpeg';
+                    \app\common\service\AuditService::audit($image, $tmpFile, $mime);
+                    $reauditOk++;
+                } catch (\Throwable $e) {
+                    $reauditFail++;
+                } finally {
+                    if ($tmpFile !== null && $tmpFile !== $localLink && is_file($tmpFile)) {
+                        @unlink($tmpFile);
+                    }
+                }
+                $count++;
+                continue;
+            }
             if ($action === 'audit_reject') {
                 // 人工批量拒绝：审核态置拒绝，同时冻结（外链立即断）
                 $image->save([
@@ -144,6 +177,9 @@ class ImageManage extends Base
             $count++;
         }
 
+        if ($action === 'reaudit') {
+            return json(['status' => true, 'message' => "已重新审核 {$reauditOk} 张（失败 {$reauditFail}）"]);
+        }
         $label = ['freeze' => '冻结', 'unfreeze' => '解冻', 'delete' => '删除', 'audit_pass' => '审核通过', 'audit_reject' => '审核拒绝'][$action];
         return json(['status' => true, 'message' => "已{$label} {$count} 张"]);
     }

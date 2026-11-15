@@ -115,8 +115,9 @@ class AuditService
             'update_time'  => time(),
         ];
 
-        // 审核通过 → 审核描述清洗后作为图片标题（name）
-        if ($result['result'] === 'pass' && trim((string)($result['detail'] ?? '')) !== '') {
+        // 审核通过 / 待人工 → 审核描述清洗后作为图片标题（name）
+        // review 只是"内容需人工确认"，描述本身仍是有效的内容概括，标题照样可用
+        if (in_array($result['result'], ['pass', 'review'], true) && trim((string)($result['detail'] ?? '')) !== '') {
             $title = self::cleanTitle((string)$result['detail'], (string)$image->name);
             if ($title !== '' && $title !== (string)$image->name) {
                 $update['name'] = $title;
