@@ -166,6 +166,7 @@ return $this->adminView('admin/site', [
     {
         $allowed = [
             'site_name', 'operation_mode', 'allow_register', 'guest_group_id', 'register_group_id',
+            'session_ttl_days',
             // SEO
             'sitemap_enable', 'sitemap_ttl', 'sitemap_pages', 'sitemap_include_tags',
             'sitemap_tag_min_use', 'sitemap_tag_limit', 'seo_jsonld_enable',
@@ -183,6 +184,20 @@ return $this->adminView('admin/site', [
         ];
         $all = $this->request->post();
         $saved = 0;
+
+        // 登录有效期：同步写入 config/session.php（TP 的 session 过期时间）
+        if (array_key_exists('session_ttl_days', $all)) {
+            $days = max(1, min(365, (int)$all['session_ttl_days']));
+            Setting::saveKey('session_ttl_days', (string)$days);
+            $cfg = config_path() . 'session.php';
+            if (is_writable($cfg)) {
+                $s = (string)@file_get_contents($cfg);
+                $s2 = preg_replace("/('expire'\s*=>\s*)\d+/", '${1}' . ($days * 86400), $s);
+                if ($s2 !== null && $s2 !== $s) {
+                    @file_put_contents($cfg, $s2);
+                }
+            }
+        }
         foreach ($allowed as $key) {
             if (array_key_exists($key, $all)) {
                 Setting::saveKey($key, (string)$all[$key]);
