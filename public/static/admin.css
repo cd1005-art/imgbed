@@ -283,11 +283,13 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 #siteForm .field input,
 #siteForm .field select {
   flex: 0 0 auto;
-  width: 250px;
   max-width: 100%;
   margin: 0;
 }
-#siteForm .field input[type="number"] { width: 120px; }
+/* 文本框按常用内容宽度；下拉按最长选项自适应，不再统一 250px */
+#siteForm .field input[type="text"] { width: 200px; }
+#siteForm .field input[type="number"] { width: 100px; }
+#siteForm .field select { width: auto; min-width: 140px; max-width: 240px; }
 #siteForm .field .field-hint {
   flex: 1 1 200px;
   margin: 0;
