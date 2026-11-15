@@ -402,10 +402,12 @@ class ImageManage extends Base
             \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
         } catch (\Throwable $e) {
         }
-        // 本地外链副本
-        $link = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, (string)$image->path);
-        if (is_file($link)) {
-            @unlink($link);
+        // 本地外链副本（public/i 是软链时不删，否则会删掉网盘原图）
+        if (!is_link(public_path() . 'i')) {
+            $link = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, (string)$image->path);
+            if (is_file($link)) {
+                @unlink($link);
+            }
         }
         $thumb = trim((string)($image->thumb_path ?? ''));
         if ($thumb !== '') {

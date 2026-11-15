@@ -204,3 +204,42 @@ cp /usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc storage/fonts/
 ```
 
 找不到字体时水印会降级为位图字体（中文显示为乱码），此时建议关闭水印。
+
+## 外链本地副本（默认开启，零运维）
+
+`/i/` 外链由 nginx 直接输出 `public/i/` 下的文件。程序在上传完成后自动把文件复制一份到该目录。
+
+**为什么需要**：外链若走 PHP 代理读网盘，大图会超时；nginx 静态输出则几乎零开销（实测 0.4s / 14MB 图）。
+
+**配置**：站点设置 → 图片处理
+
+| 配置 | 默认 | 说明 |
+|---|---|---|
+| 外链本地副本 | 开启 | 关闭后外链依赖 PHP 代理（大图可能超时）|
+| 副本体积上限 | 2 MB | 超过上限的图不写副本，避免本地空间被大图吃掉 |
+
+**空间估算**（转 WebP 后）：1920×1080 约 200KB、壁纸约 0.5~1MB、14MB 原图转 WebP 约 0.6~1.5MB。500 张约 300~700MB。
+
+**清理**：副本可随时删除（原图在存储实例里），`rm -rf public/i/*` 后重新访问会自动按需…（注意：删除后历史图外链会 404，除非重新上传）。
+
+## 进阶：网盘挂载零拷贝（可选，需评估性能）
+
+用 rclone 把 WebDAV 挂到本地，再让 `public/i` 指向挂载点，理论上可以省掉副本：
+
+```bash
+dnf install -y fuse3
+curl -sL https://downloads.rclone.org/rclone-current-linux-amd64.zip | busybox unzip -d /tmp -
+cp /tmp/rclone-*/rclone /usr/local/bin/ && chmod +x /usr/local/bin/rclone
+
+rclone config create alist webdav url=http://127.0.0.1:5244/dav/YOUR_STORAGE vendor=other user=admin pass=$(rclone obscure 'your-password')
+
+mkdir -p /mnt/alist
+rclone mount alist: /mnt/alist --allow-other --vfs-cache-mode full --buffer-size 32M --daemon
+
+cd public && mv i i.bak && ln -s /mnt/alist i
+```
+
+程序检测到 `public/i` 是符号链接时**自动跳过副本写入**（零拷贝）。
+
+**⚠ 实测警告**：如果 WebDAV 后端本身慢（如 Alist 再套一层云盘），首次读取一个文件可能要 30 秒以上，nginx 会挂住连接。**仅在网盘读写延迟 < 100ms 时使用**。否则请使用默认的副本模式。
+

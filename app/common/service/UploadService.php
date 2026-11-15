@@ -189,7 +189,9 @@ class UploadService
         // 外链副本：写一份到 public/i/（nginx 静态直出，比走 TP 代理快）
         // 站长可关闭；也可设体积上限，超过上限的图不写副本（避免本地空间被大图吃掉）
         try {
-            $linkOn  = (int)Setting::get('img_local_link', 1) === 1;
+            // public/i 是软链 = 已挂载网盘目录（进阶模式），文件天然可读，零副本
+            $linkIsMount = is_link(public_path() . 'i');
+            $linkOn  = !$linkIsMount && (int)Setting::get('img_local_link', 1) === 1;
             $linkMax = (int)Setting::get('img_local_link_max', 2);   // 单位 MB，0=不限
             $upBytes = (int)@filesize($upPath);
             $allow   = $linkOn && ($linkMax === 0 || $upBytes <= $linkMax * 1048576);
