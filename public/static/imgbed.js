@@ -88,7 +88,14 @@
     var dragId = 0;
     var lastOk = null;
 
+    var MAX_BATCH = 100;   // 单次最多入队数量（大批量请分批，避免把 CPU 打满）
+    var AUTO_RETRY = 1;    // 服务器繁忙时自动重试次数
+
     function enqueue(files) {
+      if (files.length > MAX_BATCH) {
+        toast('一次最多 ' + MAX_BATCH + ' 张，已截取前 ' + MAX_BATCH + ' 张，其余请分批再传');
+        files = files.slice(0, MAX_BATCH);
+      }
       // 前端预检：超过策略单图上限的直接拦下，不浪费流量
       var maxBytes = parseInt(window.UPLOAD_MAX_BYTES || 0, 10);
       if (maxBytes > 0) {
@@ -160,15 +167,26 @@
           job.result = data.data;
           lastOk = { data: data.data, file: job.file };
         } else {
-          job.status = 'fail';
-          if (!data) {
-            job.err = xhr.status === 0 ? '网络中断或超时'
-              : ('服务端错误 ' + xhr.status + (xhr.status >= 500 ? '（图片可能过大或处理超时，已自动回退）' : ''));
-          } else {
-            job.err = data.message || '上传失败';
+          var failMsg = !data
+            ? (xhr.status === 0 ? '网络中断或超时'
+              : ('服务端错误 ' + xhr.status + (xhr.status >= 500 ? '（服务器繁忙，稍后自动重试）' : '')))
+            : (data.message || '上传失败');
+
+          // 服务器繁忙 / 网络异常：自动重试一次（业务错误如超限、格式不允许则不重试）
+          var retriable = !data && (xhr.status === 0 || xhr.status >= 500);
+          if (retriable && (job.retried || 0) < AUTO_RETRY) {
+            job.retried = (job.retried || 0) + 1;
+            job.status = 'wait';
+            job.pct = 0;
+            job.err = '';
+            render();
+            setTimeout(function () { pump(); }, 1500);
+            return;
           }
-          // 失败必须显式提示（队列可能在页面下方看不见）
-          toast(job.err);
+
+          job.status = 'fail';
+          job.err = failMsg;
+          toast(failMsg);
           if (qbox) { qbox.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
         }
         render();
