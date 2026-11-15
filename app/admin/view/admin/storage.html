@@ -32,7 +32,7 @@
     </div>
   </div>
   <p class="probe-result" id="probe-{$vo.id}"></p>
-  <form class="form form-grid storage-form" id="storage-form-{$vo.id}" hidden>
+  <form class="form form-grid settings-form wide-inputs storage-form" id="storage-form-{$vo.id}" hidden>
     <input type="hidden" name="id" value="{$vo.id}">
     <label class="field"><span class="field-label">实例名</span><input type="text" name="name" value="{$vo.name}"></label>
     <label class="field"><span class="field-label">驱动</span>
@@ -65,14 +65,14 @@
       <label class="field"><span class="field-label">网盘空间（GB，0=不限，用于显示剩余）</span><input type="number" name="space_gb" value="{$vo.config.space_gb|default=0}"></label>
       <label class="field"><span class="field-label">配额上限（GB，0=不限，达阈值停止上传）</span><input type="number" name="quota_gb" value="{$vo.config.quota_gb|default=0}"></label>
     </div>
-    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存</button></div>
+    <div style="display:flex;justify-content:flex-start;padding-top:12px"><button type="submit" class="btn">保存</button></div>
   </form>
 </section>
 {/volist}
 
 <section class="panel">
   <h2 class="panel-title">新增存储实例</h2>
-  <form class="form form-grid storage-form" id="storage-form-0">
+  <form class="form form-grid settings-form wide-inputs storage-form" id="storage-form-0">
     <input type="hidden" name="id" value="0">
     <label class="field"><span class="field-label">实例名</span><input type="text" name="name" placeholder="例如：Alist 网盘"></label>
     <label class="field"><span class="field-label">驱动</span>
@@ -102,7 +102,7 @@
       <label class="field"><span class="field-label">网盘空间（GB，0=不限，用于显示剩余）</span><input type="number" name="space_gb" value="0"></label>
       <label class="field"><span class="field-label">配额上限（GB，0=不限，达阈值停止上传）</span><input type="number" name="quota_gb" value="0"></label>
     </div>
-    <div class="field" style="justify-content:flex-end"><button type="submit" class="btn">保存新实例</button></div>
+    <div style="display:flex;justify-content:flex-start;padding-top:12px"><button type="submit" class="btn">保存新实例</button></div>
   </form>
 </section>
 {/block}

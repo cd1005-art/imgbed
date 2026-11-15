@@ -261,8 +261,8 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 .form-grid .field .field-hint { font-size: 11px; line-height: 1.5; margin-top: 3px; }
 
 /* 基础配置：纵向单列（Discuz 风格）—— 标签一行，控件 + 说明一行，虚线分隔 */
-#siteForm { display: block; max-width: 980px; text-align: left; }
-#siteForm .field {
+.settings-form { display: block; max-width: 980px; text-align: left; }
+.settings-form .field {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -274,30 +274,36 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
   border-bottom: 1px dashed #E4E1DB;
   text-align: left;
 }
-#siteForm .field .field-label {
+.settings-form .field .field-label {
   flex: 0 0 100%;
   margin-bottom: 1px;
   font-size: 12px;
   color: #5C5850;
 }
-#siteForm .field input,
-#siteForm .field select {
+.settings-form .field input,
+.settings-form .field select {
   flex: 0 0 auto;
   max-width: 100%;
   margin: 0;
 }
 /* 文本框按常用内容宽度；下拉按最长选项自适应，不再统一 250px */
-#siteForm .field input[type="text"] { width: 200px; }
-#siteForm .field input[type="number"] { width: 100px; }
-#siteForm .field select { width: auto; min-width: 140px; max-width: 240px; }
-#siteForm .field .field-hint {
+.settings-form .field input[type="text"] { width: 200px; }
+.settings-form .field input[type="number"] { width: 100px; }
+.settings-form .field select { width: auto; min-width: 140px; max-width: 240px; }
+.settings-form .field .field-hint {
   flex: 1 1 200px;
   margin: 0;
   font-size: 11px;
   color: #8A867E;
   line-height: 1.5;
 }
-#siteForm > div[style*="grid-column"] { padding-top: 14px; }
+.settings-form > div[style*="grid-column"] { padding-top: 14px; }
 
 /* 最后一项不画分隔线（收尾干净） */
-#siteForm .field:last-of-type { border-bottom: none; }
+.settings-form .field:last-of-type { border-bottom: none; }
+
+/* 存储/网关等需要长文本的设置项 */
+.settings-form.wide-inputs .field input[type="text"],
+.settings-form.wide-inputs .field input[type="url"],
+.settings-form.wide-inputs .field input[type="password"] { width: 300px; }
+.settings-form.wide-inputs .field textarea { width: 320px; }
