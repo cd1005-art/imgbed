@@ -321,3 +321,8 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
   padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--r-sm);
   background: var(--surface); color: var(--ink); font-size: 13px;
 }
+
+/* 工具栏右侧按钮组：紧挨排列，不被 space-between 拉开 */
+.toolbar-actions {
+  display: flex; align-items: center; gap: 8px;
+}
