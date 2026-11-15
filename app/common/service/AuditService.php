@@ -62,6 +62,19 @@ class AuditService
     }
 
     /** 落库：audit_logs + images 审核态，拒绝自动冻结 */
+    /** 审核描述 → 图片标题：去模型前缀、去首尾标点、限 60 字，太短则保留原名 */
+    protected static function cleanTitle(string $detail, string $fallback): string
+    {
+        $t = preg_replace('/^\s*\[[^\]]{0,40}\]\s*/u', '', $detail);
+        $t = preg_replace('/^[\s\p{P}\p{S}]+/u', '', (string)$t);
+        $t = preg_replace('/[\s\p{P}\p{S}]+$/u', '', (string)$t);
+        $t = trim((string)$t);
+        if ($t === '' || mb_strlen($t) < 4) {
+            return $fallback;
+        }
+        return mb_substr($t, 0, 60);
+    }
+
     protected static function applyResult(Image $image, string $driver, array $result): void
     {
         $statusMap = ['pass' => Image::AUDIT_PASS, 'reject' => Image::AUDIT_REJECT, 'review' => Image::AUDIT_REVIEW];
@@ -86,6 +99,14 @@ class AuditService
             'audit_time'   => time(),
             'update_time'  => time(),
         ];
+
+        // 审核通过 → 审核描述清洗后作为图片标题（name）
+        if ($result['result'] === 'pass' && trim((string)($result['detail'] ?? '')) !== '') {
+            $title = self::cleanTitle((string)$result['detail'], (string)$image->name);
+            if ($title !== '' && $title !== (string)$image->name) {
+                $update['name'] = $title;
+            }
+        }
         if ($result['result'] === 'reject') {
             $update['status'] = Image::ST_FROZEN;   // 拒绝即冻结，外链断
             // 审核拒绝通知上传者

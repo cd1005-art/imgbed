@@ -86,6 +86,7 @@
     var busy = false;
     var qbox = document.getElementById('uploadQueue');
     var dragId = 0;
+    var lastOk = null;
 
     function enqueue(files) {
       files.forEach(function (f) {
@@ -122,20 +123,39 @@
         if (el) { el.style.width = job.pct + '%'; }
         var st = qbox && qbox.querySelector('[data-status="' + job.id + '"]');
         if (st && job.pct >= 100) { st.textContent = '处理中…'; }
+        // 顶部进度条同步当前项
+        if (progress) { progress.hidden = false; }
+        if (bar) { bar.style.width = job.pct + '%'; }
+        if (floatBox) {
+          floatBox.hidden = false;
+          floatFill.style.width = job.pct + '%';
+          floatPct.textContent = job.pct >= 100 ? '处理中…' : job.pct + '%';
+        }
       };
       xhr.onload = function () {
         busy = false;
         var data = null;
         try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
+        if (progress) { progress.hidden = true; }
+        if (floatBox) { floatBox.hidden = true; }
+        if (bar) { bar.style.width = '0%'; }
+
         if (data && data.status) {
           job.status = 'ok';
           job.pct = 100;
           job.result = data.data;
+          lastOk = { data: data.data, file: job.file };
         } else {
           job.status = 'fail';
           job.err = (data && data.message) || '上传失败';
         }
         render();
+        var pending = queue.some(function (q) { return q.status === 'wait' || q.status === 'up'; });
+        if (!pending && lastOk) {
+          // 队列跑完：显示上传结果页（大图 + 四格式链接）
+          showResult(lastOk.data, lastOk.file);
+          lastOk = null;
+        }
         pump();
       };
       xhr.onerror = function () {

@@ -231,7 +231,9 @@ class UploadService
         }
 
         // ---------- 6. 机审（同步一期，none 驱动零开销；二期异步队列） ----------
-        AuditService::audit($image, $upPath, (string)$mime);
+        // 审核始终用「原始文件 + 原始 mime」：转 WebP 后部分视觉模型无法识别，
+        // 会导致审核拿不到描述、图片标题为空（v1.3 回归问题）
+        AuditService::audit($image, $file->getPathname(), (string)($info['mime'] ?? $mime));
 
         // 清理处理产生的临时文件
         if (!empty($processed['path'])) {
