@@ -54,7 +54,7 @@
     <p class="field-hint">Token 权限已改为按策略组配置（策略组 → 编辑 → Token 允许权限）。</p>
     <label class="field"><span class="field-label">登录有效期（天）</span>
       <input type="number" name="session_ttl_days" value="{$settings.session_ttl_days|default='7'}" min="1" max="365">
-      <span class="field-hint">用户登录后多久需要重新登录（页面长时间不动不会掉线）；保存后立即写入 config/session.php</span>
+      <span class="field-hint"><b>可填 1~365 天</b>（默认 7）；例如 1=隔天就要重登，30=一个月免登录，365=一年；保存后立即写入 config/session.php，页面长时间不动不会掉线</span>
     </label>
 
     <div style="padding:16px 0 3px">
