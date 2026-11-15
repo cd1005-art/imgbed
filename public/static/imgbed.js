@@ -128,7 +128,7 @@
       if (!job) { return; }
       busy = true;
       job.status = 'up';
-      render();
+      updateItem(job);
       send(job);
     }
 
@@ -179,7 +179,7 @@
             job.status = 'wait';
             job.pct = 0;
             job.err = '';
-            render();
+            updateItem(job);
             setTimeout(function () { pump(); }, 1500);
             return;
           }
@@ -189,7 +189,7 @@
           toast(failMsg);
           if (qbox) { qbox.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
         }
-        render();
+        updateItem(job);
         var pending = queue.some(function (q) { return q.status === 'wait' || q.status === 'up'; });
         if (!pending && lastOk) {
           // 队列跑完：显示上传结果页（大图 + 四格式链接）
@@ -203,15 +203,13 @@
         job.status = 'fail';
         job.err = '网络错误，请重试';
         toast(job.err);
-        render();
+        updateItem(job);
         pump();
       };
       xhr.send(fd);
     }
 
-    function render() {
-      if (!qbox) { return; }
-      qbox.innerHTML = queue.map(function (q) {
+    function itemHtml(q) {
         var cls = q.status === 'up' ? 'up' : (q.status === 'ok' ? 'ok' : (q.status === 'fail' ? 'fail' : 'wait'));
         var statusText = q.status === 'wait' ? '排队中'
           : (q.status === 'up' ? (q.pct >= 100 ? '处理中…' : q.pct + '%')
@@ -235,68 +233,89 @@
           + '</div>'
           + '<div class="uq-act">' + actions + '</div>'
           + '</div>';
-      }).join('');
+    }
+
+    function render() {
+      if (!qbox) { return; }
+      qbox.innerHTML = queue.map(itemHtml).join('');
       bindQueueEvents();
+    }
+
+    /** 只更新单项（大批量时避免每次全量重绘导致页面卡死） */
+    function updateItem(q) {
+      if (!qbox) { return; }
+      var el = qbox.querySelector('[data-qid="' + q.id + '"]');
+      if (!el) { return; }
+      var tmp = document.createElement('div');
+      tmp.innerHTML = itemHtml(q);
+      var fresh = tmp.firstElementChild;
+      if (!fresh) { return; }
+      el.replaceWith(fresh);
+      bindItemEvents(fresh);
     }
 
     function bindQueueEvents() {
       if (!qbox) { return; }
-      qbox.querySelectorAll('[data-retry]').forEach(function (b) {
+      qbox.querySelectorAll('.uq-item').forEach(bindItemEvents);
+    }
+
+    /** 只绑定单个队列项的按钮与拖拽（updateItem 后调用） */
+    function bindItemEvents(el) {
+      if (!el) { return; }
+      el.querySelectorAll('[data-retry],[data-remove],[data-copy],[data-open]').forEach(function (b) {
         b.onclick = function () {
-          var id = parseInt(b.getAttribute('data-retry'), 10);
-          var q = queue.filter(function (x) { return x.id === id; })[0];
-          if (q) { q.status = 'wait'; q.pct = 0; q.err = ''; render(); pump(); }
-        };
-      });
-      qbox.querySelectorAll('[data-remove]').forEach(function (b) {
-        b.onclick = function () {
-          var id = parseInt(b.getAttribute('data-remove'), 10);
-          queue = queue.filter(function (x) { return x.id !== id; });
-          render(); pump();
-        };
-      });
-      qbox.querySelectorAll('[data-copy]').forEach(function (b) {
-        b.onclick = function () {
-          var id = parseInt(b.getAttribute('data-copy'), 10);
-          var q = queue.filter(function (x) { return x.id === id; })[0];
-          if (q && q.result) { copyText(q.result.url, function (ok) { toast(ok ? '已复制' : '复制失败'); }); }
-        };
-      });
-      qbox.querySelectorAll('[data-open]').forEach(function (b) {
-        b.onclick = function () {
-          var id = parseInt(b.getAttribute('data-open'), 10);
-          var q = queue.filter(function (x) { return x.id === id; })[0];
-          if (q && q.result) { window.open(q.result.url, '_blank'); }
-        };
-      });
-      // 拖拽排序（仅排队中的项可拖）
-      qbox.querySelectorAll('.uq-item').forEach(function (el) {
-        el.addEventListener('dragstart', function () {
-          if (el.getAttribute('draggable') !== 'true') { return; }
-          dragId = parseInt(el.getAttribute('data-qid'), 10);
-          el.classList.add('is-drag');
-        });
-        el.addEventListener('dragend', function () { el.classList.remove('is-drag'); });
-        el.addEventListener('dragover', function (e) {
-          if (!dragId) { return; }
-          e.preventDefault();
-          el.classList.add('is-over');
-        });
-        el.addEventListener('dragleave', function () { el.classList.remove('is-over'); });
-        el.addEventListener('drop', function (e) {
-          e.preventDefault();
-          el.classList.remove('is-over');
-          var toId = parseInt(el.getAttribute('data-qid'), 10);
-          if (!dragId || dragId === toId) { dragId = 0; return; }
-          var from = queue.findIndex(function (x) { return x.id === dragId; });
-          var to = queue.findIndex(function (x) { return x.id === toId; });
-          if (from >= 0 && to >= 0) {
-            var moved = queue.splice(from, 1)[0];
-            queue.splice(to, 0, moved);
+          if (b.hasAttribute('data-retry')) {
+            var id = parseInt(b.getAttribute('data-retry'), 10);
+            var q = queue.filter(function (x) { return x.id === id; })[0];
+            if (q) { q.status = 'wait'; q.pct = 0; q.err = ''; updateItem(q); pump(); }
+            return;
           }
-          dragId = 0;
-          render();
-        });
+          if (b.hasAttribute('data-remove')) {
+            var rid = parseInt(b.getAttribute('data-remove'), 10);
+            queue = queue.filter(function (x) { return x.id !== rid; });
+            if (el.parentNode) { el.parentNode.removeChild(el); }
+            pump();
+            return;
+          }
+          if (b.hasAttribute('data-copy')) {
+            var cid = parseInt(b.getAttribute('data-copy'), 10);
+            var cq = queue.filter(function (x) { return x.id === cid; })[0];
+            if (cq && cq.result) { copyText(cq.result.url, function (ok) { toast(ok ? '已复制' : '复制失败'); }); }
+            return;
+          }
+          if (b.hasAttribute('data-open')) {
+            var oid = parseInt(b.getAttribute('data-open'), 10);
+            var oq = queue.filter(function (x) { return x.id === oid; })[0];
+            if (oq && oq.result) { window.open(oq.result.url, '_blank'); }
+          }
+        };
+      });
+      // 拖拽排序
+      el.addEventListener('dragstart', function () {
+        if (el.getAttribute('draggable') !== 'true') { return; }
+        dragId = parseInt(el.getAttribute('data-qid'), 10);
+        el.classList.add('is-drag');
+      });
+      el.addEventListener('dragend', function () { el.classList.remove('is-drag'); });
+      el.addEventListener('dragover', function (e) {
+        if (!dragId) { return; }
+        e.preventDefault();
+        el.classList.add('is-over');
+      });
+      el.addEventListener('dragleave', function () { el.classList.remove('is-over'); });
+      el.addEventListener('drop', function (e) {
+        e.preventDefault();
+        el.classList.remove('is-over');
+        var toId = parseInt(el.getAttribute('data-qid'), 10);
+        if (!dragId || dragId === toId) { dragId = 0; return; }
+        var from = queue.findIndex(function (x) { return x.id === dragId; });
+        var to = queue.findIndex(function (x) { return x.id === toId; });
+        if (from >= 0 && to >= 0) {
+          var moved = queue.splice(from, 1)[0];
+          queue.splice(to, 0, moved);
+        }
+        dragId = 0;
+        render();
       });
     }
 
