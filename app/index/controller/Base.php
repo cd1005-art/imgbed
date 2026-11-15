@@ -30,6 +30,11 @@ class Base extends \app\BaseController
         $vars['nav_left']  = $vars['nav_left']  ?? \app\common\service\NavService::forPage($logged)['left'];
         $vars['nav_right'] = $vars['nav_right'] ?? \app\common\service\NavService::forPage($logged)['right'];
 
+        // 前台 HTML 不缓存：图片标题/审核状态/站币余额都是实时数据，避免用户看到旧内容
+        header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
         return view($template, $vars);
     }
 
