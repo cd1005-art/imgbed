@@ -33,6 +33,7 @@ class Explore extends Base
 
         // 热门标签
         $hotTags = Db::name('tags')->where('status', 1)
+            ->where('status', 1)->where('use_count', '>', 0)
             ->order('use_count', 'desc')->limit(20)->select()->toArray();
 
         return $this->siteView('photo/explore', [

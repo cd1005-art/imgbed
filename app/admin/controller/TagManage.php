@@ -11,6 +11,32 @@ class TagManage extends Base
 {
     public function index()
     {
+        // 维护动作走 GET 参数（独立方法路由在此项目下会被 nginx 拦成 404）
+        $act = (string)$this->request->param('action', '');
+        if ($act === 'recalc') {
+            try {
+                Db::execute("UPDATE img_tags t SET use_count = (
+                    SELECT COUNT(*) FROM img_image_tags it
+                    JOIN img_images i ON i.id = it.image_id
+                    WHERE it.tag_id = t.id AND i.status = 1
+                )");
+                $this->app->session->set('flash', '使用次数已按实际引用重算');
+            } catch (\Throwable $e) {
+                $this->app->session->set('flash', '重算失败：' . $e->getMessage());
+            }
+            return redirect('/admin/tag');
+        }
+        if ($act === 'clean_orphans') {
+            $deleted = 0;
+            try {
+                Db::execute("DELETE it FROM img_image_tags it LEFT JOIN img_images i ON i.id = it.image_id WHERE i.id IS NULL OR i.status <> 1");
+                Db::execute("DELETE t FROM img_tags t LEFT JOIN img_image_tags it ON it.tag_id = t.id WHERE it.tag_id IS NULL");
+                $deleted = (int)Db::name('tags')->count();
+            } catch (\Throwable $e) {
+            }
+            $this->app->session->set('flash', '已清理孤儿标签与失效关联');
+            return redirect('/admin/tag');
+        }
         $page   = max(1, (int)$this->request->param('page', 1));
         $kw     = trim((string)$this->request->param('kw', ''));
         $status = (string)$this->request->param('tstatus', '');
@@ -112,5 +138,39 @@ class TagManage extends Base
         Db::name('tags')->where('id', $from['id'])->delete();
 
         return json(['status' => true, 'message' => "已把「{$fromName}」并入「{$to['name']}」"]);
+    }
+
+    /** 按实际关联重算使用次数（修复历史脏数据） */
+    public function recalc()
+    {
+        try {
+            Db::execute("UPDATE img_tags t SET use_count = (
+                SELECT COUNT(*) FROM img_image_tags it
+                JOIN img_images i ON i.id = it.image_id
+                WHERE it.tag_id = t.id AND i.status = 1
+            )");
+        } catch (\Throwable $e) {
+            return json(['status' => false, 'message' => '重算失败：' . $e->getMessage()]);
+        }
+        return json(['status' => true, 'message' => '使用次数已按实际引用重算']);
+    }
+
+    /** 清理孤儿标签（无任何有效图片引用） */
+    public function cleanOrphans()
+    {
+        $deleted = 0;
+        try {
+            $ids = Db::name('tags')->where('use_count', '<=', 0)->column('id');
+            foreach ($ids as $tid) {
+                $used = Db::name('image_tags')->where('tag_id', (int)$tid)->count();
+                if ($used === 0) {
+                    Db::name('tags')->where('id', (int)$tid)->delete();
+                    $deleted++;
+                }
+            }
+        } catch (\Throwable $e) {
+            return json(['status' => false, 'message' => '清理失败：' . $e->getMessage()]);
+        }
+        return json(['status' => true, 'message' => "已清理 {$deleted} 个无引用的标签"]);
     }
 }

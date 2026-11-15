@@ -457,9 +457,26 @@ class ImageManage extends Base
     }
 
     /** 软删除 */
+    /** 解除标签关联并回退使用次数（删除图片时调用，避免标签统计虚高） */
+    private function detachTags(int $imageId): void
+    {
+        try {
+            $tagIds = Db::name('image_tags')->where('image_id', $imageId)->column('tag_id');
+            if (!$tagIds) {
+                return;
+            }
+            Db::name('image_tags')->where('image_id', $imageId)->delete();
+            foreach (array_unique(array_map('intval', $tagIds)) as $tid) {
+                Db::name('tags')->where('id', $tid)->where('use_count', '>', 0)->dec('use_count')->update();
+            }
+        } catch (\Throwable $e) {
+        }
+    }
+
     /** 删除原图（存储实例）+ 本地缩略图，两处删除入口共用 */
     private function purgeFiles(Image $image): void
     {
+        $this->detachTags((int)$image->id);
         try {
             \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
         } catch (\Throwable $e) {

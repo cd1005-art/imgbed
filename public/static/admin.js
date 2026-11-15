@@ -1430,6 +1430,15 @@
 
   /* ---------- 标签管理 ---------- */
   function adminTag() {
+    var rc = document.getElementById('tagRecalc');
+    if (rc) rc.addEventListener('click', function () {
+      location.href = '/admin/tag?action=recalc';
+    });
+    var cl = document.getElementById('tagClean');
+    if (cl) cl.addEventListener('click', function () {
+      if (!confirm('删除所有无图片引用的标签？此操作不可恢复')) { return; }
+      location.href = '/admin/tag?action=clean_orphans';
+    });
     bindBatchDelete({checkAll:'#tagCheckAll', checkbox:'.tag-check', batchBtn:'#tagBatchDel', api:'/admin/tag/delete', label:'标签', batchBar:'#tagBatchBar', barCount:'#tagBatchCount', clearBtn:'#tagBatchClear', unit:'个'});
     function batchStatus(status) {
       var ids = Array.prototype.map.call(document.querySelectorAll('.tag-check:checked'), function (c) { return c.value; });
