@@ -35,6 +35,14 @@ class ImageProcessor
             'bytes'  => (int)@filesize($srcPath),
         ];
 
+        // 超大尺寸图：解码一份就要 宽×高×4 字节，8000×6000 已 192MB，
+        // 叠加缩放/重编码副本很容易吃满 512M 并触发 500。
+        // 超过 80MP 直接原样上传（不压缩/不水印/不缩略图），保证能传上去。
+        $megapixels = ((int)$info[0] * (int)$info[1]) / 1000000;
+        if ($megapixels > 80) {
+            return $out;
+        }
+
         $compress = (int)Setting::get('img_compress', 82);     // 0=不压缩
         $toWebp   = (int)Setting::get('img_webp', 0) === 1;
         $wmText   = trim((string)Setting::get('img_watermark', ''));
@@ -50,7 +58,7 @@ class ImageProcessor
             return $out;
         }
 
-        @ini_set('memory_limit', '512M');
+        @ini_set('memory_limit', '1024M');
 
         $img = self::load($srcPath, $ext);
         if (!$img) {

@@ -174,8 +174,10 @@ class UploadService
         try {
             $processed = ImageProcessor::process($file->getPathname(), $ext);
         } catch (\Throwable $e) {
-            // 图片处理失败绝不阻断上传：记录后回退原图
-            \think\facade\Log::record('图片处理异常：' . $e->getMessage(), 'error');
+            // 图片处理遇到无法处理的图（CMYK / 超大幅面 / 损坏编码）时兜底：
+            // 直接按原图上传，绝不因为"优化"把用户的上传打回 500
+            \think\facade\Log::record('图片处理失败，按原图上传：' . $e->getMessage(), 'error');
+            $processed = ['path' => null, 'ext' => $ext, 'width' => $width, 'height' => $height, 'thumb' => null, 'bytes' => (int)$file->getSize()];
         }
         $upPath    = $file->getPathname();
         if (!empty($processed['path'])) {
