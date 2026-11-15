@@ -182,16 +182,7 @@
     </label>
     <label class="field"><span class="field-label">缩略图最长边（像素，0=不生成）</span>
       <input type="number" name="img_thumb_size" value="{$settings.img_thumb_size|default='480'}" min="0" max="2000">
-      <span class="field-hint">列表与广场用缩略图，详情页仍用原图</span>
-    </label>
-    <label class="field"><span class="field-label">缩略图存储位置</span>
-      <select name="thumb_storage_id">
-        <option value="0" {if condition="($settings['thumb_storage_id'] ?? '0') eq '0'"}selected{/if}>本地（public/i/thumbs，nginx 直出）</option>
-        {foreach $storages_for_thumb as $st}
-        <option value="{$st.id}" {if condition="($settings['thumb_storage_id'] ?? '0') eq $st.id"}selected{/if}>{$st.name}（{$st.driver}）</option>
-        {/foreach}
-      </select>
-      <span class="field-hint">存网盘时缩略图走 /i/thumbs/ 代理输出；网盘不可用自动回退本地</span>
+      <span class="field-hint">列表与广场用缩略图，详情页仍用原图。<br>存储目录：<code>public/i/thumbs/年/月/日/文件名.webp</code>（如 <code>public/i/thumbs/2026/11/16/ab12cd34.webp</code>）</span>
     </label>
     <label class="field"><span class="field-label">外链本地副本</span>
       <select name="img_local_link">

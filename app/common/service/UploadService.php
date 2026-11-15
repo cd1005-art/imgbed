@@ -209,22 +209,9 @@ class UploadService
         } catch (\Throwable $e) {
         }
 
-        // 缩略图：按「缩略图存储」设置（0=本地 public/thumbs/，>0=指定存储实例）
+        // 缩略图：固定写本地 public/i/thumbs/（网盘缩略图无法通过 /i/thumbs/ 代理访问，只能本地）
         $thumbPath = '';
         if (!empty($processed['thumb'])) {
-            $thumbStorage = (int)Setting::get('thumb_storage_id', 0);
-            if ($thumbStorage > 0) {
-                $thumbRel = 'thumbs/' . preg_replace('/\.[a-z0-9]+$/i', '.webp', $relativePath);
-                try {
-                    $tDriver = StorageManager::driver($thumbStorage);
-                    if ($tDriver && $tDriver->put((string)$processed['thumb'], $thumbRel)) {
-                        $thumbPath = $thumbRel;
-                    }
-                } catch (\Throwable $e) {
-                    // 指定存储失败时回退本地
-                }
-            }
-            // 本地始终写一份（供 nginx 直出，缩略图只有 10~50KB，占用可忽略）
             if (true) {
                 $thumbRel = 'thumbs/' . preg_replace('/\.[a-z0-9]+$/i', '.webp', $relativePath);
                 $thumbAbs = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $thumbRel);
