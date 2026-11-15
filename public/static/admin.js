@@ -1826,17 +1826,40 @@
     if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', fn); } else { fn(); }
   }
   ready(function () {
-    // 有列表（筛选栏 + 表格）就提供每页条数，数据少时虽无分页也保留入口
-    if (!document.querySelector('form.search-bar') && !document.querySelector('table')) { return; }
-    if (!document.querySelector('.pager') && !document.querySelector('form.search-bar')) { return; }
+    // 有列表就提供每页条数；统一放到表格下方的 .list-foot（没有就现场创建）
+    var pager = document.querySelector('.pager');
+    var tbl = document.querySelector('.data-table') || document.querySelector('table');
+    if (!tbl && !pager) { return; }
+
+    var foot = document.querySelector('.list-foot');
+    if (!foot) {
+      foot = document.createElement('div');
+      foot.className = 'list-foot';
+      if (tbl && tbl.parentNode) {
+        tbl.parentNode.insertBefore(foot, tbl.nextSibling);
+      } else if (pager && pager.parentNode) {
+        pager.parentNode.insertBefore(foot, pager);
+      } else {
+        return;
+      }
+    }
+    // 分页也搬到底部同一行
+    if (pager && !foot.contains(pager)) {
+      foot.appendChild(pager);
+    }
+
     var url = new URL(location.href);
     var cur = parseInt(url.searchParams.get('per_page') || '20', 10);
     if ([20, 50, 100, 200].indexOf(cur) === -1) { cur = 20; }
 
     if (!document.querySelector('select[name="per_page"]')) {
       // 优先放到列表底部（分页旁边），避免筛选栏拥挤
-      var bar = document.querySelector('.list-foot') || document.querySelector('.pager') || document.querySelector('.page-toolbar');
-      if (bar) {
+      {
+        var wrap = document.createElement('div');
+        wrap.className = 'per-page-bar';
+        var lab = document.createElement('span');
+        lab.textContent = '每页显示';
+        wrap.appendChild(lab);
         var sel = document.createElement('select');
         sel.className = 'filter-select';
         sel.name = 'per_page';
@@ -1853,11 +1876,8 @@
           url.searchParams.delete('page');
           location.href = url.toString();
         });
-        if (bar.classList && bar.classList.contains('pager')) {
-          bar.parentNode.insertBefore(sel, bar);
-        } else {
-          bar.appendChild(sel);
-        }
+        wrap.appendChild(sel);
+        foot.insertBefore(wrap, foot.firstChild);
       }
     }
 
