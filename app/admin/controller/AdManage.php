@@ -175,7 +175,7 @@ return $this->adminView('admin/site', [
             // 站币：充值 / 提现 / 分成
             'pager_size', 'explore_per_page',
             'img_compress', 'img_webp', 'img_thumb_size', 'img_watermark', 'img_watermark_pos', 'img_watermark_opacity', 'img_exif_clean',
-            'img_watermark_font', 'thumb_storage_id', 'token_scopes',
+            'img_watermark_font', 'thumb_storage_id', 'token_scopes', 'audit_max_side',
             'credits_per_yuan', 'min_recharge', 'recharge_bonus_pct',
             'withdraw_enable', 'withdraw_rate', 'min_withdraw', 'withdraw_step', 'withdraw_monthly_limit', 'withdraw_fee_pct',
             'revenue_split_mode', 'share_user', 'share_ai',

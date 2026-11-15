@@ -16,7 +16,7 @@ class LlmVlmDriver implements AuditDriverInterface
     protected string $endpoint;
     protected string $apiKey;
     protected string $model;
-    protected int $timeout = 20;
+    protected int $timeout = 12;
 
     public function __construct(array $config)
     {
@@ -36,8 +36,9 @@ class LlmVlmDriver implements AuditDriverInterface
             return ['result' => 'review', 'score' => 0, 'detail' => 'LLM 审核端点未配置完整，转人工'];
         }
 
-        $content = file_get_contents($localPath);
-        if ($content === false) {
+        // 审核前缩图：模型判断内容性质不需要原分辨率，整图 base64 会撑爆请求体（4000px 原图 ≈ 18MB）
+        [$content, $mime] = $this->shrinkForAudit($localPath, $mime);
+        if ($content === false || $content === null || $content === '') {
             return ['result' => 'review', 'score' => 0, 'detail' => '图片读取失败，转人工'];
         }
 
@@ -72,6 +73,48 @@ class LlmVlmDriver implements AuditDriverInterface
     }
 
     /** 发送请求，失败返回 false */
+    /**
+     * 缩图后再 base64：最长边 1024（约 1k tokens / 150KB 请求体）
+     * 缩放失败时回退原图，绝不阻断审核
+     */
+    protected function shrinkForAudit(string $localPath, string $mime): array
+    {
+        $maxSide = max(256, (int)\app\common\model\Setting::get('audit_max_side', 1024));
+
+        $raw = @file_get_contents($localPath);
+        if ($raw === false) {
+            return [false, $mime];
+        }
+        $info = @getimagesize($localPath);
+        if (!$info) {
+            return [$raw, $mime];               // 非标准图片 → 原样送审
+        }
+        [$w, $h] = [(int)$info[0], (int)$info[1]];
+        if (max($w, $h) <= $maxSide) {
+            return [$raw, $mime];               // 已经够小
+        }
+
+        $src = @imagecreatefromstring($raw);
+        if (!$src) {
+            return [$raw, $mime];
+        }
+        $scale = $maxSide / max($w, $h);
+        $nw    = max(1, (int)round($w * $scale));
+        $nh    = max(1, (int)round($h * $scale));
+        $dst   = @imagescale($src, $nw, $nh, IMG_BICUBIC);
+        imagedestroy($src);
+        if (!$dst) {
+            return [$raw, $mime];
+        }
+
+        ob_start();
+        $ok = @imagejpeg($dst, null, 85);
+        $bin = (string)ob_get_clean();
+        imagedestroy($dst);
+
+        return ($ok && $bin !== '') ? [$bin, 'image/jpeg'] : [$raw, $mime];
+    }
+
     protected function post(array $payload)
     {
         $ch = curl_init($this->endpoint);
