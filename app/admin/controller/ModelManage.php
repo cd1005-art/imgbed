@@ -21,17 +21,47 @@ class ModelManage extends Base
         $genModels   = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? '') === 'image_gen'));
         $promptModels = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? '') === 'prompt'));
 
-        // 审核日志 / 白名单（tab 内展示最近 50 条）
-        $auditLogs = Db::name('audit_logs')->alias('a')
+        // 审核日志（tab 内完整列表，独立分页与筛选）
+        $alPage   = max(1, (int)$this->request->param('al_page', 1));
+        $alSize   = 20;
+        $alResult = (string)$this->request->param('al_result', '');
+        $alDriver = (string)$this->request->param('al_driver', '');
+        $alKw     = trim((string)$this->request->param('al_kw', ''));
+        $alQ = Db::name('audit_logs')->alias('a')
             ->leftJoin('images i', 'i.id = a.image_id')
-            ->field('a.*, i.name AS img_name')
-            ->order('a.id', 'desc')->limit(50)->select()->toArray();
-        $whitelist = Db::name('approved_fingerprints')->order('id', 'desc')->limit(50)->select()->toArray();
+            ->field('a.*, i.name AS img_name');
+        if ($alResult !== '') { $alQ->where('a.result', $alResult); }
+        if ($alDriver !== '') { $alQ->where('a.driver', $alDriver); }
+        if ($alKw !== '') {
+            $alQ->where(function ($w) use ($alKw) {
+                $w->whereLike('i.name', '%' . $alKw . '%')->whereOr('a.detail', 'like', '%' . $alKw . '%');
+            });
+        }
+        $alTotal  = (clone $alQ)->count();
+        $auditLogs = $alQ->order('a.id', 'desc')->page($alPage, $alSize)->select()->toArray();
+        $alDrivers = Db::name('audit_logs')->distinct(true)->column('driver');
+
+        // 白名单（tab 内完整列表）
+        $wlPage = max(1, (int)$this->request->param('wl_page', 1));
+        $wlSize = 20;
+        $wlKw   = trim((string)$this->request->param('wl_kw', ''));
+        $wlQ = Db::name('approved_fingerprints');
+        if ($wlKw !== '') {
+            $wlQ->where(function ($w) use ($wlKw) {
+                $w->whereLike('note', '%' . $wlKw . '%')->whereOr('sha1', 'like', $wlKw . '%');
+            });
+        }
+        $wlTotal = (clone $wlQ)->count();
+        $whitelist = $wlQ->order('id', 'desc')->page($wlPage, $wlSize)->select()->toArray();
 
         return $this->adminView('admin/model', [
             'page'        => 'model',
             'audit_logs'  => $auditLogs,
+            'al_total'    => $alTotal, 'al_page' => $alPage, 'al_pages' => (int)ceil($alTotal / $alSize) ?: 1,
+            'al_result'   => $alResult, 'al_driver' => $alDriver, 'al_kw' => $alKw, 'al_drivers' => $alDrivers,
             'whitelist'   => $whitelist,
+            'wl_total'    => $wlTotal, 'wl_page' => $wlPage, 'wl_pages' => (int)ceil($wlTotal / $wlSize) ?: 1,
+            'wl_kw'       => $wlKw,
             'models'      => $auditModels,
             'gen_models'  => $genModels, 'prompt_models' => $promptModels,
             'settings'    => Setting::allSettings(),

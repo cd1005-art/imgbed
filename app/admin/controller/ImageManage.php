@@ -84,6 +84,15 @@ class ImageManage extends Base
         foreach (Db::name('storage_configs')->field('id,name,driver')->select()->toArray() as $r) {
             $storages[(int)$r['id']] = $r['name'] . '（' . $r['driver'] . '）';
         }
+        $ulPage   = max(1, (int)$this->request->param('ul_page', 1));
+        $ulResult = (string)$this->request->param('ul_result', '');
+        $ulKw     = trim((string)$this->request->param('ul_kw', ''));
+        $ulQ = Db::name('upload_logs');
+        if ($ulResult !== '') { $ulQ->where('result', (int)$ulResult); }
+        if ($ulKw !== '') { $ulQ->whereLike('reason', '%' . $ulKw . '%'); }
+        $ulTotal = (clone $ulQ)->count();
+        $uploadLogs = $ulQ->order('id', 'desc')->page($ulPage, 20)->select()->toArray();
+
 
         return $this->adminView('admin/image', [
             'page'     => 'image',
@@ -99,7 +108,10 @@ class ImageManage extends Base
             'storages' => $storages,
             'page_no'  => $page,
             'per_page' => $size,
-            'upload_logs' => \think\facade\Db::name('upload_logs')->order('id', 'desc')->limit(50)->select()->toArray(),
+            'upload_logs' => $uploadLogs,
+            'ul_total'    => $ulTotal, 'ul_page' => $ulPage,
+            'ul_pages'    => (int)ceil($ulTotal / 20) ?: 1,
+            'ul_result'   => $ulResult, 'ul_kw' => $ulKw,
             'qs'       => http_build_query([
                 'kw' => $kw, 'ufilter' => $ufilter, 'tag' => $tag, 'sid' => $sid,
                 'audit' => $audit, 'status' => $status, 'public' => $public,

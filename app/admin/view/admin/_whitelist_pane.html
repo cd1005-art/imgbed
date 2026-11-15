@@ -1,22 +1,101 @@
 <section class="panel">
   <div class="page-toolbar" style="margin:0 0 10px">
-    <h2 class="panel-title" style="margin:0">审核白名单 <span class="count">最近 50 条</span></h2>
-    <a class="btn-ghost-sm" href="/admin/whitelist">查看全部 →</a>
+    <h2 class="panel-title" style="margin:0">审核白名单 <span class="count">{$wl_total} 条</span></h2>
+    <form class="search-bar" method="get" action="/admin/model#whitelist">
+      <input type="hidden" name="tab" value="whitelist">
+      <input type="text" name="wl_kw" value="{$wl_kw}" placeholder="说明 / SHA1 前缀">
+      <button class="btn btn-sm" type="submit">筛选</button>
+    </form>
+    <div class="toolbar-actions">
+      <button class="btn-ghost-sm btn-danger-sm" type="button" id="wlClear">清空白名单</button>
+    </div>
   </div>
   <p class="field-hint" style="margin:-4px 0 10px">人工「批量通过」时自动写入；命中白名单的图直接放行不调模型。</p>
+
+  <div class="batch-bar" id="wlBar" hidden>
+    <span id="wlCount">已选 0 条</span>
+    <button class="btn-ghost-sm btn-danger-sm" type="button" id="wlBatchDel">批量移出</button>
+    <button class="btn-ghost-sm" type="button" id="wlClearSel">取消选择</button>
+  </div>
+
   <table class="table">
-    <thead><tr><th>ID</th><th>说明</th><th>SHA1</th><th>命中</th><th>时间</th></tr></thead>
+    <thead><tr><th style="width:28px"><input type="checkbox" id="wlCheckAll"></th><th>ID</th><th>说明</th><th>SHA1</th><th>ahash</th><th>命中</th><th>时间</th><th>操作</th></tr></thead>
     <tbody>
       {volist name="whitelist" id="vo"}
       <tr>
+        <td><input type="checkbox" class="wl-check" value="{$vo.id}"></td>
         <td>{$vo.id}</td>
         <td>{$vo.note|default='-'}</td>
         <td><code style="font-size:11px">{$vo.sha1|default='-'}</code></td>
+        <td><code style="font-size:11px">{$vo.ahash|default='-'}</code></td>
         <td>{$vo.hit_count}</td>
         <td>{:date('m-d H:i', $vo.create_time)}</td>
+        <td><button class="btn-ghost-sm btn-danger-sm" type="button" data-wl-del="{$vo.id}">移出</button></td>
       </tr>
       {/volist}
-      {empty name="whitelist"}<tr><td colspan="5" class="count" style="text-align:center;padding:20px">暂无白名单</td></tr>{/empty}
+      {empty name="whitelist"}<tr><td colspan="8" class="count" style="text-align:center;padding:20px">暂无白名单</td></tr>{/empty}
     </tbody>
   </table>
+
+  <div class="list-foot">
+    {if condition="$wl_pages gt 1"}
+    <nav class="pager">
+      {if condition="$wl_page gt 1"}<a class="btn-ghost-sm" href="/admin/model?wl_page={$wl_page-1}&wl_kw={$wl_kw}#whitelist">上一页</a>{/if}
+      <span class="pager-info">{$wl_page} / {$wl_pages}</span>
+      {if condition="$wl_page lt $wl_pages"}<a class="btn-ghost-sm" href="/admin/model?wl_page={$wl_page+1}&wl_kw={$wl_kw}#whitelist">下一页</a>{/if}
+    </nav>
+    {/if}
+  </div>
 </section>
+
+<script>
+(function () {
+  var box = document.getElementById('wlBar');
+  var cnt = document.getElementById('wlCount');
+  var all = document.getElementById('wlCheckAll');
+  function refresh() {
+    var n = document.querySelectorAll('.wl-check:checked').length;
+    if (box) { box.hidden = n === 0; }
+    if (cnt) { cnt.textContent = '已选 ' + n + ' 条'; }
+  }
+  if (all) all.addEventListener('change', function () {
+    document.querySelectorAll('.wl-check').forEach(function (c) { c.checked = all.checked; });
+    refresh();
+  });
+  document.querySelectorAll('.wl-check').forEach(function (c) { c.addEventListener('change', refresh); });
+  var bd = document.getElementById('wlBatchDel');
+  if (bd) bd.addEventListener('click', function () {
+    var ids = Array.prototype.map.call(document.querySelectorAll('.wl-check:checked'), function (c) { return c.value; });
+    if (!ids.length) { toast('先勾选'); return; }
+    if (!confirm('批量移出 ' + ids.length + ' 条白名单？')) { return; }
+    var done = 0;
+    ids.forEach(function (id) {
+      fetch('/admin/whitelist/delete/' + id, { method: 'POST' }).finally(function () {
+        done++;
+        if (done === ids.length) { toast('已移出 ' + done + ' 条'); setTimeout(function () { location.reload(); }, 400); }
+      });
+    });
+  });
+  var cs = document.getElementById('wlClearSel');
+  if (cs) cs.addEventListener('click', function () {
+    document.querySelectorAll('.wl-check').forEach(function (c) { c.checked = false; });
+    if (all) all.checked = false;
+    refresh();
+  });
+  refresh();
+  document.querySelectorAll('[data-wl-del]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      fetch('/admin/whitelist/delete/' + b.getAttribute('data-wl-del'), { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 400); });
+    });
+  });
+  var cl = document.getElementById('wlClear');
+  if (cl) cl.addEventListener('click', function () {
+    if (!confirm('清空所有白名单？此操作不可恢复')) { return; }
+    fetch('/admin/whitelist/clear', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 400); });
+  });
+})();
+</script>

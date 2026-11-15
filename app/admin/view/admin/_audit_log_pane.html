@@ -1,23 +1,112 @@
 <section class="panel">
   <div class="page-toolbar" style="margin:0 0 10px">
-    <h2 class="panel-title" style="margin:0">审核日志 <span class="count">最近 50 条</span></h2>
-    <a class="btn-ghost-sm" href="/admin/audit-log">查看全部 →</a>
+    <h2 class="panel-title" style="margin:0">审核日志 <span class="count">{$al_total} 条</span></h2>
+    <form class="search-bar" method="get" action="/admin/model#auditlog">
+      <input type="hidden" name="tab" value="auditlog">
+      <input type="text" name="al_kw" value="{$al_kw}" placeholder="图片名 / 理由关键词">
+      <select name="al_result" class="filter-select">
+        <option value="">全部结论</option>
+        <option value="pass" {if condition="$al_result eq 'pass'"}selected{/if}>通过</option>
+        <option value="review" {if condition="$al_result eq 'review'"}selected{/if}>待人工</option>
+        <option value="reject" {if condition="$al_result eq 'reject'"}selected{/if}>拒绝</option>
+      </select>
+      <select name="al_driver" class="filter-select">
+        <option value="">全部来源</option>
+        {foreach $al_drivers as $d}
+        <option value="{$d}" {if condition="$al_driver eq $d"}selected{/if}>{$d}</option>
+        {/foreach}
+      </select>
+      <button class="btn btn-sm" type="submit">筛选</button>
+    </form>
+    <div class="toolbar-actions">
+      <button class="btn-ghost-sm btn-danger-sm" type="button" id="alClear">清空日志</button>
+    </div>
   </div>
-  <p class="field-hint" style="margin:-4px 0 10px">完整列表（含筛选、批量删除）在 <a href="/admin/audit-log">审核日志</a> 页；此处只展示最近 50 条。</p>
+
+  <div class="batch-bar" id="alBar" hidden>
+    <span id="alCount">已选 0 条</span>
+    <button class="btn-ghost-sm btn-danger-sm" type="button" id="alBatchDel">批量删除</button>
+    <button class="btn-ghost-sm" type="button" id="alClearSel">取消选择</button>
+  </div>
+
   <table class="table">
-    <thead><tr><th>图</th><th>来源</th><th>结论</th><th>分数</th><th>理由</th><th>时间</th></tr></thead>
+    <thead><tr><th style="width:28px"><input type="checkbox" id="alCheckAll"></th><th>ID</th><th>图片</th><th>来源</th><th>结论</th><th>分数</th><th>理由</th><th>时间</th><th>操作</th></tr></thead>
     <tbody>
       {volist name="audit_logs" id="vo"}
       <tr>
-        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">{if condition="$vo.img_name"}{$vo.img_name}{else /}<span class="count">#{$vo.image_id}</span>{/if}</td>
+        <td><input type="checkbox" class="al-check" value="{$vo.id}"></td>
+        <td>{$vo.id}</td>
+        <td style="max-width:170px;overflow:hidden;text-overflow:ellipsis">{if condition="$vo.img_name"}{$vo.img_name}{else /}<span class="count">#{$vo.image_id}</span>{/if}</td>
         <td><code style="font-size:11px">{$vo.driver}</code></td>
         <td>{if condition="$vo.result eq 'pass'"}<span class="ok">通过</span>{elseif condition="$vo.result eq 'reject'"}<span class="danger">拒绝</span>{else /}<span class="count">待人工</span>{/if}</td>
         <td>{$vo.score}</td>
-        <td style="max-width:360px;font-size:12px">{$vo.detail}</td>
+        <td style="max-width:320px;font-size:12px">{$vo.detail}</td>
         <td>{:date('m-d H:i', $vo.create_time)}</td>
+        <td><button class="btn-ghost-sm btn-danger-sm" type="button" data-al-del="{$vo.id}">删除</button></td>
       </tr>
       {/volist}
-      {empty name="audit_logs"}<tr><td colspan="6" class="count" style="text-align:center;padding:20px">暂无记录</td></tr>{/empty}
+      {empty name="audit_logs"}<tr><td colspan="9" class="count" style="text-align:center;padding:20px">暂无记录</td></tr>{/empty}
     </tbody>
   </table>
+
+  <div class="list-foot">
+    {if condition="$al_pages gt 1"}
+    <nav class="pager">
+      {if condition="$al_page gt 1"}<a class="btn-ghost-sm" href="/admin/model?al_page={$al_page-1}&al_kw={$al_kw}&al_result={$al_result}&al_driver={$al_driver}#auditlog">上一页</a>{/if}
+      <span class="pager-info">{$al_page} / {$al_pages}</span>
+      {if condition="$al_page lt $al_pages"}<a class="btn-ghost-sm" href="/admin/model?al_page={$al_page+1}&al_kw={$al_kw}&al_result={$al_result}&al_driver={$al_driver}#auditlog">下一页</a>{/if}
+    </nav>
+    {/if}
+  </div>
 </section>
+
+<script>
+(function () {
+  var box = document.getElementById('alBar');
+  var cnt = document.getElementById('alCount');
+  var all = document.getElementById('alCheckAll');
+  function refresh() {
+    var n = document.querySelectorAll('.al-check:checked').length;
+    if (box) { box.hidden = n === 0; }
+    if (cnt) { cnt.textContent = '已选 ' + n + ' 条'; }
+  }
+  if (all) all.addEventListener('change', function () {
+    document.querySelectorAll('.al-check').forEach(function (c) { c.checked = all.checked; });
+    refresh();
+  });
+  document.querySelectorAll('.al-check').forEach(function (c) { c.addEventListener('change', refresh); });
+  document.querySelectorAll('[data-al-del]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      fetch('/admin/audit-log/delete/' + b.getAttribute('data-al-del'), { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 400); });
+    });
+  });
+  var bd = document.getElementById('alBatchDel');
+  if (bd) bd.addEventListener('click', function () {
+    var ids = Array.prototype.map.call(document.querySelectorAll('.al-check:checked'), function (c) { return c.value; });
+    if (!ids.length) { toast('先勾选日志'); return; }
+    if (!confirm('删除选中的 ' + ids.length + ' 条日志？')) { return; }
+    fetch('/admin/audit-log/batch', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'ids=' + ids.join(',')
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 400);
+    });
+  });
+  var cs = document.getElementById('alClearSel');
+  if (cs) cs.addEventListener('click', function () {
+    document.querySelectorAll('.al-check').forEach(function (c) { c.checked = false; });
+    if (all) all.checked = false;
+    refresh();
+  });
+  var cl = document.getElementById('alClear');
+  if (cl) cl.addEventListener('click', function () {
+    if (!confirm('清空全部审核日志？此操作不可恢复')) { return; }
+    fetch('/admin/audit-log/clear', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 400); });
+  });
+  refresh();
+})();
+</script>
