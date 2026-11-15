@@ -1846,9 +1846,10 @@
         sel.appendChild(o);
       });
       sel.addEventListener('change', function () {
-        url.searchParams.set('per_page', sel.value);
-        url.searchParams.delete('page');
-        location.href = url.toString();
+        var u = new URL(location.href);   // 实时读取，保留 #tab 锚点
+        u.searchParams.set('per_page', sel.value);
+        u.searchParams.delete('page');
+        location.href = u.toString();
       });
       wrap.appendChild(sel);
       return wrap;
