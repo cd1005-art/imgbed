@@ -15,8 +15,12 @@ use think\Response;
  */
 class ImageController extends BaseController
 {
-    public function serve(string $path): Response
+    public function serve(string $path = ''): Response
     {
+        $path = trim(str_replace('\\', '/', $path), '/');
+        if ($path === '') {
+            return Response::create('Image Not Found')->code(404);
+        }
         $image = Image::where('path', $path)
             ->where('status', Image::ST_NORMAL)
             ->find();
