@@ -930,6 +930,7 @@
       fetch('/admin/gen/detail/' + id + '?page=' + (page || 1)).then(function (r) { return r.json(); }).then(function (d) {
         if (!d.status) { toast(d.message); return; }
         renderDetail(d, id);
+        if (typeof window.__initPerPage === 'function') { setTimeout(window.__initPerPage, 30); }
       }).catch(function () { toast('读取失败'); });
     }
     document.querySelectorAll('[data-gen-detail]').forEach(function (b) {
@@ -1820,66 +1821,76 @@
   }
 })();
 
-/* 通用「每页条数」：所有带分页的后台列表自动加下拉，并让翻页链接带上该参数 */
+/* 通用「每页条数」：遍历所有列表表格，各自在表格下方生成工具条（可重复调用，供动态弹窗复用） */
 (function initPerPage() {
-  function ready(fn) {
-    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', fn); } else { fn(); }
-  }
-  ready(function () {
-    // 有列表就提供每页条数；统一放到表格下方的 .list-foot（没有就现场创建）
-    var pager = document.querySelector('.pager');
-    var tbl = document.querySelector('.data-table') || document.querySelector('table');
-    if (!tbl && !pager) { return; }
-
-    var foot = document.querySelector('.list-foot');
-    if (!foot) {
-      foot = document.createElement('div');
-      foot.className = 'list-foot';
-      if (tbl && tbl.parentNode) {
-        tbl.parentNode.insertBefore(foot, tbl.nextSibling);
-      } else if (pager && pager.parentNode) {
-        pager.parentNode.insertBefore(foot, pager);
-      } else {
-        return;
-      }
-    }
-    // 分页也搬到底部同一行
-    if (pager && !foot.contains(pager)) {
-      foot.appendChild(pager);
-    }
-
+  function boot() {
     var url = new URL(location.href);
     var cur = parseInt(url.searchParams.get('per_page') || '20', 10);
     if ([20, 50, 100, 200].indexOf(cur) === -1) { cur = 20; }
 
-    if (!document.querySelector('select[name="per_page"]')) {
-      // 优先放到列表底部（分页旁边），避免筛选栏拥挤
-      {
-        var wrap = document.createElement('div');
-        wrap.className = 'per-page-bar';
-        var lab = document.createElement('span');
-        lab.textContent = '每页显示';
-        wrap.appendChild(lab);
-        var sel = document.createElement('select');
-        sel.className = 'filter-select';
-        sel.name = 'per_page';
-        sel.title = '每页显示条数';
-        [20, 50, 100, 200].forEach(function (n) {
-          var o = document.createElement('option');
-          o.value = n;
-          o.textContent = '每页 ' + n + ' 条';
-          if (n === cur) { o.selected = true; }
-          sel.appendChild(o);
-        });
-        sel.addEventListener('change', function () {
-          url.searchParams.set('per_page', sel.value);
-          url.searchParams.delete('page');
-          location.href = url.toString();
-        });
-        wrap.appendChild(sel);
-        foot.insertBefore(wrap, foot.firstChild);
-      }
+    function buildBar() {
+      var wrap = document.createElement('div');
+      wrap.className = 'per-page-bar';
+      var lab = document.createElement('span');
+      lab.textContent = '每页显示';
+      wrap.appendChild(lab);
+      var sel = document.createElement('select');
+      sel.className = 'filter-select';
+      sel.name = 'per_page';
+      sel.title = '每页显示条数';
+      [20, 50, 100, 200].forEach(function (n) {
+        var o = document.createElement('option');
+        o.value = n;
+        o.textContent = '每页 ' + n + ' 条';
+        if (n === cur) { o.selected = true; }
+        sel.appendChild(o);
+      });
+      sel.addEventListener('change', function () {
+        url.searchParams.set('per_page', sel.value);
+        url.searchParams.delete('page');
+        location.href = url.toString();
+      });
+      wrap.appendChild(sel);
+      return wrap;
     }
+
+    Array.prototype.forEach.call(document.querySelectorAll('table'), function (tbl) {
+      if (tbl.dataset.ppDone) { return; }
+      // 同容器已有 footer（模板自带的）→ 直接复用，不再新建
+      var container = tbl.parentNode;
+      var existing = container ? container.querySelector('.list-foot') : null;
+      if (existing) {
+        tbl.dataset.ppDone = '1';
+        return;
+      }
+
+      // 找该表格自己的 footer：紧跟其后的 .list-foot
+      var foot = null;
+      var sib = tbl.nextElementSibling;
+      if (sib && sib.classList && sib.classList.contains('list-foot')) {
+        foot = sib;
+      }
+      if (foot && foot.getAttribute('data-own') === '1') {
+        tbl.dataset.ppDone = '1';
+        return;
+      }
+      if (!foot) {
+        foot = document.createElement('div');
+        foot.className = 'list-foot';
+        tbl.parentNode.insertBefore(foot, tbl.nextSibling);
+      }
+      tbl.dataset.ppDone = '1';
+
+      // 分页搬进 footer
+      var scope = tbl.parentNode;
+      if (scope) {
+        var pager = scope.querySelector('.pager');
+        if (pager && !foot.contains(pager)) { foot.appendChild(pager); }
+      }
+      if (!foot.querySelector('.per-page-bar')) {
+        foot.insertBefore(buildBar(), foot.firstChild);
+      }
+    });
 
     if (cur !== 20) {
       document.querySelectorAll('.pager a[href]').forEach(function (a) {
@@ -1887,5 +1898,12 @@
         if (h && !/per_page=/.test(h)) { a.setAttribute('href', h + '&per_page=' + cur); }
       });
     }
-  });
+  }
+
+  window.__initPerPage = boot;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 })();
