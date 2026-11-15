@@ -76,7 +76,7 @@
     <span class="field-hint">管理员已关闭 Token 生成</span>
     {/if}
   </div>
-  <p class="field-hint" style="margin-top:6px">权限说明：上传=POST /upload，列表=GET /list，详情=GET /info，删除=DELETE /delete。建议只勾选需要的，删除权限尤其慎给。</p>
+  <p class="field-hint" style="margin-top:6px">权限说明：{$token_scope_desc|default='无可用权限'}{if condition="$token_has_delete"}。建议只勾选需要的，删除权限尤其慎给{/if}</p>
   <div class="token-new" id="tokenNew" hidden>
     <p style="margin:0 0 6px">已生成（<b>完整 Token 只显示这一次</b>，请立即复制保存；刷新后列表仅显示中间打码的版本，无法再次查看或复制完整值）：</p>
     <div class="url-line">

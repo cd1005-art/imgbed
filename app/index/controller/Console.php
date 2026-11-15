@@ -55,6 +55,27 @@ class Console extends Base
                 $raw = $gs !== '' ? $gs : trim((string)Setting::get('token_scopes', ''));
                 return $raw === '' ? $all : array_values(array_intersect($all, array_filter(array_map('trim', explode(',', $raw)))));
             })(),
+            // 权限说明随开放范围变化（只写当前允许的）
+            'token_scope_desc' => (function () use ($group) {
+                $map = [
+                    'upload' => '上传=POST /upload',
+                    'list'   => '列表=GET /list',
+                    'info'   => '详情=GET /info',
+                    'delete' => '删除=DELETE /delete',
+                ];
+                $all = array_keys($map);
+                $gs  = trim((string)($group->token_scopes ?? ''));
+                $raw = $gs !== '' ? $gs : trim((string)Setting::get('token_scopes', ''));
+                $allow = $raw === '' ? $all : array_values(array_intersect($all, array_filter(array_map('trim', explode(',', $raw)))));
+                $parts = [];
+                foreach ($allow as $k) { $parts[] = $map[$k]; }
+                return implode('，', $parts);
+            })(),
+            'token_has_delete' => (function () use ($group) {
+                $gs  = trim((string)($group->token_scopes ?? ''));
+                $raw = $gs !== '' ? $gs : trim((string)Setting::get('token_scopes', ''));
+                return $raw === '' ? true : in_array('delete', array_map('trim', explode(',', $raw)), true);
+            })(),
             'email_verified' => (int)$user->email_verified === 1,
             'credits'        => (int)$user->credits,
             'earnings'       => (int)($user->earnings ?? 0),
