@@ -88,7 +88,10 @@
     var dragId = 0;
     var lastOk = null;
 
-    var MAX_BATCH = parseInt(window.UPLOAD_MAX_BATCH || 100, 10);   // 单次入队上限（策略组配置，0=不限）
+    // 注意：0 是"不限"，不能被 || 兜底成 100（0 在 JS 里是 falsy）
+    var MAX_BATCH = (window.UPLOAD_MAX_BATCH === undefined || window.UPLOAD_MAX_BATCH === null || window.UPLOAD_MAX_BATCH === '')
+      ? 100
+      : parseInt(window.UPLOAD_MAX_BATCH, 10);
     var AUTO_RETRY = 1;    // 服务器繁忙时自动重试次数
 
     function enqueue(files) {
