@@ -218,6 +218,16 @@ class ImageProcessor
             return $cached;
         }
 
+        // 0) 后台指定的水印字体（storage/fonts/ 下）
+        $picked = trim((string)\app\common\model\Setting::get('img_watermark_font', ''));
+        if ($picked !== '') {
+            $root = function_exists('root_path') ? root_path() : dirname(__DIR__, 3) . DIRECTORY_SEPARATOR;
+            $f = $root . 'storage/fonts/' . basename($picked);
+            if (@is_file($f)) {
+                return $cached = $f;
+            }
+        }
+
         // 1) Linux：fc-match 自动找可用中文字体（兼容 CentOS/Debian/Ubuntu 各种路径）
         if (function_exists('exec') && DIRECTORY_SEPARATOR === '/') {
             foreach (['Noto Sans CJK SC', 'WenQuanYi Zen Hei', 'Source Han Sans SC', 'DejaVu Sans'] as $name) {

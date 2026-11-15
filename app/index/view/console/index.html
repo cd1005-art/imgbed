@@ -65,12 +65,16 @@
   <div class="token-create" style="flex-wrap:wrap">
     <input type="text" id="tokenName" maxlength="30" placeholder="Token 名称（可空）">
     <span class="token-scopes">
-      <label><input type="checkbox" class="scope-cb" value="upload" checked> 上传</label>
-      <label><input type="checkbox" class="scope-cb" value="list" checked> 列表</label>
-      <label><input type="checkbox" class="scope-cb" value="info" checked> 详情</label>
-      <label><input type="checkbox" class="scope-cb" value="delete"> 删除</label>
+      {if condition="in_array('upload', $token_allowed)"}<label><input type="checkbox" class="scope-cb" value="upload" checked> 上传</label>{/if}
+      {if condition="in_array('list', $token_allowed)"}<label><input type="checkbox" class="scope-cb" value="list" checked> 列表</label>{/if}
+      {if condition="in_array('info', $token_allowed)"}<label><input type="checkbox" class="scope-cb" value="info" checked> 详情</label>{/if}
+      {if condition="in_array('delete', $token_allowed)"}<label><input type="checkbox" class="scope-cb" value="delete"> 删除</label>{/if}
     </span>
+    {if condition="count($token_allowed) gt 0"}
     <button class="btn" type="button" id="tokenCreateBtn"><svg class="ic"><use href="#i-key"/></svg> 生成</button>
+    {else /}
+    <span class="field-hint">管理员已关闭 Token 生成</span>
+    {/if}
   </div>
   <p class="field-hint" style="margin-top:6px">权限说明：上传=POST /upload，列表=GET /list，详情=GET /info，删除=DELETE /delete。建议只勾选需要的，删除权限尤其慎给。</p>
   <div class="token-new" id="tokenNew" hidden>

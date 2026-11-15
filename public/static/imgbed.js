@@ -647,16 +647,19 @@
 
 /* ---------- 深色/浅色主题切换（全站，localStorage 持久化） ---------- */
 (function () {
-  var KEY = 'imgbed-theme';
+  // 前后台主题互不影响：按 body 是否 admin-body 动态取 key
+  function themeKey() {
+    return (document.body && document.body.classList.contains('admin-body')) ? 'imgbed-theme-admin' : 'imgbed-theme';
+  }
   function apply(t) {
     document.documentElement.setAttribute('data-theme', t);
-    try { localStorage.setItem(KEY, t); } catch (e) {}
+    try { localStorage.setItem(themeKey(), t); } catch (e) {}
     var fab = document.getElementById('themeFab');
     if (fab) { fab.textContent = t === 'dark' ? '☀' : '◐'; fab.title = t === 'dark' ? '切换到浅色' : '切换到深色'; }
   }
   function init() {
     var saved = '';
-    try { saved = localStorage.getItem(KEY) || ''; } catch (e) {}
+    try { saved = localStorage.getItem(themeKey()) || ''; } catch (e) {}
     if (saved === 'dark' || saved === 'light') { apply(saved); }
     var fab = document.createElement('button');
     fab.id = 'themeFab';

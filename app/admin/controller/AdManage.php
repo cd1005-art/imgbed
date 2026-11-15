@@ -26,7 +26,17 @@ class AdManage extends Base
     /** 站点设置 */
     public function site()
     {
-        return $this->adminView('admin/site', [
+                // 水印字体列表（storage/fonts/*.ttf|otf）
+        $fonts = [];
+        foreach (glob(root_path() . 'storage/fonts/*.{ttf,otf,ttc}', GLOB_BRACE) ?: [] as $fp) {
+            $fonts[] = basename($fp);
+        }
+        sort($fonts);
+        $storagesForThumb = \think\facade\Db::name('storage_configs')->field('id,name,driver')->select()->toArray();
+
+return $this->adminView('admin/site', [
+            'fonts' => $fonts,
+            'storages_for_thumb' => $storagesForThumb,
             'page'     => 'site',
             'settings' => Setting::allSettings(),
             'groups'   => StrategyGroup::where('status', 1)->select(),
@@ -165,6 +175,7 @@ class AdManage extends Base
             // 站币：充值 / 提现 / 分成
             'pager_size', 'explore_per_page',
             'img_compress', 'img_webp', 'img_thumb_size', 'img_watermark', 'img_watermark_pos', 'img_watermark_opacity', 'img_exif_clean',
+            'img_watermark_font', 'thumb_storage_id', 'token_scopes',
             'credits_per_yuan', 'min_recharge', 'recharge_bonus_pct',
             'withdraw_enable', 'withdraw_rate', 'min_withdraw', 'withdraw_step', 'withdraw_monthly_limit', 'withdraw_fee_pct',
             'revenue_split_mode', 'share_user', 'share_ai',

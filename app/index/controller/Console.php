@@ -49,6 +49,11 @@ class Console extends Base
             'quota_pct'   => $quotaTotal > 0 ? min(100, (int)($used / $quotaTotal * 100)) : 0,
             'tokens'      => $tokens,
             'token_used'  => ApiToken::where('user_id', $user->id)->count(),
+            'token_allowed' => (function () {
+                $all = ['upload', 'list', 'info', 'delete'];
+                $raw = trim((string)Setting::get('token_scopes', ''));
+                return $raw === '' ? $all : array_values(array_intersect($all, array_filter(array_map('trim', explode(',', $raw)))));
+            })(),
             'email_verified' => (int)$user->email_verified === 1,
             'credits'        => (int)$user->credits,
             'earnings'       => (int)($user->earnings ?? 0),
@@ -272,8 +277,14 @@ class Console extends Base
             }
         }
 
-        // 权限范围（未勾选时默认只给上传+读取）
-        $allowed = ['upload', 'list', 'info', 'delete'];
+        // 权限范围：受后台「允许的 Token 权限」限制
+        $allScopes = ['upload', 'list', 'info', 'delete'];
+        $allowRaw  = trim((string)Setting::get('token_scopes', ''));
+        $allowed   = $allowRaw === '' ? $allScopes
+            : array_values(array_intersect($allScopes, array_filter(array_map('trim', explode(',', $allowRaw)))));
+        if (!$allowed) {
+            return json(['status' => false, 'message' => '后台已关闭 Token 生成（未开放任何权限）']);
+        }
         $picked  = array_values(array_intersect($allowed, (array)$this->request->post('scopes/a', [])));
         if (!$picked) {
             $picked = ['upload', 'list'];

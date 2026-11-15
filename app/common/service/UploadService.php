@@ -186,19 +186,33 @@ class UploadService
             throw new UploadException('存储写入失败，请检查存储配置');
         }
 
-        // 缩略图：统一存本地 public/thumbs/（小文件，不依赖存储驱动，WebDAV 也能用）
+        // 缩略图：按「缩略图存储」设置（0=本地 public/thumbs/，>0=指定存储实例）
         $thumbPath = '';
         if (!empty($processed['thumb'])) {
-            $thumbRel = 'thumbs/' . $relativePath;
-            $thumbAbs = public_path() . str_replace('/', DIRECTORY_SEPARATOR, $thumbRel);
-            $thumbDir = dirname($thumbAbs);
-            try {
-                if (!is_dir($thumbDir) && !@mkdir($thumbDir, 0755, true) && !is_dir($thumbDir)) {
-                    // 目录创建失败则跳过缩略图
-                } elseif (@copy((string)$processed['thumb'], $thumbAbs)) {
-                    $thumbPath = $thumbRel;
+            $thumbStorage = (int)Setting::get('thumb_storage_id', 0);
+            if ($thumbStorage > 0) {
+                $thumbRel = 'thumbs/' . $relativePath;
+                try {
+                    $tDriver = StorageManager::driver($thumbStorage);
+                    if ($tDriver && $tDriver->put((string)$processed['thumb'], $thumbRel)) {
+                        $thumbPath = $thumbRel;
+                    }
+                } catch (\Throwable $e) {
+                    // 指定存储失败时回退本地
                 }
-            } catch (\Throwable $e) {
+            }
+            if ($thumbPath === '') {
+                $thumbRel = 'thumbs/' . $relativePath;
+                $thumbAbs = public_path() . str_replace('/', DIRECTORY_SEPARATOR, $thumbRel);
+                $thumbDir = dirname($thumbAbs);
+                try {
+                    if (!is_dir($thumbDir) && !@mkdir($thumbDir, 0755, true) && !is_dir($thumbDir)) {
+                        // 目录创建失败则跳过缩略图
+                    } elseif (@copy((string)$processed['thumb'], $thumbAbs)) {
+                        $thumbPath = $thumbRel;
+                    }
+                } catch (\Throwable $e) {
+                }
             }
         }
 
