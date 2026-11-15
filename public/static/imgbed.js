@@ -210,6 +210,7 @@
     }
 
     function itemHtml(q) {
+        var idx = queue.indexOf(q) + 1;   // 动态序号：随排序实时重算
         var cls = q.status === 'up' ? 'up' : (q.status === 'ok' ? 'ok' : (q.status === 'fail' ? 'fail' : 'wait'));
         var statusText = q.status === 'wait' ? '排队中'
           : (q.status === 'up' ? (q.pct >= 100 ? '处理中…' : q.pct + '%')
@@ -224,6 +225,7 @@
           actions = '<button class="btn-ghost-sm" type="button" data-remove="' + q.id + '">移除</button>';
         }
         return '<div class="uq-item" draggable="' + (q.status === 'wait' ? 'true' : 'false') + '" data-qid="' + q.id + '">'
+          + '<span class="uq-idx" title="队列序号">' + (idx > 0 ? idx : '?') + '</span>'
           + '<span class="uq-handle" title="拖动调整顺序">⋮⋮</span>'
           + '<div class="uq-main">'
           +   '<div class="uq-name" title="' + (q.file.name || '') + '">' + (q.file.name || '图片') + '</div>'
@@ -239,6 +241,18 @@
       if (!qbox) { return; }
       qbox.innerHTML = queue.map(itemHtml).join('');
       bindQueueEvents();
+      updateSummary();
+    }
+
+    /** 顶部统计：共 N 张 · 已完成 M · 失败 K */
+    function updateSummary() {
+      var sum = document.getElementById('uqSummary');
+      if (!sum) { return; }
+      sum.hidden = false;
+      var total = queue.length;
+      var ok = queue.filter(function (q) { return q.status === 'ok'; }).length;
+      var fail = queue.filter(function (q) { return q.status === 'fail'; }).length;
+      sum.textContent = '共 ' + total + ' 张 · 已完成 ' + ok + (fail ? ' · 失败 ' + fail : '');
     }
 
     /** 只更新单项（大批量时避免每次全量重绘导致页面卡死） */
@@ -252,6 +266,7 @@
       if (!fresh) { return; }
       el.replaceWith(fresh);
       bindItemEvents(fresh);
+      updateSummary();
     }
 
     function bindQueueEvents() {
@@ -273,7 +288,7 @@
           if (b.hasAttribute('data-remove')) {
             var rid = parseInt(b.getAttribute('data-remove'), 10);
             queue = queue.filter(function (x) { return x.id !== rid; });
-            if (el.parentNode) { el.parentNode.removeChild(el); }
+            render();
             pump();
             return;
           }

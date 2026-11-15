@@ -384,10 +384,18 @@ a.pager-btn { background: var(--accent) !important; color: #fff !important; bord
 
 /* 上传队列 */
 .upload-queue { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-.uq-item { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 10px;
+.uq-item { display: grid; grid-template-columns: 26px 22px 1fr auto; align-items: center; gap: 10px;
   padding: 9px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); }
 .uq-item.is-drag { opacity: .45; }
 .uq-item.is-over { border-color: var(--accent); }
+.uq-idx {
+  min-width: 26px; text-align: right; font-size: 12px; color: var(--ink-2);
+  font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+.uq-summary {
+  margin: 8px 0 0; font-size: 12px; color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
 .uq-handle { cursor: grab; color: #B8B3AA; font-size: 14px; user-select: none; text-align: center; }
 .uq-main { min-width: 0; }
 .uq-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
