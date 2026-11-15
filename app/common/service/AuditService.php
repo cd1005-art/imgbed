@@ -106,6 +106,13 @@ class AuditService
                 break;
             }
         }
+        // 删掉夹在中间的「无违规内容」「无有害信息」等判定短语（不在尾部也算）
+        $t = preg_replace('/[,，]?\s*无[^,，。;；]{0,6}(违规|有害|不良|敏感|风险)[^,，。;；]{0,6}/u', '', (string)$t);
+        // 「，但…」「，不过…」「，只是…」之后基本都是审核判断，整段截断
+        $parts = preg_split('/[,，]\s*(但|不过|然而|只是)[^,，。;；]{0,40}/u', (string)$t);
+        if (!empty($parts[0])) {
+            $t = $parts[0];
+        }
         $t = preg_replace('/^[\s\p{P}\p{S}]+/u', '', (string)$t);
         $t = preg_replace('/[\s\p{P}\p{S}]+$/u', '', (string)$t);
         $t = trim((string)$t);
