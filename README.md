@@ -121,8 +121,9 @@ PHP 8.2 · ThinkPHP 8.1 · MIT License ｜ **v1.2.0**
 
 [![宣传视频（15 秒 · 6 个场景）](docs/screenshots/home-upload.png)](docs/assets/promo.mp4)
 
-> 点击封面播放：**上传页 → 个人中心站币 → 图片广场 → 图片管理 → 站币设置 → 仪表盘**
-> 文件：`docs/assets/promo.mp4`（1920×1080 / 30fps / 15.5s / 1.2MB，无音轨）
+> 点击封面播放：**上传页 → 站币双账户 → 图片广场 → 图片管理 → 站币设置 → 运营后台**
+> 文件：`docs/assets/promo.mp4`（1920×1080 / 30fps / **33.9s** / **中文配音 + 烧录字幕** / 1.3MB）
+> 字幕文件：`docs/assets/promo.srt` ｜ 制作方式：JSON 配置驱动（分镜排版 + edge-tts 配音 + 字幕合成）
 
 ## 界面预览
 
