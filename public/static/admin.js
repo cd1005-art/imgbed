@@ -1825,7 +1825,8 @@
     if ([20, 50, 100, 200].indexOf(cur) === -1) { cur = 20; }
 
     if (!document.querySelector('select[name="per_page"]')) {
-      var bar = document.querySelector('form.search-bar') || document.querySelector('.page-toolbar');
+      // 优先放到列表底部（分页旁边），避免筛选栏拥挤
+      var bar = document.querySelector('.list-foot') || document.querySelector('.pager') || document.querySelector('.page-toolbar');
       if (bar) {
         var sel = document.createElement('select');
         sel.className = 'filter-select';
@@ -1843,7 +1844,11 @@
           url.searchParams.delete('page');
           location.href = url.toString();
         });
-        bar.appendChild(sel);
+        if (bar.classList && bar.classList.contains('pager')) {
+          bar.parentNode.insertBefore(sel, bar);
+        } else {
+          bar.appendChild(sel);
+        }
       }
     }
 

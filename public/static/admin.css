@@ -307,3 +307,17 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 .settings-form.wide-inputs .field input[type="url"],
 .settings-form.wide-inputs .field input[type="password"] { width: 300px; }
 .settings-form.wide-inputs .field textarea { width: 320px; }
+
+/* 列表底部：每页条数 + 分页 */
+.list-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-top: 14px; flex-wrap: wrap;
+}
+.per-page-bar {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--ink-2);
+}
+.per-page-bar select {
+  padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--ink); font-size: 13px;
+}
