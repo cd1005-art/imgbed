@@ -26,10 +26,16 @@ class AuditService
         // 白名单前置：人工复审通过过的图（SHA1/ahash 命中）直接放行，不再调用模型
         $approved = ApprovedFingerprintService::match($localPath);
         if ($approved !== null) {
+            $wlTags = [];
+            try {
+                $wlTags = json_decode((string)($approved['tags'] ?? '[]'), true) ?: [];
+            } catch (\Throwable $e) {
+            }
             $result = [
                 'result' => 'pass',
                 'score'  => 100,
                 'detail' => (string)($approved['note'] ?? '') !== '' ? (string)$approved['note'] : '白名单命中（人工已复审通过）',
+                'tags'   => $wlTags,
             ];
             self::applyResult($image, 'whitelist', $result);
             return $result;

@@ -93,11 +93,22 @@ class ApprovedFingerprintService
         if ($sha1 !== '' && Db::name('approved_fingerprints')->where('sha1', $sha1)->find()) {
             return false;
         }
+        // 连同原图标签一起记下来，命中后新图也能自动带标签
+        $tags = [];
+        try {
+            $tags = Db::name('image_tags')->alias('it')
+                ->join('tags t', 't.id = it.tag_id')
+                ->where('it.image_id', (int)$image->id)
+                ->column('t.name');
+        } catch (\Throwable $e) {
+        }
+
         Db::name('approved_fingerprints')->insert([
             'image_id'    => (int)$image->id,
             'sha1'        => $sha1,
             'ahash'       => $ahash,
             'note'        => mb_substr($note !== '' ? $note : (string)$image->name, 0, 60),
+            'tags'        => mb_substr(json_encode(array_values(array_filter((array)$tags)), JSON_UNESCAPED_UNICODE), 0, 240),
             'create_time' => time(),
         ]);
         return true;
