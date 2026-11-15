@@ -3,44 +3,6 @@
 {block name="content"}
 <h1 class="page-title">存储管理</h1>
 
-<section class="panel" style="margin-bottom:14px">
-  <h2 class="panel-title">本地磁盘占用</h2>
-  <p class="panel-sub">策略组的图片存到网盘时，本地只会留下「外链副本」和「缩略图」；下面三项合计就是站点占用的本地空间。</p>
-  <table class="table" style="margin-top:8px">
-    <thead><tr><th>项目</th><th>路径</th><th>文件数</th><th>占用</th><th>说明</th></tr></thead>
-    <tbody>
-      <tr>
-        <td>外链副本</td>
-        <td><code>public/i/</code></td>
-        <td>{$local_usage.copy.files}</td>
-        <td>{:number_format($local_usage['copy']['bytes'] / 1048576, 1)} MB</td>
-        <td>≥ 副本下限的图才会写；可在图片处理里关掉</td>
-      </tr>
-      <tr>
-        <td>缩略图</td>
-        <td><code>public/i/thumbs/</code></td>
-        <td>{$local_usage.thumb.files}</td>
-        <td>{:number_format($local_usage['thumb']['bytes'] / 1048576, 1)} MB</td>
-        <td>列表/广场用小图，单张约 10~50KB</td>
-      </tr>
-      <tr>
-        <td>本地原图</td>
-        <td><code>public/storage/images/</code></td>
-        <td>{$local_usage.local.files}</td>
-        <td>{:number_format($local_usage['local']['bytes'] / 1048576, 1)} MB</td>
-        <td>仅当存储实例是「本地磁盘」时才有</td>
-      </tr>
-      <tr style="font-weight:600">
-        <td>合计</td>
-        <td>—</td>
-        <td>{$local_usage.total.files}</td>
-        <td>{:number_format($local_usage['total']['bytes'] / 1048576, 1)} MB</td>
-        <td>—</td>
-      </tr>
-    </tbody>
-  </table>
-</section>
-
 {volist name="list" id="vo" key="i"}
 <section class="storage-row" data-storage-panel="{$vo.id}">
   <div class="storage-line">
@@ -49,6 +11,7 @@
     <span class="storage-meta">外链：{if condition="$vo.url_mode eq 1"}代理中转{else /}302直链{/if}</span>
     <span class="storage-meta">引用 {$usage[$vo.id]['c']|default=0} 张 · 图床已用 {$vo.used_str}</span>
     {if condition="$vo.driver eq 'local'"}
+    <span class="storage-meta" title="本地额外产生的数据：外链副本 + 缩略图">外链副本 {:number_format($local_usage['copy']['bytes'] / 1048576, 1)} MB · 缩略图 {:number_format($local_usage['thumb']['bytes'] / 1048576, 1)} MB</span>
     <span class="storage-meta">磁盘剩余：<b>{$vo.disk_free_str}</b> / 总 {$vo.disk_total_str}（已用 {$vo.disk_pct}%）</span>
     {else /}
       {if condition="$vo.space_unlimited"}
