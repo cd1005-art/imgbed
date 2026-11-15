@@ -40,7 +40,8 @@ class TagManage extends Base
         $page   = max(1, (int)$this->request->param('page', 1));
         $kw     = trim((string)$this->request->param('kw', ''));
         $status = (string)$this->request->param('tstatus', '');
-        $minUse = (int)$this->request->param('min_use', 0);
+        // 默认只看有引用的标签（0 次使用的孤儿标签隐藏，避免"删图后一堆 0"）
+        $minUse = (int)$this->request->param('min_use', 1);
         $order  = (string)$this->request->param('torder', 'use_desc');
 
         $build = function () use ($kw, $status, $minUse) {
