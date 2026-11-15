@@ -206,7 +206,12 @@ class ImageManage extends Base
                     Db::name('users')->where('id', $image->user_id)
                         ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
                 }
-                if (!$this->purgeFiles($image)) { $fileFail++; }
+                $freedB = 0;
+                if (!$this->purgeFiles($image, $freedB)) { $fileFail++; }
+                if ((int)$image->user_id > 0 && $freedB > 0) {
+                    Db::name('users')->where('id', (int)$image->user_id)
+                        ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . $freedB . ')')]);
+                }
             } else {
                 $image->save(['status' => $action === 'freeze' ? Image::ST_FROZEN : Image::ST_NORMAL, 'update_time' => time()]);
             }
@@ -505,9 +510,10 @@ class ImageManage extends Base
     }
 
     /** 删除原图（存储实例）+ 本地缩略图，两处删除入口共用 */
-    private function purgeFiles(Image $image): bool
+    private function purgeFiles(Image $image, int &$freed = 0): bool
     {
         $this->detachTags((int)$image->id);
+        $freed = 0;
         $storageOk = true;
         try {
             $r = \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
@@ -521,6 +527,7 @@ class ImageManage extends Base
         if (!is_link(public_path() . 'i')) {
             $link = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, (string)$image->path);
             if (is_file($link)) {
+                $freed += (int)@filesize($link);
                 @unlink($link);
             }
         }
@@ -528,6 +535,7 @@ class ImageManage extends Base
         if ($thumb !== '') {
             $abs = public_path() . str_replace('/', DIRECTORY_SEPARATOR, ltrim($thumb, '/'));
             if (is_file($abs)) {
+                $freed += (int)@filesize($abs);
                 @unlink($abs);
             }
         }
@@ -547,7 +555,12 @@ class ImageManage extends Base
                 ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
         }
         // 同步删除存储文件 + 本地缩略图
-        $ok = $this->purgeFiles($image);
+        $freedB = 0;
+        $ok = $this->purgeFiles($image, $freedB);
+        if ((int)$image->user_id > 0 && $freedB > 0) {
+            Db::name('users')->where('id', (int)$image->user_id)
+                ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . $freedB . ')')]);
+        }
         return json(['status' => true, 'message' => $ok ? '已删除（含原图与缩略图）' : '记录已删除，但存储文件删除失败（存储实例可能不可用）']);
     }
 

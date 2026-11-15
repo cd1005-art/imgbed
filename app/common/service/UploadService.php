@@ -254,7 +254,15 @@ class UploadService
         ]);
 
         if ($userId > 0) {
-            Db::name('users')->where('id', $userId)->inc('quota_used', $size)->update();
+            // 配额按"磁盘真实占用"算：原图 + 外链副本 + 缩略图（副本/缩略图也吃磁盘）
+            $extra = 0;
+            if (!empty($linkAbs) && is_file($linkAbs)) {
+                $extra += (int)@filesize($linkAbs);
+            }
+            if (!empty($thumbAbs) && is_file($thumbAbs)) {
+                $extra += (int)@filesize($thumbAbs);
+            }
+            Db::name('users')->where('id', $userId)->inc('quota_used', $size + $extra)->update();
         }
 
         // ---------- 6. 机审（同步一期，none 驱动零开销；二期异步队列） ----------
