@@ -139,6 +139,11 @@ class UploadService
                     ->where('status', 1)
                     ->sum('size');
 
+                // 本地实例的配额上限也要算上副本 + 缩略图：它们同样占这块磁盘
+                if (($storageRow['driver'] ?? '') === 'local') {
+                    $usedB += self::localExtraBytes();
+                }
+
                 $quotaGb = (int)($storageCfg['quota_gb'] ?? 0);
                 if ($quotaGb > 0 && $usedB >= $quotaGb * 1073741824) {
                     throw new UploadException('存储配额已满，暂停上传（管理员可调整配额上限）');
@@ -264,6 +269,8 @@ class UploadService
             }
             Db::name('users')->where('id', $userId)->inc('quota_used', $size + $extra)->update();
         }
+        // 本地目录可能已变化，直接失效统计缓存（下次配额校验重新算）
+        @unlink(root_path() . 'runtime' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'local_extra.json');
 
         // ---------- 6. 机审（同步一期，none 驱动零开销；二期异步队列） ----------
         // 审核始终用「原始文件 + 原始 mime」：转 WebP 后部分视觉模型无法识别，

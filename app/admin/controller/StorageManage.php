@@ -74,6 +74,10 @@ class StorageManage extends Base
         foreach ($list as $item) {
             $cfg = is_array($item->config) ? $item->config : [];
             $usedBytes = $usageMap[(int)$item->id]['s'] ?? 0;
+            // 本地实例：配额与「图床已用」都要算上副本 + 缩略图（同占这块磁盘）
+            if ($item->driver === 'local') {
+                $usedBytes += (int)($localUsage['copy']['bytes'] ?? 0) + (int)($localUsage['thumb']['bytes'] ?? 0);
+            }
             $item['used_str'] = \app\common\service\UploadService::formatSize($usedBytes);
             $item['disk_free_str'] = '';
             $item['disk_total_str'] = '';
