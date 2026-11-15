@@ -25,8 +25,10 @@ class ImageManage extends Base
         $status = (string)$this->request->param('status', '');// 状态 1正常/2冻结
         $dfrom  = (string)$this->request->param('dfrom', '');  // 起始日期 Y-m-d
         $dto    = (string)$this->request->param('dto', '');    // 结束日期 Y-m-d
+        $smin   = (int)$this->request->param('smin', 0);        // 最小体积 KB
+        $smax   = (int)$this->request->param('smax', 0);        // 最大体积 KB
 
-        $build = function () use ($kw, $ufilter, $tag, $sid, $audit, $status, $dfrom, $dto) {
+        $build = function () use ($kw, $ufilter, $tag, $sid, $audit, $status, $dfrom, $dto, $smin, $smax) {
             $q = Image::alias('i')->leftJoin('img_users u', 'u.id = i.user_id')
                 ->field('i.*, u.nickname as user_nickname, u.email as user_email')
                 ->where('i.status', '>', 0);
@@ -45,6 +47,8 @@ class ImageManage extends Base
             }
             if ($tag !== '')    { $q->where('i.tags', 'like', '%"' . $tag . '"%'); }
             if ($sid > 0)       { $q->where('i.storage_id', $sid); }
+            if ($smin > 0)      { $q->where('i.size', '>=', $smin * 1024); }
+            if ($smax > 0)      { $q->where('i.size', '<=', $smax * 1024); }
             if ($audit !== '')  { $q->where('i.audit_status', (int)$audit); }
             if ($status !== '') { $q->where('i.status', (int)$status); }
             if ($dfrom !== '')  { $q->where('i.create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
@@ -86,7 +90,7 @@ class ImageManage extends Base
             'audit'    => $audit,
             'status'   => $status,
             'dfrom'    => $dfrom,
-            'dto'      => $dto,
+            'dto' => $dto, 'smin' => $smin, 'smax' => $smax,
             'storages' => $storages,
             'page_no'  => $page,
             'total'    => $total,

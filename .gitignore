@@ -17,3 +17,6 @@ Thumbs.db
 install.lock
 install.php.installed
 media/
+
+# 水印字体（体积大，部署时从系统字体目录复制）
+storage/fonts/*

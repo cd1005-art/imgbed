@@ -27,6 +27,10 @@
     </select>
     <input type="date" name="dfrom" value="{$dfrom}" class="filter-select">
     <input type="date" name="dto" value="{$dto}" class="filter-select">
+    <span class="count">体积</span>
+    <input type="number" name="smin" value="{if condition="$smin gt 0"}{$smin}{/if}" placeholder="最小 KB" style="width:92px">
+    <span class="count">~</span>
+    <input type="number" name="smax" value="{if condition="$smax gt 0"}{$smax}{/if}" placeholder="最大 KB" style="width:92px">
     <button class="btn btn-sm" type="submit">筛选</button>
   </form>
 </div>

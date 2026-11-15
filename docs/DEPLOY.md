@@ -188,3 +188,19 @@ cd tools/nsfw-service && pip install -r requirements.txt && python app.py   # 0.
 | 每天 09:00 | `/www/server/php/83/bin/php /www/wwwroot/你的站点/think monitor:vip` | VIP 到期提醒 |
 
 > 未配置计划任务不影响主站功能，仅以上自动化不触发。
+
+## 水印中文字体
+
+「图片处理 → 水印文字」需要中文字体，程序会按顺序查找：
+
+1. `storage/fonts/*.ttf|ttc|otf`（**推荐**，open_basedir 安全区）
+2. 系统字体（Linux 走 `fc-match`，Windows 走 `C:/Windows/Fonts/msyh.ttc`）
+
+**Linux 部署建议**（宝塔默认 open_basedir 不允许访问 `/usr/share/fonts`）：
+
+```bash
+mkdir -p storage/fonts
+cp /usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc storage/fonts/
+```
+
+找不到字体时水印会降级为位图字体（中文显示为乱码），此时建议关闭水印。

@@ -40,7 +40,29 @@ class WebdavStorage implements StorageDriverInterface
             return false;
         }
         $resp = $this->request('PUT', $relativePath, $content);
+        if ($resp['code'] >= 200 && $resp['code'] < 300) {
+            return true;
+        }
+        // 父目录缺失（409/404）→ 逐级 MKCOL 后重试一次
+        if (in_array((int)$resp['code'], [404, 409, 502], true)) {
+            $this->ensureDir(dirname($relativePath));
+            $resp = $this->request('PUT', $relativePath, $content);
+        }
         return $resp['code'] >= 200 && $resp['code'] < 300;
+    }
+
+    /** 逐级创建目录（已存在返回 405，忽略） */
+    private function ensureDir(string $rel): void
+    {
+        $rel = trim(str_replace('\\', '/', $rel), '/');
+        if ($rel === '' || $rel === '.') {
+            return;
+        }
+        $path = '';
+        foreach (explode('/', $rel) as $seg) {
+            $path = $path === '' ? $seg : $path . '/' . $seg;
+            $this->request('MKCOL', $path);
+        }
     }
 
     public function delete(string $relativePath): bool

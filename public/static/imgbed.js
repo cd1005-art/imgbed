@@ -60,16 +60,16 @@
     zone.addEventListener('dragleave', function () { zone.classList.remove('dragover'); });
     zone.addEventListener('drop', function (e) {
       e.preventDefault(); zone.classList.remove('dragover');
-      if (e.dataTransfer.files.length) upload(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files.length) enqueue(Array.prototype.slice.call(e.dataTransfer.files));
     });
     input.addEventListener('change', function () {
-      if (input.files.length) upload(input.files[0]);
+      if (input.files.length) enqueue(Array.prototype.slice.call(input.files));
       input.value = '';
     });
     // 粘贴上传
     document.addEventListener('paste', function (e) {
       var items = e.clipboardData && e.clipboardData.files;
-      if (items && items.length) upload(items[0]);
+      if (items && items.length) enqueue(Array.prototype.slice.call(items));
     });
 
     document.getElementById('continueBtn').addEventListener('click', function () {
@@ -80,36 +80,163 @@
     var floatPct = document.getElementById('ufPct');
     var floatFill = document.getElementById('ufFill');
 
-    function upload(file) {
-      zone.classList.add('uploading');
-      progress.hidden = false; bar.style.width = '0%';
-      if (floatBox) { floatBox.hidden = false; floatFill.style.width = '0%'; floatPct.textContent = '0%'; }
+    /* ---------- 上传队列：多项排队 + 失败重试 + 拖拽排序 ---------- */
+    var queue = [];
+    var seq = 0;
+    var busy = false;
+    var qbox = document.getElementById('uploadQueue');
+    var dragId = 0;
 
+    function enqueue(files) {
+      files.forEach(function (f) {
+        seq += 1;
+        queue.push({ id: seq, file: f, status: 'wait', pct: 0, result: null, err: '' });
+      });
+      if (qbox) qbox.hidden = false;
+      render();
+      pump();
+    }
+
+    function pump() {
+      if (busy) { return; }
+      var job = null;
+      for (var i = 0; i < queue.length; i += 1) {
+        if (queue[i].status === 'wait') { job = queue[i]; break; }
+      }
+      if (!job) { return; }
+      busy = true;
+      job.status = 'up';
+      render();
+      send(job);
+    }
+
+    function send(job) {
       var fd = new FormData();
-      fd.append('file', file);
+      fd.append('file', job.file);
       var xhr = new XMLHttpRequest();
       xhr.open('POST', '/upload/save');
       xhr.upload.onprogress = function (e) {
-        if (!e.lengthComputable) return;
-        var pct = Math.round(e.loaded / e.total * 100);
-        bar.style.width = pct + '%';
-        if (floatBox) {
-          floatFill.style.width = pct + '%';
-          floatPct.textContent = pct + '%';
-          if (pct >= 100) { floatPct.textContent = '处理中…'; }
-        }
+        if (!e.lengthComputable) { return; }
+        job.pct = Math.round(e.loaded / e.total * 100);
+        var el = qbox && qbox.querySelector('[data-bar="' + job.id + '"]');
+        if (el) { el.style.width = job.pct + '%'; }
+        var st = qbox && qbox.querySelector('[data-status="' + job.id + '"]');
+        if (st && job.pct >= 100) { st.textContent = '处理中…'; }
       };
       xhr.onload = function () {
-        zone.classList.remove('uploading');
-        progress.hidden = true;
-        if (floatBox) floatBox.hidden = true;
-        var data;
-        try { data = JSON.parse(xhr.responseText); } catch (e) { toast('服务返回异常，看下服务器日志'); return; }
-        if (!data.status) { toast(data.message || '上传失败'); return; }
-        showResult(data.data, file);
+        busy = false;
+        var data = null;
+        try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
+        if (data && data.status) {
+          job.status = 'ok';
+          job.pct = 100;
+          job.result = data.data;
+        } else {
+          job.status = 'fail';
+          job.err = (data && data.message) || '上传失败';
+        }
+        render();
+        pump();
       };
-      xhr.onerror = function () { zone.classList.remove('uploading'); progress.hidden = true; if (floatBox) floatBox.hidden = true; toast('网络错误，重试一次'); };
+      xhr.onerror = function () {
+        busy = false;
+        job.status = 'fail';
+        job.err = '网络错误';
+        render();
+        pump();
+      };
       xhr.send(fd);
+    }
+
+    function render() {
+      if (!qbox) { return; }
+      qbox.innerHTML = queue.map(function (q) {
+        var cls = q.status === 'up' ? 'up' : (q.status === 'ok' ? 'ok' : (q.status === 'fail' ? 'fail' : 'wait'));
+        var statusText = q.status === 'wait' ? '排队中'
+          : (q.status === 'up' ? (q.pct >= 100 ? '处理中…' : q.pct + '%')
+          : (q.status === 'ok' ? '已完成' : (q.err || '失败')));
+        var actions = '';
+        if (q.status === 'ok') {
+          actions = '<button class="btn-ghost-sm" type="button" data-copy="' + q.id + '">复制链接</button>'
+                  + '<button class="btn-ghost-sm" type="button" data-open="' + q.id + '">打开</button>';
+        } else if (q.status === 'fail') {
+          actions = '<button class="btn-ghost-sm btn-danger-sm" type="button" data-retry="' + q.id + '">重试</button>';
+        } else if (q.status === 'wait') {
+          actions = '<button class="btn-ghost-sm" type="button" data-remove="' + q.id + '">移除</button>';
+        }
+        return '<div class="uq-item" draggable="' + (q.status === 'wait' ? 'true' : 'false') + '" data-qid="' + q.id + '">'
+          + '<span class="uq-handle" title="拖动调整顺序">⋮⋮</span>'
+          + '<div class="uq-main">'
+          +   '<div class="uq-name" title="' + (q.file.name || '') + '">' + (q.file.name || '图片') + '</div>'
+          +   '<div class="uq-meta"><span class="uq-status ' + cls + '" data-status="' + q.id + '">' + statusText + '</span>'
+          +     ' · ' + (q.file.size / 1024).toFixed(1) + ' KB</div>'
+          +   '<div class="uq-bar"><i data-bar="' + q.id + '" style="width:' + (q.status === 'ok' ? 100 : q.pct) + '%"></i></div>'
+          + '</div>'
+          + '<div class="uq-act">' + actions + '</div>'
+          + '</div>';
+      }).join('');
+      bindQueueEvents();
+    }
+
+    function bindQueueEvents() {
+      if (!qbox) { return; }
+      qbox.querySelectorAll('[data-retry]').forEach(function (b) {
+        b.onclick = function () {
+          var id = parseInt(b.getAttribute('data-retry'), 10);
+          var q = queue.filter(function (x) { return x.id === id; })[0];
+          if (q) { q.status = 'wait'; q.pct = 0; q.err = ''; render(); pump(); }
+        };
+      });
+      qbox.querySelectorAll('[data-remove]').forEach(function (b) {
+        b.onclick = function () {
+          var id = parseInt(b.getAttribute('data-remove'), 10);
+          queue = queue.filter(function (x) { return x.id !== id; });
+          render(); pump();
+        };
+      });
+      qbox.querySelectorAll('[data-copy]').forEach(function (b) {
+        b.onclick = function () {
+          var id = parseInt(b.getAttribute('data-copy'), 10);
+          var q = queue.filter(function (x) { return x.id === id; })[0];
+          if (q && q.result) { copyText(q.result.url, function (ok) { toast(ok ? '已复制' : '复制失败'); }); }
+        };
+      });
+      qbox.querySelectorAll('[data-open]').forEach(function (b) {
+        b.onclick = function () {
+          var id = parseInt(b.getAttribute('data-open'), 10);
+          var q = queue.filter(function (x) { return x.id === id; })[0];
+          if (q && q.result) { window.open(q.result.url, '_blank'); }
+        };
+      });
+      // 拖拽排序（仅排队中的项可拖）
+      qbox.querySelectorAll('.uq-item').forEach(function (el) {
+        el.addEventListener('dragstart', function () {
+          if (el.getAttribute('draggable') !== 'true') { return; }
+          dragId = parseInt(el.getAttribute('data-qid'), 10);
+          el.classList.add('is-drag');
+        });
+        el.addEventListener('dragend', function () { el.classList.remove('is-drag'); });
+        el.addEventListener('dragover', function (e) {
+          if (!dragId) { return; }
+          e.preventDefault();
+          el.classList.add('is-over');
+        });
+        el.addEventListener('dragleave', function () { el.classList.remove('is-over'); });
+        el.addEventListener('drop', function (e) {
+          e.preventDefault();
+          el.classList.remove('is-over');
+          var toId = parseInt(el.getAttribute('data-qid'), 10);
+          if (!dragId || dragId === toId) { dragId = 0; return; }
+          var from = queue.findIndex(function (x) { return x.id === dragId; });
+          var to = queue.findIndex(function (x) { return x.id === toId; });
+          if (from >= 0 && to >= 0) {
+            var moved = queue.splice(from, 1)[0];
+            queue.splice(to, 0, moved);
+          }
+          dragId = 0;
+          render();
+        });
+      });
     }
 
     function showResult(d, file) {
@@ -122,7 +249,6 @@
         d.width + '×' + d.height + ' · ' + (d.size / 1024).toFixed(1) + ' KB' + (d.reused ? ' · 秒传复用' : '');
       var urlEl = document.getElementById('resultUrl');
       urlEl.textContent = d.url;
-      // 格式按钮的动态数据
       box.querySelectorAll('[data-fmt]').forEach(function (b) {
         b.onclick = function () {
           copyText(d[b.getAttribute('data-fmt')] || d.url, function (ok) { toast(ok ? '已复制 ' + b.textContent : '复制失败'); });
@@ -265,10 +391,12 @@
     if (createBtn) {
       createBtn.addEventListener('click', function () {
         var name = document.getElementById('tokenName').value;
+        var scopes = [];
+        document.querySelectorAll('.scope-cb:checked').forEach(function (cb) { scopes.push(cb.value); });
         fetch('/console/token/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: 'name=' + encodeURIComponent(name)
+          body: 'name=' + encodeURIComponent(name) + scopes.map(function (s) { return '&scopes[]=' + s; }).join('')
         }).then(function (r) { return r.json(); }).then(function (data) {
           if (!data.status) { toast(data.message); return; }
           var box = document.getElementById('tokenNew');
@@ -495,4 +623,32 @@
   } else {
     initPagerJump();
   }
+})();
+
+/* ---------- 深色/浅色主题切换（全站，localStorage 持久化） ---------- */
+(function () {
+  var KEY = 'imgbed-theme';
+  function apply(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    try { localStorage.setItem(KEY, t); } catch (e) {}
+    var fab = document.getElementById('themeFab');
+    if (fab) { fab.textContent = t === 'dark' ? '☀' : '◐'; fab.title = t === 'dark' ? '切换到浅色' : '切换到深色'; }
+  }
+  function init() {
+    var saved = '';
+    try { saved = localStorage.getItem(KEY) || ''; } catch (e) {}
+    if (saved === 'dark' || saved === 'light') { apply(saved); }
+    var fab = document.createElement('button');
+    fab.id = 'themeFab';
+    fab.className = 'theme-fab';
+    fab.type = 'button';
+    fab.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀' : '◐';
+    fab.title = '切换深色/浅色';
+    fab.addEventListener('click', function () {
+      var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      apply(cur === 'dark' ? 'light' : 'dark');
+    });
+    document.body.appendChild(fab);
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); } else { init(); }
 })();

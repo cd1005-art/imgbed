@@ -18,7 +18,7 @@
 
 <div id="consoleTabs">
   <nav class="tabs-nav">
-    <button class="tab-btn" type="button" data-tab="quota">配额</button>
+    <button class="tab-btn" type="button" data-tab="quota">我的权益</button>
     <button class="tab-btn" type="button" data-tab="token">API Token</button>
     <button class="tab-btn" type="button" data-tab="credits">站币</button>
 {if condition="$withdraw_enable"}<button class="tab-btn" type="button" data-tab="withdraw">提现</button>{/if}
@@ -26,7 +26,7 @@
   </nav>
   <div class="tab-pane" data-pane="quota">
 <section class="panel">
-  <h2 class="panel-title">配额</h2>
+  <h2 class="panel-title">我的权益</h2>
   <div class="quota-bar"><div class="quota-fill" style="width:{$quota_pct}%"></div></div>
   <p class="quota-line">
     存储容量：已用 {:round($quota_used / 1048576, 1)} MB / {:round($quota_total / 1073741824, 1)} GB（{$quota_pct}%）
@@ -39,6 +39,7 @@
     <p>单图上限：<b>{$rights.max_size_str}</b></p>
     <p>图片保留：<b>{$rights.keep_text}</b></p>
     <p>允许格式：<b>{$rights.ext_str}</b></p>
+    <p>存储容量：<b>{:round($quota_total / 1073741824, 1)} GB</b>（已用 {:round($quota_used / 1048576, 1)} MB）</p>
     <p>可生成 Token：<b>{$rights.max_tokens}</b></p>
     {if condition="$rights.ad_exempt"}<p>免广告：<b>是</b></p>{/if}
   </div>
@@ -61,10 +62,17 @@
     </div>
   </details>
 
-  <div class="token-create">
+  <div class="token-create" style="flex-wrap:wrap">
     <input type="text" id="tokenName" maxlength="30" placeholder="Token 名称（可空）">
+    <span class="token-scopes">
+      <label><input type="checkbox" class="scope-cb" value="upload" checked> 上传</label>
+      <label><input type="checkbox" class="scope-cb" value="list" checked> 列表</label>
+      <label><input type="checkbox" class="scope-cb" value="info" checked> 详情</label>
+      <label><input type="checkbox" class="scope-cb" value="delete"> 删除</label>
+    </span>
     <button class="btn" type="button" id="tokenCreateBtn"><svg class="ic"><use href="#i-key"/></svg> 生成</button>
   </div>
+  <p class="field-hint" style="margin-top:6px">权限说明：上传=POST /upload，列表=GET /list，详情=GET /info，删除=DELETE /delete。建议只勾选需要的，删除权限尤其慎给。</p>
   <div class="token-new" id="tokenNew" hidden>
     <p style="margin:0 0 6px">已生成（<b>完整 Token 只显示这一次</b>，请立即复制保存；刷新后列表仅显示中间打码的版本，无法再次查看或复制完整值）：</p>
     <div class="url-line">

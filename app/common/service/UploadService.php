@@ -162,8 +162,44 @@ class UploadService
             throw new UploadException($e->getMessage());
         }
 
-        if (!$driver->put($file->getPathname(), $relativePath)) {
+        // ---------- 4.1 图片处理（压缩 / WebP / 水印 / 缩略图 / EXIF 清理） ----------
+        $processed = ['path' => null, 'ext' => $ext, 'width' => $width, 'height' => $height, 'thumb' => null, 'bytes' => $size];
+        try {
+            $processed = ImageProcessor::process($file->getPathname(), $ext);
+        } catch (\Throwable $e) {
+            // 图片处理失败绝不阻断上传：记录后回退原图
+            \think\facade\Log::record('图片处理异常：' . $e->getMessage(), 'error');
+        }
+        $upPath    = $file->getPathname();
+        if (!empty($processed['path'])) {
+            $upPath = (string)$processed['path'];
+            // 扩展名可能被转成 webp/png，路径后缀同步
+            $relativePath = preg_replace('/\.[a-z0-9]+$/i', '.' . $processed['ext'], $relativePath);
+            $ext          = $processed['ext'];
+            $size         = (int)$processed['bytes'];
+            $width        = (int)$processed['width'];
+            $height       = (int)$processed['height'];
+            $mime         = 'image/' . ($ext === 'jpg' ? 'jpeg' : $ext);
+        }
+
+        if (!$driver->put($upPath, $relativePath)) {
             throw new UploadException('存储写入失败，请检查存储配置');
+        }
+
+        // 缩略图：统一存本地 public/thumbs/（小文件，不依赖存储驱动，WebDAV 也能用）
+        $thumbPath = '';
+        if (!empty($processed['thumb'])) {
+            $thumbRel = 'thumbs/' . $relativePath;
+            $thumbAbs = public_path() . str_replace('/', DIRECTORY_SEPARATOR, $thumbRel);
+            $thumbDir = dirname($thumbAbs);
+            try {
+                if (!is_dir($thumbDir) && !@mkdir($thumbDir, 0755, true) && !is_dir($thumbDir)) {
+                    // 目录创建失败则跳过缩略图
+                } elseif (@copy((string)$processed['thumb'], $thumbAbs)) {
+                    $thumbPath = $thumbRel;
+                }
+            } catch (\Throwable $e) {
+            }
         }
 
         // ---------- 5. 入库 + 配额累加 ----------
@@ -172,6 +208,7 @@ class UploadService
             'group_id'     => $group->id,
             'name'         => mb_substr($file->getOriginalName(), 0, 200),
             'path'         => $relativePath,
+            'thumb_path'   => $thumbPath,
             'sha1'         => $sha1,
             'md5'          => $md5,
             'size'         => $size,
@@ -194,7 +231,15 @@ class UploadService
         }
 
         // ---------- 6. 机审（同步一期，none 驱动零开销；二期异步队列） ----------
-        AuditService::audit($image, $file->getPathname(), (string)$mime);
+        AuditService::audit($image, $upPath, (string)$mime);
+
+        // 清理处理产生的临时文件
+        if (!empty($processed['path'])) {
+            @unlink((string)$processed['path']);
+        }
+        if (!empty($processed['thumb'])) {
+            @unlink((string)$processed['thumb']);
+        }
 
         return $this->buildResult($image, false);
     }

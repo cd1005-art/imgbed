@@ -614,6 +614,13 @@
 
   /* ---------- 站点设置 / 审核设置 ---------- */
   function adminSite() {
+    var ipf = document.getElementById('imgProcForm');
+    if (ipf) {
+      ipf.addEventListener('submit', function (e) {
+        e.preventDefault();
+        postForm('/admin/site/save', ipf).then(function (d) { toast(d.message); });
+      });
+    }
     initTabs('#siteTabs');
     var f = document.getElementById('siteForm');
     if (f) f.addEventListener('submit', function (e) {

@@ -31,7 +31,7 @@ class V1 extends BaseController
     /**
      * 解析并校验 Token（upload 等写操作用）
      */
-    protected function auth(): void
+    protected function auth(string $need = ''): void
     {
         $tokenStr = (string)$this->request->header('x-api-token', '');
         if ($tokenStr === '' && str_starts_with((string)$this->request->header('authorization', ''), 'Bearer ')) {
@@ -66,6 +66,14 @@ class V1 extends BaseController
             }
         }
 
+        // 权限范围校验（upload/list/info/delete）
+        if ($need !== '') {
+            $scopes = array_filter(array_map('trim', explode(',', (string)($token->scopes ?? 'upload,list,info,delete'))));
+            if (!in_array($need, $scopes, true)) {
+                $this->fail(403, "当前 Token 没有 {$need} 权限，请在个人中心重新生成并勾选");
+            }
+        }
+
         $this->token = $token;
         $this->user  = $user;
 
@@ -87,7 +95,7 @@ class V1 extends BaseController
      */
     public function upload(): \think\response\Json
     {
-        $this->auth();
+        $this->auth('upload');
 
         // 兼容 file / image 字段名
         $file = $this->request->file('file') ?: $this->request->file('image');
@@ -165,7 +173,7 @@ class V1 extends BaseController
      */
     public function info(int $id): \think\response\Json
     {
-        $this->auth();
+        $this->auth('info');
         $image = Image::where('id', $id)->where('user_id', $this->user->id)->where('status', '>', 0)->find();
         if (!$image) {
             $this->fail(404, '图片不存在');
@@ -182,7 +190,7 @@ class V1 extends BaseController
      */
     public function list(): \think\response\Json
     {
-        $this->auth();
+        $this->auth('list');
         $page = max(1, (int)$this->request->param('page', 1));
         $size = min(100, max(1, (int)$this->request->param('size', 20)));
 
@@ -215,7 +223,7 @@ class V1 extends BaseController
      */
     public function delete(int $id): \think\response\Json
     {
-        $this->auth();
+        $this->auth('delete');
         $image = Image::where('id', $id)->where('user_id', $this->user->id)->where('status', Image::ST_NORMAL)->find();
         if (!$image) {
             $this->fail(404, '图片不存在');

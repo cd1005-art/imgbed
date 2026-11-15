@@ -272,10 +272,18 @@ class Console extends Base
             }
         }
 
+        // 权限范围（未勾选时默认只给上传+读取）
+        $allowed = ['upload', 'list', 'info', 'delete'];
+        $picked  = array_values(array_intersect($allowed, (array)$this->request->post('scopes/a', [])));
+        if (!$picked) {
+            $picked = ['upload', 'list'];
+        }
+
         $token = bin2hex(random_bytes(32));
         ApiToken::create([
             'user_id'     => $user->id,
             'name'        => mb_substr($name !== '' ? $name : 'Token ' . ($count + 1), 0, 30),
+            'scopes'      => implode(',', $picked),
             'token'       => $token,
             'status'      => 1,
             'create_time' => time(),
