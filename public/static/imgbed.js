@@ -148,6 +148,9 @@
         } else {
           job.status = 'fail';
           job.err = (data && data.message) || '上传失败';
+          // 失败必须显式提示（队列可能在页面下方看不见）
+          toast(job.err);
+          if (qbox) { qbox.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
         }
         render();
         var pending = queue.some(function (q) { return q.status === 'wait' || q.status === 'up'; });
@@ -161,7 +164,8 @@
       xhr.onerror = function () {
         busy = false;
         job.status = 'fail';
-        job.err = '网络错误';
+        job.err = '网络错误，请重试';
+        toast(job.err);
         render();
         pump();
       };
