@@ -194,7 +194,8 @@ class GenRun extends Command
     protected function isDuplicate(string $file): bool
     {
         $sha1 = @sha1_file($file) ?: '';
-        if ($sha1 !== '' && Db::name('images')->where('sha1', $sha1)->find()) {
+        // 只与"仍在用"的图比较：已删除的图不应再挡住新的生成
+        if ($sha1 !== '' && Db::name('images')->where('sha1', $sha1)->where('status', '<>', 0)->find()) {
             return true;
         }
         $ah = FingerprintService::ahash($file);
