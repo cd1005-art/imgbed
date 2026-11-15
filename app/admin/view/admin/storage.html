@@ -11,7 +11,6 @@
     <span class="storage-meta">外链：{if condition="$vo.url_mode eq 1"}代理中转{else /}302直链{/if}</span>
     <span class="storage-meta">引用 {$usage[$vo.id]['c']|default=0} 张 · 图床已用 {$vo.used_str}{if condition="$vo.driver eq 'local'"}（含副本/缩略图）{/if}</span>
     {if condition="$vo.driver eq 'local'"}
-    <span class="storage-meta" title="本地额外产生的数据：外链副本 + 缩略图">外链副本 {:number_format($local_usage['copy']['bytes'] / 1048576, 1)} MB · 缩略图 {:number_format($local_usage['thumb']['bytes'] / 1048576, 1)} MB</span>
     <span class="storage-meta">磁盘剩余：<b>{$vo.disk_free_str}</b> / 总 {$vo.disk_total_str}（已用 {$vo.disk_pct}%）</span>
     {else /}
       {if condition="$vo.space_unlimited"}

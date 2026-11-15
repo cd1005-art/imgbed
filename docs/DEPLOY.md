@@ -243,3 +243,49 @@ cd public && mv i i.bak && ln -s /mnt/alist i
 
 **⚠ 实测警告**：如果 WebDAV 后端本身慢（如 Alist 再套一层云盘），首次读取一个文件可能要 30 秒以上，nginx 会挂住连接。**仅在网盘读写延迟 < 100ms 时使用**。否则请使用默认的副本模式。
 
+## 运行环境要求（自建部署必读）
+
+| 项目 | 最低要求 | 推荐 | 说明 |
+|---|---|---|---|
+| PHP | 8.0 | 8.3 | 需要扩展：`gd`、`curl`、`mbstring`、`pdo_mysql`、`fileinfo`、`zip`、`openssl` |
+| **memory_limit** | **512M** | **1024M** | **处理 4000 万像素以上的大图时必须**。程序会在图片处理前自动 `ini_set('memory_limit','1024M')`；若主机通过 `disable_functions` 禁用了 `ini_set`，则退回 php.ini 的值，此时请手动把 `memory_limit` 设为 1024M |
+| post_max_size | ≥ 策略组单图上限 | 32M | 小于单图上限会导致上传直接被 PHP 丢弃 |
+| upload_max_filesize | ≥ 策略组单图上限 | 32M | 同上 |
+| max_execution_time | 120 | 300 | 大图压缩/水印耗时较长 |
+| GD 扩展 | 支持 jpeg/png/webp/gif | 含 `imagick` 更佳 | 缺少 webp 支持时无法输出 WebP |
+
+### 为什么必须 ≥512M 内存
+
+一张 12000×9000 的图（约 1.08 亿像素），GD 解码就要：
+
+```
+12000 × 9000 × 4 字节 ≈ 432 MB
+```
+
+再做缩放或重新编码会再复制一份，总计 800MB+。
+
+**本程序的处理策略**（无需手动干预）：
+
+1. 处理前自动把 `memory_limit` 提到 1024M
+2. 超过策略组 `max_mp`（默认 0=不限；内部兜底 80MP）的图，**按策略组配置处理**：
+   - `skip`：原图直传，不压缩（默认，兼容性最好）
+   - `downscale`：先缩到指定长边（默认 4096）再常规处理
+   - `reject`：拒绝上传并给出中文提示
+3. 处理过程中出现任何异常，**回退为原图上传**，不会把用户的上传打回 500
+
+### 快速自检
+
+```bash
+php -r "echo ini_get('memory_limit'), PHP_EOL;"
+php -r "var_dump(extension_loaded('gd'), extension_loaded('curl'), extension_loaded('fileinfo'));"
+```
+
+输出建议：
+
+```
+1024M
+bool(true)
+bool(true)
+bool(true)
+```
+

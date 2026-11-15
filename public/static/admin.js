@@ -1903,6 +1903,28 @@
     });
   }
 
+/* 筛选表单提交时保留 per_page（否则一筛选就回到默认 20 条） */
+(function keepPerPageOnFilter() {
+  function ready(fn) {
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', fn); } else { fn(); }
+  }
+  ready(function () {
+    var pp = new URLSearchParams(location.search).get('per_page');
+    if (!pp) { return; }
+    document.querySelectorAll('form.search-bar').forEach(function (f) {
+      if (f.querySelector('input[name="per_page"]')) { return; }
+      f.addEventListener('submit', function () {
+        if (f.querySelector('input[name="per_page"]')) { return; }
+        var h = document.createElement('input');
+        h.type = 'hidden';
+        h.name = 'per_page';
+        h.value = pp;
+        f.appendChild(h);
+      });
+    });
+  });
+})();
+
 /* 通用「每页条数」：遍历所有列表表格，各自在表格下方生成工具条（可重复调用，供动态弹窗复用） */
 (function initPerPage() {
   function boot() {
