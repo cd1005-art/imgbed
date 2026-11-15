@@ -1,7 +1,7 @@
 {extend name="common/layout"}
 
 {block name="content"}
-<script>window.UPLOAD_MAX_BYTES = {$max_size_bytes|default='0'};</script>
+<script>window.UPLOAD_MAX_BYTES = {$max_size_bytes|default='0'};window.UPLOAD_MAX_BATCH = {$max_batch|default='100'};</script>
 <section class="upload-zone" id="dropZone" tabindex="0" aria-label="上传图片">
   <svg class="ic ic-lg"><use href="#i-upload"/></svg>
   <p class="upload-title">拖图到这里，或点击选择</p>

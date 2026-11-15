@@ -88,11 +88,11 @@
     var dragId = 0;
     var lastOk = null;
 
-    var MAX_BATCH = 100;   // 单次最多入队数量（大批量请分批，避免把 CPU 打满）
+    var MAX_BATCH = parseInt(window.UPLOAD_MAX_BATCH || 100, 10);   // 单次入队上限（策略组配置，0=不限）
     var AUTO_RETRY = 1;    // 服务器繁忙时自动重试次数
 
     function enqueue(files) {
-      if (files.length > MAX_BATCH) {
+      if (MAX_BATCH > 0 && files.length > MAX_BATCH) {
         toast('一次最多 ' + MAX_BATCH + ' 张，已截取前 ' + MAX_BATCH + ' 张，其余请分批再传');
         files = files.slice(0, MAX_BATCH);
       }

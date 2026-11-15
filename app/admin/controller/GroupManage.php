@@ -40,6 +40,7 @@ class GroupManage extends Base
             'name'        => trim((string)$this->request->post('name', '')),
             'remark'      => trim((string)$this->request->post('remark', '')),
             'max_size'    => (int)$this->request->post('max_size_mb', 0) * 1048576,
+            'max_batch'   => max(0, (int)$this->request->post('max_batch', 100)),
             'daily_count' => (int)$this->request->post('daily_count', 0),
             'quota_total' => (int)$this->request->post('quota_gb', 0) * 1073741824,
             'allow_ext'   => strtolower(trim((string)$this->request->post('allow_ext', 'jpg,jpeg,png,gif,webp'))),

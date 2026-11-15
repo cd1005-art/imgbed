@@ -45,6 +45,7 @@ class UploadController extends Base
             'group'            => $group,
             'max_size_str'     => $group ? UploadService::formatSize((int)$group->max_size) : '5 MB',
             'max_size_bytes'   => $group ? (int)$group->max_size : 0,
+            'max_batch'        => $group ? max(0, (int)$group->max_batch) : 100,
             'allow_ext_str'    => implode(' / ', array_map('strtoupper', $allowExt)),
             'keep_days_text'   => ($group && (int)$group->keep_days > 0)
                 ? '图片保留 ' . (int)$group->keep_days . ' 天'

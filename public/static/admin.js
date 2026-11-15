@@ -502,6 +502,8 @@
         document.getElementById('g_keep').value = g.keep_days;
         document.getElementById('g_ext').value = g.allow_ext;
         document.getElementById('g_max_tokens').value = g.max_tokens || 0;
+        var gmb = document.getElementById('g_max_batch');
+        if (gmb) { gmb.value = (g.max_batch === undefined || g.max_batch === null) ? 100 : g.max_batch; }
         var gts = String(g.token_scopes || '').split(',').filter(Boolean);
         document.querySelectorAll('#g_token_scopes input[type=checkbox]').forEach(function (cb) {
           cb.checked = gts.indexOf(cb.value) !== -1;
