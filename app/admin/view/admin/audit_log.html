@@ -24,11 +24,18 @@
   </div>
 </div>
 
+<div class="batch-bar" id="alBar" hidden>
+  <span id="alCount">已选 0 条</span>
+  <button class="btn-ghost-sm btn-danger-sm" type="button" id="alBatchDel">批量删除</button>
+  <button class="btn-ghost-sm" type="button" id="alClearSel">取消选择</button>
+</div>
+
 <table class="table">
-  <thead><tr><th>ID</th><th>图片</th><th>来源</th><th>结论</th><th>分数</th><th>理由</th><th>时间</th><th>操作</th></tr></thead>
+  <thead><tr><th style="width:28px"><input type="checkbox" id="alCheckAll"></th><th>ID</th><th>图片</th><th>来源</th><th>结论</th><th>分数</th><th>理由</th><th>时间</th><th>操作</th></tr></thead>
   <tbody>
     {volist name="list" id="vo"}
     <tr>
+      <td><input type="checkbox" class="al-check" value="{$vo.id}"></td>
       <td>{$vo.id}</td>
       <td>{if condition="$vo.img_name"}{$vo.img_name}{else /}<span class="count">#{$vo.image_id}（已删除）</span>{/if}</td>
       <td><code style="font-size:11px">{$vo.driver}</code></td>
@@ -43,7 +50,7 @@
       <td><button class="btn-ghost-sm btn-danger-sm" type="button" data-al-del="{$vo.id}">删除</button></td>
     </tr>
     {/volist}
-    {empty name="list"}<tr><td colspan="8" class="count" style="text-align:center;padding:24px">暂无审核日志</td></tr>{/empty}
+    {empty name="list"}<tr><td colspan="9" class="count" style="text-align:center;padding:24px">暂无审核日志</td></tr>{/empty}
   </tbody>
 </table>
 

@@ -221,6 +221,7 @@
 
   /* ---------- 图片管理 ---------- */
   function adminImage() {
+    initTabs('#imageTabs');
     initBatch();
     var orphanBtn = document.getElementById('orphanBtn');
     if (orphanBtn) {
@@ -1552,6 +1553,7 @@
 
   /* ---------- 模型设置：多卡片 ---------- */
   function adminModel() {
+    initTabs('#modelTabs');
     document.querySelectorAll('.model-form').forEach(function (form) {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
@@ -1853,6 +1855,42 @@
           .then(function (d) { toast(d.message); if (d.status) { setTimeout(function () { location.reload(); }, 400); } });
       });
     });
+    // 批量选择
+    var all = document.getElementById('alCheckAll');
+    var bar = document.getElementById('alBar');
+    var cnt = document.getElementById('alCount');
+    function refresh() {
+      var checked = document.querySelectorAll('.al-check:checked');
+      if (bar) { bar.hidden = checked.length === 0; }
+      if (cnt) { cnt.textContent = '已选 ' + checked.length + ' 条'; }
+    }
+    if (all) all.addEventListener('change', function () {
+      document.querySelectorAll('.al-check').forEach(function (c) { c.checked = all.checked; });
+      refresh();
+    });
+    document.querySelectorAll('.al-check').forEach(function (c) { c.addEventListener('change', refresh); });
+    var bd = document.getElementById('alBatchDel');
+    if (bd) bd.addEventListener('click', function () {
+      var ids = Array.prototype.map.call(document.querySelectorAll('.al-check:checked'),
+        function (c) { return c.value; });
+      if (!ids.length) { toast('先勾选日志'); return; }
+      if (!confirm('删除选中的 ' + ids.length + ' 条日志？')) { return; }
+      fetch('/admin/audit-log/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'ids=' + ids.join(',')
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        toast(d.message);
+        if (d.status) { setTimeout(function () { location.reload(); }, 400); }
+      }).catch(function () { toast('网络错误'); });
+    });
+    var cs = document.getElementById('alClearSel');
+    if (cs) cs.addEventListener('click', function () {
+      document.querySelectorAll('.al-check').forEach(function (c) { c.checked = false; });
+      if (all) all.checked = false;
+      refresh();
+    });
+    refresh();
     var cl = document.getElementById('alClear');
     if (cl) cl.addEventListener('click', function () {
       if (!confirm('清空全部审核日志？此操作不可恢复')) { return; }

@@ -99,6 +99,7 @@ class ImageManage extends Base
             'storages' => $storages,
             'page_no'  => $page,
             'per_page' => $size,
+            'upload_logs' => \think\facade\Db::name('upload_logs')->order('id', 'desc')->limit(50)->select()->toArray(),
             'qs'       => http_build_query([
                 'kw' => $kw, 'ufilter' => $ufilter, 'tag' => $tag, 'sid' => $sid,
                 'audit' => $audit, 'status' => $status, 'public' => $public,

@@ -21,8 +21,17 @@ class ModelManage extends Base
         $genModels   = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? '') === 'image_gen'));
         $promptModels = array_values(array_filter($models, fn($m) => ($m['purpose'] ?? '') === 'prompt'));
 
+        // 审核日志 / 白名单（tab 内展示最近 50 条）
+        $auditLogs = Db::name('audit_logs')->alias('a')
+            ->leftJoin('images i', 'i.id = a.image_id')
+            ->field('a.*, i.name AS img_name')
+            ->order('a.id', 'desc')->limit(50)->select()->toArray();
+        $whitelist = Db::name('approved_fingerprints')->order('id', 'desc')->limit(50)->select()->toArray();
+
         return $this->adminView('admin/model', [
             'page'        => 'model',
+            'audit_logs'  => $auditLogs,
+            'whitelist'   => $whitelist,
             'models'      => $auditModels,
             'gen_models'  => $genModels, 'prompt_models' => $promptModels,
             'settings'    => Setting::allSettings(),

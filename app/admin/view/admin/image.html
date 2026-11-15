@@ -1,6 +1,13 @@
 {extend name="admin/layout"}
 
 {block name="content"}
+<div id="imageTabs">
+  <nav class="tabs-nav" style="margin-bottom:14px">
+    <button class="tab-btn active" type="button" data-tab="images">图片列表</button>
+    <button class="tab-btn" type="button" data-tab="uploadlog">上传日志</button>
+  </nav>
+
+  <div class="tab-pane active" data-pane="images">
 <div class="page-toolbar">
   <h1 class="page-title">图片管理 <span class="count">{$total} 张</span></h1>
   <form class="search-bar" method="get" action="/admin/image">
@@ -142,6 +149,12 @@
   {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&{$qs}">下一页</a>{/if}
 </nav>
 {/if}
+</div>
+  </div>
+
+  <div class="tab-pane" data-pane="uploadlog">
+    {include file="admin/_upload_log_pane" /}
+  </div>
 </div>
 {/block}
 

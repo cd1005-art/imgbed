@@ -1,7 +1,15 @@
 {extend name="admin/layout"}
 
 {block name="content"}
-<h1 class="page-title">模型设置</h1>
+<div id="modelTabs">
+  <nav class="tabs-nav" style="margin-bottom:14px">
+    <button class="tab-btn active" type="button" data-tab="models">模型配置</button>
+    <button class="tab-btn" type="button" data-tab="auditlog">审核日志</button>
+    <button class="tab-btn" type="button" data-tab="whitelist">审核白名单</button>
+  </nav>
+
+  <div class="tab-pane active" data-pane="models">
+    <h1 class="page-title">模型设置</h1>
 
 <section class="panel">
   <h2 class="panel-title">审核策略</h2>
@@ -145,6 +153,16 @@
     <button type="submit" class="btn btn-sm">+ 新增卡片</button>
   </form>
 </section>
+  </div>
+
+  <div class="tab-pane" data-pane="auditlog">
+    {include file="admin/_audit_log_pane" /}
+  </div>
+
+  <div class="tab-pane" data-pane="whitelist">
+    {include file="admin/_whitelist_pane" /}
+  </div>
+</div>
 {/block}
 
 {block name="script"}

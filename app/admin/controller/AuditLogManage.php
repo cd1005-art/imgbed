@@ -60,4 +60,15 @@ class AuditLogManage extends Base
         $n = Db::name('audit_logs')->where('id', '>', 0)->delete();
         return json(['status' => true, 'message' => "已清空审核日志（{$n} 条）"]);
     }
+
+    /** 批量删除 */
+    public function batch()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择记录']);
+        }
+        $n = Db::name('audit_logs')->whereIn('id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 条"]);
+    }
 }

@@ -19,6 +19,7 @@ Route::group(function () {
     Route::get('audit-log', 'AuditLogManage/index');
     Route::post('audit-log/delete/:id', 'AuditLogManage/delete');
     Route::post('audit-log/clear', 'AuditLogManage/clear');
+    Route::post('audit-log/batch', 'AuditLogManage/batch');
     Route::get('whitelist', 'WhitelistManage/index');
     Route::post('whitelist/delete/:id', 'WhitelistManage/delete');
     Route::post('whitelist/clear', 'WhitelistManage/clear');

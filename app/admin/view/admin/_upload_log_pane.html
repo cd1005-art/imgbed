@@ -1,0 +1,23 @@
+<section class="panel">
+  <div class="page-toolbar" style="margin:0 0 10px">
+    <h2 class="panel-title" style="margin:0">上传日志 <span class="count">最近 50 条</span></h2>
+    <a class="btn-ghost-sm" href="/admin/log">查看全部 →</a>
+  </div>
+  <p class="field-hint" style="margin:-4px 0 10px">记录每次上传的结果与失败原因；完整列表（含筛选、批量删除）在 <a href="/admin/log">上传日志</a> 页。</p>
+  <table class="table">
+    <thead><tr><th>ID</th><th>图片</th><th>结果</th><th>原因</th><th>IP</th><th>时间</th></tr></thead>
+    <tbody>
+      {volist name="upload_logs" id="vo"}
+      <tr>
+        <td>{$vo.id}</td>
+        <td>{if condition="$vo.image_id gt 0"}#{$vo.image_id}{else /}-{/if}</td>
+        <td>{if condition="$vo.result eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
+        <td style="max-width:360px;font-size:12px">{$vo.reason|default='-'}</td>
+        <td><code style="font-size:11px">{$vo.ip|default='-'}</code></td>
+        <td>{:date('m-d H:i', $vo.create_time)}</td>
+      </tr>
+      {/volist}
+      {empty name="upload_logs"}<tr><td colspan="6" class="count" style="text-align:center;padding:20px">暂无上传日志</td></tr>{/empty}
+    </tbody>
+  </table>
+</section>

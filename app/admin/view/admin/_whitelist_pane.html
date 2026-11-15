@@ -1,0 +1,22 @@
+<section class="panel">
+  <div class="page-toolbar" style="margin:0 0 10px">
+    <h2 class="panel-title" style="margin:0">审核白名单 <span class="count">最近 50 条</span></h2>
+    <a class="btn-ghost-sm" href="/admin/whitelist">查看全部 →</a>
+  </div>
+  <p class="field-hint" style="margin:-4px 0 10px">人工「批量通过」时自动写入；命中白名单的图直接放行不调模型。</p>
+  <table class="table">
+    <thead><tr><th>ID</th><th>说明</th><th>SHA1</th><th>命中</th><th>时间</th></tr></thead>
+    <tbody>
+      {volist name="whitelist" id="vo"}
+      <tr>
+        <td>{$vo.id}</td>
+        <td>{$vo.note|default='-'}</td>
+        <td><code style="font-size:11px">{$vo.sha1|default='-'}</code></td>
+        <td>{$vo.hit_count}</td>
+        <td>{:date('m-d H:i', $vo.create_time)}</td>
+      </tr>
+      {/volist}
+      {empty name="whitelist"}<tr><td colspan="5" class="count" style="text-align:center;padding:20px">暂无白名单</td></tr>{/empty}
+    </tbody>
+  </table>
+</section>
