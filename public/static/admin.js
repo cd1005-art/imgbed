@@ -800,6 +800,23 @@
   /* ---------- 造图任务 ---------- */
   function adminGen() {
     initTabs('#genTabs');
+
+    // 单条 暂停 / 启用（此前按钮没有绑定，点击无反应）
+    document.querySelectorAll('[data-gen-toggle]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-gen-toggle');
+        var running = (b.textContent || '').trim() === '暂停';   // 运行中 → 暂停
+        var action = running ? 'disable' : 'enable';
+        fetch('/admin/gen/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'action=' + action + '&ids=' + id
+        }).then(function (r) { return r.json(); }).then(function (d) {
+          toast(d.message || (d.status ? '已更新' : '操作失败'));
+          if (d.status) { setTimeout(function () { location.reload(); }, 500); }
+        }).catch(function () { toast('网络错误，请重试'); });
+      });
+    });
     // 新建 / 编辑任务
     var nf = document.getElementById('genNewForm');
     function resetGenForm() {
