@@ -191,7 +191,7 @@ class UploadService
         if (!empty($processed['thumb'])) {
             $thumbStorage = (int)Setting::get('thumb_storage_id', 0);
             if ($thumbStorage > 0) {
-                $thumbRel = 'thumbs/' . $relativePath;
+                $thumbRel = 'thumbs/' . preg_replace('/\.[a-z0-9]+$/i', '.webp', $relativePath);
                 try {
                     $tDriver = StorageManager::driver($thumbStorage);
                     if ($tDriver && $tDriver->put((string)$processed['thumb'], $thumbRel)) {
@@ -202,7 +202,7 @@ class UploadService
                 }
             }
             if ($thumbPath === '') {
-                $thumbRel = 'thumbs/' . $relativePath;
+                $thumbRel = 'thumbs/' . preg_replace('/\.[a-z0-9]+$/i', '.webp', $relativePath);
                 $thumbAbs = public_path() . str_replace('/', DIRECTORY_SEPARATOR, $thumbRel);
                 $thumbDir = dirname($thumbAbs);
                 try {

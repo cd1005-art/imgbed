@@ -118,9 +118,7 @@ class ImageManage extends Base
                     Db::name('users')->where('id', $image->user_id)
                         ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
                 }
-                try {
-                    \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
-                } catch (\Throwable $e) {}
+                $this->purgeFiles($image);
             } else {
                 $image->save(['status' => $action === 'freeze' ? Image::ST_FROZEN : Image::ST_NORMAL, 'update_time' => time()]);
             }
@@ -395,6 +393,22 @@ class ImageManage extends Base
     }
 
     /** 软删除 */
+    /** 删除原图（存储实例）+ 本地缩略图，两处删除入口共用 */
+    private function purgeFiles(Image $image): void
+    {
+        try {
+            \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
+        } catch (\Throwable $e) {
+        }
+        $thumb = trim((string)($image->thumb_path ?? ''));
+        if ($thumb !== '') {
+            $abs = public_path() . str_replace('/', DIRECTORY_SEPARATOR, ltrim($thumb, '/'));
+            if (is_file($abs)) {
+                @unlink($abs);
+            }
+        }
+    }
+
     public function delete(int $id)
     {
         $image = Image::find($id);
@@ -406,10 +420,8 @@ class ImageManage extends Base
             Db::name('users')->where('id', $image->user_id)
                 ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
         }
-        // 同步删除存储文件（释放磁盘/网盘空间）
-        try {
-            \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
-        } catch (\Throwable $e) {}
-        return json(['status' => true, 'message' => '已删除（含存储文件）']);
+        // 同步删除存储文件 + 本地缩略图
+        $this->purgeFiles($image);
+        return json(['status' => true, 'message' => '已删除（含原图与缩略图）']);
     }
 }
