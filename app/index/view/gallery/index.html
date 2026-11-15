@@ -38,7 +38,7 @@
   <figure class="cell" data-id="{$vo.id}">
     <label class="cell-check"><input type="checkbox" class="g-check" value="{$vo.id}"></label>
     <a class="cell-img" href="/i/{$vo.path}" target="_blank" rel="noopener">
-      <img src="/i/{$vo.path}" loading="lazy" alt="{$vo.name}">
+      <img src="/i/{$vo.thumb_path ?: $vo.path}" loading="lazy" alt="{$vo.name}">
     </a>
     <figcaption class="cell-meta">
       <span class="cell-name" title="{$vo.name}">{$vo.name}</span>

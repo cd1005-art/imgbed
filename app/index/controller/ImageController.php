@@ -21,7 +21,9 @@ class ImageController extends BaseController
         if ($path === '') {
             return Response::create('Image Not Found')->code(404);
         }
-        $image = Image::where('path', $path)
+        // 缩略图：/i/thumbs/... 按 thumb_path 查
+        $isThumb = str_starts_with($path, 'thumbs/');
+        $image = Image::where($isThumb ? 'thumb_path' : 'path', $path)
             ->where('status', Image::ST_NORMAL)
             ->find();
 

@@ -192,9 +192,10 @@ class UploadService
             // public/i 是软链 = 已挂载网盘目录（进阶模式），文件天然可读，零副本
             $linkIsMount = is_link(public_path() . 'i');
             $linkOn  = !$linkIsMount && (int)Setting::get('img_local_link', 1) === 1;
-            $linkMax = (int)Setting::get('img_local_link_max', 2);   // 单位 MB，0=不限
+            $linkMin = (int)Setting::get('img_local_link_min', 0);   // 单位 MB，0=全部做副本
             $upBytes = (int)@filesize($upPath);
-            $allow   = $linkOn && ($linkMax === 0 || $upBytes <= $linkMax * 1048576);
+            // 只有 >= 下限的大图才做副本（小图走网盘代理已足够快）
+            $allow   = $linkOn && ($linkMin === 0 || $upBytes >= $linkMin * 1048576);
             if ($allow) {
                 $linkAbs = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
                 $linkDir = dirname($linkAbs);
@@ -223,14 +224,15 @@ class UploadService
                     // 指定存储失败时回退本地
                 }
             }
-            if ($thumbPath === '') {
+            // 本地始终写一份（供 nginx 直出，缩略图只有 10~50KB，占用可忽略）
+            if (true) {
                 $thumbRel = 'thumbs/' . preg_replace('/\.[a-z0-9]+$/i', '.webp', $relativePath);
-                $thumbAbs = public_path() . str_replace('/', DIRECTORY_SEPARATOR, $thumbRel);
+                $thumbAbs = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $thumbRel);
                 $thumbDir = dirname($thumbAbs);
                 try {
                     if (!is_dir($thumbDir) && !@mkdir($thumbDir, 0755, true) && !is_dir($thumbDir)) {
                         // 目录创建失败则跳过缩略图
-                    } elseif (@copy((string)$processed['thumb'], $thumbAbs)) {
+                    } elseif (@copy((string)$processed['thumb'], $thumbAbs) && $thumbPath === '') {
                         $thumbPath = $thumbRel;
                     }
                 } catch (\Throwable $e) {

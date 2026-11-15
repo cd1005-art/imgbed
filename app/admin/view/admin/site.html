@@ -182,7 +182,16 @@
     </label>
     <label class="field"><span class="field-label">缩略图最长边（像素，0=不生成）</span>
       <input type="number" name="img_thumb_size" value="{$settings.img_thumb_size|default='480'}" min="0" max="2000">
-      <span class="field-hint">列表与广场用缩略图，详情页仍用原图；固定存本地 <code>public/thumbs/</code></span>
+      <span class="field-hint">列表与广场用缩略图，详情页仍用原图</span>
+    </label>
+    <label class="field"><span class="field-label">缩略图存储位置</span>
+      <select name="thumb_storage_id">
+        <option value="0" {if condition="($settings['thumb_storage_id'] ?? '0') eq '0'"}selected{/if}>本地（public/i/thumbs，nginx 直出）</option>
+        {foreach $storages_for_thumb as $st}
+        <option value="{$st.id}" {if condition="($settings['thumb_storage_id'] ?? '0') eq $st.id"}selected{/if}>{$st.name}（{$st.driver}）</option>
+        {/foreach}
+      </select>
+      <span class="field-hint">存网盘时缩略图走 /i/thumbs/ 代理输出；网盘不可用自动回退本地</span>
     </label>
     <label class="field"><span class="field-label">外链本地副本</span>
       <select name="img_local_link">
@@ -191,9 +200,9 @@
       </select>
       <span class="field-hint">开启时上传会在 public/i/ 存一份，外链直接由 nginx 输出；关闭可省本地空间，但外链需经 PHP 代理</span>
     </label>
-    <label class="field"><span class="field-label">副本体积上限（MB，0=不限）</span>
-      <input type="number" name="img_local_link_max" value="{$settings.img_local_link_max|default='2'}" min="0" max="100">
-      <span class="field-hint">超过该体积的图不写本地副本（转 WebP 后通常 100KB~1MB，2MB 可覆盖绝大多数）</span>
+    <label class="field"><span class="field-label">副本体积下限（MB，0=全部做副本）</span>
+      <input type="number" name="img_local_link_min" value="{$settings.img_local_link_min|default='0'}" min="0" max="100">
+      <span class="field-hint">只有不小于该体积的图才写本地副本；小图走网盘代理已足够快，不必占本地空间。例：填 2 表示 2MB 以上才做副本</span>
     </label>
     <label class="field"><span class="field-label">水印文字（留空=不加水印）</span>
       <input type="text" name="img_watermark" value="{$settings.img_watermark|default=''}" placeholder="例如：逍遥图床">
