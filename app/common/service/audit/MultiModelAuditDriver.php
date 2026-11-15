@@ -55,7 +55,14 @@ class MultiModelAuditDriver implements AuditDriverInterface
                     'key'      => (string)$m['api_key'],
                     'model'    => (string)$m['model_name'],
                 ]);
+            $retry  = max(0, min(3, (int)Setting::get('audit_retry', 0)));
             $result = $driver->audit($localPath, $mime);
+            $attempt = 0;
+            while ($attempt < $retry
+                && isset($result['detail']) && str_starts_with((string)$result['detail'], 'LLM 调用失败')) {
+                $attempt++;
+                $result = $driver->audit($localPath, $mime);
+            }
 
             $failed = isset($result['detail']) && str_starts_with((string)$result['detail'], 'LLM 调用失败');
             if (!$failed) {

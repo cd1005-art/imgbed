@@ -326,3 +326,6 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 .toolbar-actions {
   display: flex; align-items: center; gap: 8px;
 }
+
+/* 字段提示在 flex 行内不被压缩成多行 */
+.field .field-hint { flex-shrink: 0; }

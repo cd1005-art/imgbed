@@ -47,7 +47,10 @@ class GenRun extends Command
             $gen = 0; $ok = 0; $fail = 0; $detail = [];
             $prompts = json_decode((string)$task['prompts'], true) ?: [];
             if (!$prompts) {
-                $prompts = ['abstract gradient background', 'minimal geometric pattern'];
+                $defaults = trim((string)\app\common\model\Setting::get('gen_default_prompts', ''));
+                $prompts = $defaults !== ''
+                    ? array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $defaults))))
+                    : ['abstract gradient background', 'minimal geometric pattern'];
             }
 
             $user  = User::find((int)$task['target_user_id']);

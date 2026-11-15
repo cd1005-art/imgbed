@@ -247,15 +247,27 @@
       <input type="number" name="audit_max_tokens" value="{$settings.audit_max_tokens|default='1024'}" min="200" max="4096">
       <span class="field-hint">太小会导致模型只输出思考不输出结论（建议 1024）</span>
     </label>
-    <label class="field"><span class="field-label">自定义审核提示词（留空用内置）</span>
-      <textarea name="audit_prompt" rows="5" style="width:100%;font-family:var(--font-mono);font-size:12px">{$settings.audit_prompt|default=''}</textarea>
-      <span class="field-hint">支持占位符 <code>{{N}}</code>=标签数量上限。内置规则：色情低俗/暴恐血腥/赌博诈骗/涉政 → reject；拿不准 → review；正常 → pass</span>
+    <label class="field"><span class="field-label">自定义审核提示词（预填为内置默认，可参考格式改写）</span>
+      <textarea name="audit_prompt" rows="7" style="width:100%;font-family:var(--font-mono);font-size:12px">{:htmlspecialchars(($settings['audit_prompt'] ?? '') !== '' ? $settings['audit_prompt'] : $default_audit_prompt)}</textarea>
+      <span class="field-hint">支持占位符 <code>{{N}}</code>=标签数量上限；<b>清空保存即恢复内置规则</b>。内置：色情低俗/暴恐血腥/赌博诈骗/涉政 → reject；拿不准 → review；正常 → pass</span>
+    </label>
+    <label class="field"><span class="field-label">多模型协同模式</span>
+      <select name="audit_mode">
+        <option value="failover" {if condition="($settings['audit_mode'] ?? 'failover') eq 'failover'"}selected{/if}>顺序切换（第一个成功即采用）</option>
+        <option value="parallel" {if condition="($settings['audit_mode'] ?? 'failover') eq 'parallel'"}selected{/if}>并行投票（同时请求，多数票）</option>
+      </select>
+      <span class="field-hint">顺序切换省 token；并行投票更稳但成本更高。模型顺序在「审核模型」页按排序值决定</span>
+    </label>
+    <label class="field"><span class="field-label">失败重试次数</span>
+      <input type="number" name="audit_retry" value="{$settings.audit_retry|default='0'}" min="0" max="3">
+      <span class="field-hint">单模型调用失败（网络/超时）后重试几次（0~3）</span>
     </label>
     <label class="field"><span class="field-label">审核拒绝后处置</span>
       <select name="audit_reject_action">
         <option value="freeze" {if condition="($settings['audit_reject_action'] ?? 'freeze') eq 'freeze'"}selected{/if}>冻结外链（推荐）</option>
         <option value="only_mark" {if condition="($settings['audit_reject_action'] ?? 'freeze') eq 'only_mark'"}selected{/if}>仅标记拒绝，保留外链</option>
       </select>
+      <span class="field-hint">标记查看：图片管理 → 审核状态选「拒绝」；外链仍可访问但列表里标为拒绝</span>
     </label>
     <label class="field"><span class="field-label">违规累计处置</span>
       <div style="display:flex;gap:8px;align-items:center">
@@ -266,7 +278,7 @@
           <option value="none" {if condition="($settings['violation_action'] ?? 'ban_user') eq 'none'"}selected{/if}>仅记录，不处置</option>
         </select>
       </div>
-      <span class="field-hint">0 = 不统计违规次数</span>
+      <span class="field-hint">0 = 不统计；处置记录可在「审核日志」查看（驱动显示为 system，内容含"违规累计 N 次"）</span>
     </label>
     <label class="field"><span class="field-label">违规指纹拦截</span>
       <div style="display:flex;gap:8px;align-items:center">
@@ -276,7 +288,7 @@
         </select>
         <span class="field-hint">相似度阈值 ≤</span>
         <input type="number" name="fingerprint_ban_distance" value="{$settings.fingerprint_ban_distance|default='8'}" min="0" max="32" style="width:80px">
-        <span class="field-hint">（越小越严格，8 较稳）</span>
+        <span class="field-hint" style="white-space:nowrap">（0~32，越小越严格 / 越大越宽松，8 较稳）</span>
       </div>
       <span class="field-hint">上传时与违规指纹库比对，命中直接拒绝，不调用模型</span>
     </label>
@@ -289,6 +301,7 @@
         <span class="field-hint">相似度阈值 ≤</span>
         <input type="number" name="whitelist_distance" value="{$settings.whitelist_distance|default='4'}" min="0" max="32" style="width:80px">
       </div>
+        <span class="field-hint" style="white-space:nowrap">（0~32，越小越严格 / 越大越宽松，4 较稳）</span>
       <span class="field-hint">人工批量通过会写入白名单，同图/相似图再次上传直接放行，不调用模型</span>
     </label>
     <label class="field"><span class="field-label">造图去重</span>
@@ -302,7 +315,12 @@
         <span class="field-hint">张，距离 ≤</span>
         <input type="number" name="gen_dup_distance" value="{$settings.gen_dup_distance|default='6'}" min="0" max="32" style="width:70px">
       </div>
-      <span class="field-hint">造图任务生成后与近期图比对，相似则丢弃重生成</span>
+      <span class="field-hint">造图任务生成后与近期图比对，相似则丢弃重生成（距离 0~32，越小越严格 / 越大越宽松，6 较稳）</span>
+    </label>
+    <label class="field"><span class="field-label">造图默认提示词（每行一条，任务未单独配置时使用）</span>
+      <textarea name="gen_default_prompts" rows="4" style="width:100%;font-family:var(--font-mono);font-size:12px">{$settings.gen_default_prompts|default='abstract gradient background
+minimal geometric pattern'}</textarea>
+      <span class="field-hint">建任务时若没填提示词，按这些行轮换；每个任务也可在「造图任务 → 新建/编辑」里单独配置自己的提示词列表</span>
     </label>
 
     <div style="padding:16px 0 3px">

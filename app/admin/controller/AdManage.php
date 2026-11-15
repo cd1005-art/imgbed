@@ -35,6 +35,7 @@ class AdManage extends Base
         $storagesForThumb = \think\facade\Db::name('storage_configs')->field('id,name,driver')->select()->toArray();
 
 return $this->adminView('admin/site', [
+            'default_audit_prompt' => \app\common\service\audit\LlmVlmDriver::defaultPrompt(),
             'fonts' => $fonts,
             'storages_for_thumb' => $storagesForThumb,
             'page'     => 'site',
@@ -186,6 +187,7 @@ return $this->adminView('admin/site', [
             'violation_limit', 'violation_action',
             // 审核行为
             'audit_timeout', 'audit_max_tokens', 'audit_prompt', 'audit_reject_action',
+            'audit_mode', 'audit_retry', 'gen_default_prompts',
             'credits_per_yuan', 'min_recharge', 'recharge_bonus_pct',
             'withdraw_enable', 'withdraw_rate', 'min_withdraw', 'withdraw_step', 'withdraw_monthly_limit', 'withdraw_fee_pct',
             'revenue_split_mode', 'share_user', 'share_ai',
