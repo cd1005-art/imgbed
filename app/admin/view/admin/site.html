@@ -14,10 +14,6 @@
 <section class="panel">
   <h2 class="panel-title">基础配置</h2>
   <form class="form settings-form" id="siteForm">
-    <label class="field"><span class="field-label">登录有效期（天）</span>
-      <input type="number" name="session_ttl_days" value="{$settings.session_ttl_days|default='7'}" min="1" max="365">
-      <span class="field-hint">用户登录后多久需要重新登录（页面长时间不动不会掉线）；保存后立即写入 config/session.php</span>
-    </label>
     <label class="field"><span class="field-label">站点名</span><input type="text" name="site_name" value="{$settings.site_name|default='逍遥图床'}">
       <span class="field-hint">显示在浏览器标题、页脚、邮件与支付商品名中</span></label>
     <label class="field"><span class="field-label">运营模式</span>
@@ -56,6 +52,11 @@
       <span class="field-hint">1~200（默认 30）</span>
     </label>
     <p class="field-hint">Token 权限已改为按策略组配置（策略组 → 编辑 → Token 允许权限）。</p>
+    <label class="field"><span class="field-label">登录有效期（天）</span>
+      <input type="number" name="session_ttl_days" value="{$settings.session_ttl_days|default='7'}" min="1" max="365">
+      <span class="field-hint">用户登录后多久需要重新登录（页面长时间不动不会掉线）；保存后立即写入 config/session.php</span>
+    </label>
+
     <div style="padding:16px 0 3px">
       <button type="submit" class="btn">保存设置</button>
     </div>
