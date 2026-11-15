@@ -125,6 +125,15 @@ PHP 8.2 · ThinkPHP 8.1 · MIT License ｜ **v1.2.0**
 > 文件：`docs/assets/promo.mp4`（1920×1080 / 30fps / **33.9s** / **中文配音 + 烧录字幕** / 1.3MB）
 > 字幕文件：`docs/assets/promo.srt` ｜ 制作方式：JSON 配置驱动（分镜排版 + edge-tts 配音 + 字幕合成）
 
+**已产出双版本发布物料**（仓库外 `D://wwwroot//img//media//`）：
+
+| 平台 | 文件 | 规格 |
+|---|---|---|
+| B 站 | `media/bilibili/IMGBED-promo.mp4` | 1920×1080 · 33.9s · 1.3MB + 封面 2 张 |
+| 抖音 | `media/douyin/IMGBED-promo-vertical.mp4` | 1080×1920 · 33.9s · 1.5MB + 竖封/横封 |
+
+制作工程：`D://AIWork//MP4//projects//imgbed//`（`config.json` 横版 / `config-vertical.json` 竖版）
+
 ## 界面预览
 
 ### 站币与财务（v1.2 新增）
