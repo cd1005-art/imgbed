@@ -186,15 +186,22 @@ class UploadService
             throw new UploadException('存储写入失败，请检查存储配置');
         }
 
-        // 外链副本：写一份到 public/i/（nginx 静态直出，比走 TP 代理快 10 倍）
+        // 外链副本：写一份到 public/i/（nginx 静态直出，比走 TP 代理快）
+        // 站长可关闭；也可设体积上限，超过上限的图不写副本（避免本地空间被大图吃掉）
         try {
-            $linkAbs = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
-            $linkDir = dirname($linkAbs);
-            if (!is_dir($linkDir)) {
-                @mkdir($linkDir, 0755, true);
-            }
-            if (is_dir($linkDir)) {
-                @copy($upPath, $linkAbs);
+            $linkOn  = (int)Setting::get('img_local_link', 1) === 1;
+            $linkMax = (int)Setting::get('img_local_link_max', 2);   // 单位 MB，0=不限
+            $upBytes = (int)@filesize($upPath);
+            $allow   = $linkOn && ($linkMax === 0 || $upBytes <= $linkMax * 1048576);
+            if ($allow) {
+                $linkAbs = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+                $linkDir = dirname($linkAbs);
+                if (!is_dir($linkDir)) {
+                    @mkdir($linkDir, 0755, true);
+                }
+                if (is_dir($linkDir)) {
+                    @copy($upPath, $linkAbs);
+                }
             }
         } catch (\Throwable $e) {
         }

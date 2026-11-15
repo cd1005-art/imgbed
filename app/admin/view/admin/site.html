@@ -184,6 +184,17 @@
       <input type="number" name="img_thumb_size" value="{$settings.img_thumb_size|default='480'}" min="0" max="2000">
       <span class="field-hint">列表与广场用缩略图，详情页仍用原图；固定存本地 <code>public/thumbs/</code></span>
     </label>
+    <label class="field"><span class="field-label">外链本地副本</span>
+      <select name="img_local_link">
+        <option value="1" {if condition="($settings['img_local_link'] ?? '1') eq '1'"}selected{/if}>开启（外链由 nginx 直出，快）</option>
+        <option value="0" {if condition="($settings['img_local_link'] ?? '1') eq '0'"}selected{/if}>关闭（省本地空间，外链走存储代理）</option>
+      </select>
+      <span class="field-hint">开启时上传会在 public/i/ 存一份，外链直接由 nginx 输出；关闭可省本地空间，但外链需经 PHP 代理</span>
+    </label>
+    <label class="field"><span class="field-label">副本体积上限（MB，0=不限）</span>
+      <input type="number" name="img_local_link_max" value="{$settings.img_local_link_max|default='2'}" min="0" max="100">
+      <span class="field-hint">超过该体积的图不写本地副本（转 WebP 后通常 100KB~1MB，2MB 可覆盖绝大多数）</span>
+    </label>
     <label class="field"><span class="field-label">水印文字（留空=不加水印）</span>
       <input type="text" name="img_watermark" value="{$settings.img_watermark|default=''}" placeholder="例如：逍遥图床">
       <span class="field-hint">白色半透明文字，字号随图片宽度自适应（14~40px）</span>
