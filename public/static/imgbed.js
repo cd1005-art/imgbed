@@ -649,7 +649,12 @@
 (function () {
   // 前后台主题互不影响：按 body 是否 admin-body 动态取 key
   function themeKey() {
-    return (document.body && document.body.classList.contains('admin-body')) ? 'imgbed-theme-admin' : 'imgbed-theme';
+    if (document.body && document.body.classList.contains('admin-body')) {
+      return 'imgbed-theme-admin';
+    }
+    // 前台：按登录用户区分（不同账号各自记住自己的选择）
+    var uid = parseInt(window.CURRENT_UID || 0, 10);
+    return uid > 0 ? 'imgbed-theme-u' + uid : 'imgbed-theme-guest';
   }
   function apply(t) {
     document.documentElement.setAttribute('data-theme', t);

@@ -49,9 +49,10 @@ class Console extends Base
             'quota_pct'   => $quotaTotal > 0 ? min(100, (int)($used / $quotaTotal * 100)) : 0,
             'tokens'      => $tokens,
             'token_used'  => ApiToken::where('user_id', $user->id)->count(),
-            'token_allowed' => (function () {
+            'token_allowed' => (function () use ($group) {
                 $all = ['upload', 'list', 'info', 'delete'];
-                $raw = trim((string)Setting::get('token_scopes', ''));
+                $gs  = trim((string)($group->token_scopes ?? ''));
+                $raw = $gs !== '' ? $gs : trim((string)Setting::get('token_scopes', ''));
                 return $raw === '' ? $all : array_values(array_intersect($all, array_filter(array_map('trim', explode(',', $raw)))));
             })(),
             'email_verified' => (int)$user->email_verified === 1,
@@ -279,7 +280,11 @@ class Console extends Base
 
         // 权限范围：受后台「允许的 Token 权限」限制
         $allScopes = ['upload', 'list', 'info', 'delete'];
-        $allowRaw  = trim((string)Setting::get('token_scopes', ''));
+        // 策略组优先，其次站点全局
+        $groupRow = \think\facade\Db::name('strategy_groups')->where('id', (int)$user->group_id)->find();
+        $groupScopes = trim((string)($groupRow['token_scopes'] ?? ''));
+        $globalScopes = trim((string)Setting::get('token_scopes', ''));
+        $allowRaw = $groupScopes !== '' ? $groupScopes : $globalScopes;
         $allowed   = $allowRaw === '' ? $allScopes
             : array_values(array_intersect($allScopes, array_filter(array_map('trim', explode(',', $allowRaw)))));
         if (!$allowed) {

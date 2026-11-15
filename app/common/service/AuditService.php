@@ -66,6 +66,8 @@ class AuditService
     protected static function cleanTitle(string $detail, string $fallback): string
     {
         $t = preg_replace('/^\s*\[[^\]]{0,40}\]\s*/u', '', $detail);
+        // 去掉审核模型爱加的结论尾巴（「，无违规内容」「，图片内容正常」等）
+        $t = preg_replace('/[,，。;；\s]*(无违规内容|未发现违规|图片内容(正常|合规)|内容合规|符合(规范|要求|规定)|审核通过)[^。]{0,20}$/u', '', (string)$t);
         $t = preg_replace('/^[\s\p{P}\p{S}]+/u', '', (string)$t);
         $t = preg_replace('/[\s\p{P}\p{S}]+$/u', '', (string)$t);
         $t = trim((string)$t);

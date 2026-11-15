@@ -39,6 +39,14 @@
     <label class="field"><span class="field-label">总容量（GB）</span><input type="number" name="quota_gb" id="g_quota" value="1"></label>
     <label class="field"><span class="field-label">保留天数（0=永久）</span><input type="number" name="keep_days" id="g_keep" value="0"></label>
     <label class="field"><span class="field-label">可生成 Token 数量（-1=禁止，0=不限）</span><input type="number" name="max_tokens" id="g_max_tokens" value="-1"></label>
+    <label class="field"><span class="field-label">Token 允许权限（不勾选=沿用站点全局设置）</span>
+      <span class="token-scopes" id="g_token_scopes">
+        <label><input type="checkbox" name="token_scopes[]" value="upload"> 上传</label>
+        <label><input type="checkbox" name="token_scopes[]" value="list"> 列表</label>
+        <label><input type="checkbox" name="token_scopes[]" value="info"> 详情</label>
+        <label><input type="checkbox" name="token_scopes[]" value="delete"> 删除</label>
+      </span>
+    </label>
     <label class="field"><span class="field-label">允许扩展名</span><input type="text" name="allow_ext" id="g_ext" value="jpg,jpeg,png,gif,webp"></label>
     <label class="field"><span class="field-label">存储实例</span>
       <select name="storage_id" id="g_storage">

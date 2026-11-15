@@ -53,10 +53,10 @@
     </label>
     <label class="field"><span class="field-label">允许生成的 Token 权限</span>
       <select name="token_scopes">
-        <option value="" {if condition="($settings['token_scopes'] ?? '') eq ''"}selected{/if}>全部开放（上传/列表/详情/删除）</option>
-        <option value="upload,list,info" {if condition="($settings['token_scopes'] ?? '') eq 'upload,list,info'"}selected{/if}>不包括删除（推荐）</option>
-        <option value="upload,list" {if condition="($settings['token_scopes'] ?? '') eq 'upload,list'"}selected{/if}>只上传 + 列表</option>
-        <option value="upload" {if condition="($settings['token_scopes'] ?? '') eq 'upload'"}selected{/if}>只上传</option>
+        <option value="" {if condition="($settings['token_scopes'] ?? '') eq ''"}selected{/if}>上传+列表+详情+删除</option>
+        <option value="upload,list,info" {if condition="($settings['token_scopes'] ?? '') eq 'upload,list,info'"}selected{/if}>上传+列表+详情</option>
+        <option value="upload,list" {if condition="($settings['token_scopes'] ?? '') eq 'upload,list'"}selected{/if}>上传+列表</option>
+        <option value="upload" {if condition="($settings['token_scopes'] ?? '') eq 'upload'"}selected{/if}>上传</option>
         <option value="__none__" {if condition="($settings['token_scopes'] ?? '') eq '__none__'"}selected{/if}>关闭 Token 生成</option>
       </select>
       <span class="field-hint">前台生成 Token 时只能勾选这里开放的权限；选「关闭」后前台不再显示生成入口</span>

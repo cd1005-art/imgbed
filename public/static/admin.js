@@ -502,6 +502,10 @@
         document.getElementById('g_keep').value = g.keep_days;
         document.getElementById('g_ext').value = g.allow_ext;
         document.getElementById('g_max_tokens').value = g.max_tokens || 0;
+        var gts = String(g.token_scopes || '').split(',').filter(Boolean);
+        document.querySelectorAll('#g_token_scopes input[type=checkbox]').forEach(function (cb) {
+          cb.checked = gts.indexOf(cb.value) !== -1;
+        });
         document.getElementById('g_storage').value = g.storage_id;
         document.getElementById('g_ad').value = g.ad_exempt;
         document.getElementById('g_status').value = g.status;
