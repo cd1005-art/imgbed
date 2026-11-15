@@ -122,6 +122,7 @@ class ImageManage extends Base
         $count = 0;
         $reauditOk = 0;
         $reauditFail = 0;
+        $fileFail = 0;
         foreach ($ids as $id) {
             $image = Image::find($id);
             if (!$image) { continue; }
@@ -179,7 +180,7 @@ class ImageManage extends Base
                     Db::name('users')->where('id', $image->user_id)
                         ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
                 }
-                $this->purgeFiles($image);
+                if (!$this->purgeFiles($image)) { $fileFail++; }
             } else {
                 $image->save(['status' => $action === 'freeze' ? Image::ST_FROZEN : Image::ST_NORMAL, 'update_time' => time()]);
             }
@@ -190,7 +191,11 @@ class ImageManage extends Base
             return json(['status' => true, 'message' => "已重新审核 {$reauditOk} 张（失败 {$reauditFail}）"]);
         }
         $label = ['freeze' => '冻结', 'unfreeze' => '解冻', 'delete' => '删除', 'audit_pass' => '审核通过', 'audit_reject' => '审核拒绝'][$action];
-        return json(['status' => true, 'message' => "已{$label} {$count} 张"]);
+        $msg = "已{$label} {$count} 张";
+        if ($action === 'delete' && $fileFail > 0) {
+            $msg .= "（其中 {$fileFail} 张的存储文件删除失败，存储实例可能不可用）";
+        }
+        return json(['status' => true, 'message' => $msg]);
     }
 
     /** 扫描孤立文件（存储上存在但数据库无有效引用） */
@@ -474,12 +479,17 @@ class ImageManage extends Base
     }
 
     /** 删除原图（存储实例）+ 本地缩略图，两处删除入口共用 */
-    private function purgeFiles(Image $image): void
+    private function purgeFiles(Image $image): bool
     {
         $this->detachTags((int)$image->id);
+        $storageOk = true;
         try {
-            \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
+            $r = \app\common\service\storage\StorageManager::driver((int)$image->storage_id)->delete((string)$image->path);
+            if ($r === false) {
+                $storageOk = false;
+            }
         } catch (\Throwable $e) {
+            $storageOk = false;
         }
         // 本地外链副本（public/i 是软链时不删，否则会删掉网盘原图）
         if (!is_link(public_path() . 'i')) {
@@ -495,6 +505,8 @@ class ImageManage extends Base
                 @unlink($abs);
             }
         }
+
+        return $storageOk;
     }
 
     public function delete(int $id)
@@ -509,7 +521,7 @@ class ImageManage extends Base
                 ->update(['quota_used' => Db::raw('GREATEST(0, quota_used - ' . (int)$image->size . ')')]);
         }
         // 同步删除存储文件 + 本地缩略图
-        $this->purgeFiles($image);
-        return json(['status' => true, 'message' => '已删除（含原图与缩略图）']);
+        $ok = $this->purgeFiles($image);
+        return json(['status' => true, 'message' => $ok ? '已删除（含原图与缩略图）' : '记录已删除，但存储文件删除失败（存储实例可能不可用）']);
     }
 }
