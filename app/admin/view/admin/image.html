@@ -135,7 +135,7 @@
 <div class="list-foot" data-own="1">
   <div class="per-page-bar">
     <span>每页显示</span>
-    <select name="per_page" onchange="(function(s){var u=new URL(location.href);u.searchParams.set('per_page',s.value);u.searchParams.delete('page');location.href=u.toString();})(this)">
+    <select name="per_page" onchange="window.setPerPage(this.value, 'per_page', 'page')">
       <option value="20" {if condition="$per_page eq 20"}selected{/if}>20 张</option>
       <option value="50" {if condition="$per_page eq 50"}selected{/if}>50 张</option>
       <option value="100" {if condition="$per_page eq 100"}selected{/if}>100 张</option>

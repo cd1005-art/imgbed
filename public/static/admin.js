@@ -1903,6 +1903,18 @@
     });
   }
 
+/* 切换每页条数：纯字符串拼 URL，不依赖 new URL（部分环境里 URL 构造器不可用） */
+window.setPerPage = function (v, key, resetKey) {
+  key = key || 'per_page';
+  resetKey = resetKey || 'page';
+  var q = location.search;
+  // 去掉旧的该键与页码
+  q = q.replace(new RegExp('[?&]' + key + '=[^&]*', 'g'), '').replace(new RegExp('[?&]' + resetKey + '=[^&]*', 'g'), '');
+  if (q === '?') { q = ''; }
+  var sep = q ? (q.charAt(0) === '?' ? '&' : '?') : '?';
+  location.href = location.pathname + q + sep + key + '=' + encodeURIComponent(v) + (location.hash || '');
+};
+
 /* 筛选表单提交时保留 per_page（否则一筛选就回到默认 20 条） */
 (function keepPerPageOnFilter() {
   function ready(fn) {
@@ -1950,10 +1962,7 @@
         sel.appendChild(o);
       });
       sel.addEventListener('change', function () {
-        var u = new URL(location.href);   // 实时读取，保留 #tab 锚点
-        u.searchParams.set('per_page', sel.value);
-        u.searchParams.delete('page');
-        location.href = u.toString();
+        window.setPerPage(sel.value, 'per_page', 'page');
       });
       wrap.appendChild(sel);
       return wrap;

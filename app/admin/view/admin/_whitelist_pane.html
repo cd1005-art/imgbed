@@ -40,7 +40,7 @@
   <div class="list-foot">
     <div class="per-page-bar">
       <span>每页显示</span>
-      <select name="wl_size" onchange="(function(s){var u=new URL(location.href);u.searchParams.set('wl_size',s.value);u.searchParams.delete('wl_page');location.href=u.toString()+'#whitelist';})(this)">
+      <select name="wl_size" onchange="window.setPerPage(this.value, 'wl_size', 'wl_page')">
         <option value="20" {if condition="$wl_size eq 20"}selected{/if}>20 条</option>
         <option value="50" {if condition="$wl_size eq 50"}selected{/if}>50 条</option>
         <option value="100" {if condition="$wl_size eq 100"}selected{/if}>100 条</option>

@@ -44,7 +44,7 @@
   <div class="list-foot">
     <div class="per-page-bar">
       <span>每页显示</span>
-      <select name="ul_size" onchange="(function(s){var u=new URL(location.href);u.searchParams.set('ul_size',s.value);u.searchParams.delete('ul_page');location.href=u.toString()+'#uploadlog';})(this)">
+      <select name="ul_size" onchange="window.setPerPage(this.value, 'ul_size', 'ul_page')">
         <option value="20" {if condition="$ul_size eq 20"}selected{/if}>20 条</option>
         <option value="50" {if condition="$ul_size eq 50"}selected{/if}>50 条</option>
         <option value="100" {if condition="$ul_size eq 100"}selected{/if}>100 条</option>
