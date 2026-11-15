@@ -239,7 +239,7 @@
     </label>
     <label class="field"><span class="field-label">审核缩图最长边（像素）</span>
       <input type="number" name="audit_max_side" value="{$settings.audit_max_side|default='1024'}" min="256" max="4096">
-      <span class="field-hint">送审前把图缩到该尺寸再 base64，避免超大图撑爆请求体（413/超时）；1024 约 1k token，判内容足够</span>
+      <span class="field-hint">送审前把图缩到该尺寸再 base64，避免超大图撑爆请求体（413/超时）。1024 约 1k token 足够判断；<b>填 0 = 不缩图</b>（原图送审，超大图容易失败，不推荐）</span>
     </label>
     <div style="padding:16px 0 3px">
       <button type="submit" class="btn">保存图片处理设置</button>

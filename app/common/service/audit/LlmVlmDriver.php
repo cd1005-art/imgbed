@@ -79,7 +79,13 @@ class LlmVlmDriver implements AuditDriverInterface
      */
     protected function shrinkForAudit(string $localPath, string $mime): array
     {
-        $maxSide = max(256, (int)\app\common\model\Setting::get('audit_max_side', 1024));
+        $maxSide = (int)\app\common\model\Setting::get('audit_max_side', 1024);
+        if ($maxSide <= 0) {
+            // 0 = 不缩图（原图送审，超大图容易 413/超时，不推荐）
+            $raw = @file_get_contents($localPath);
+            return [$raw === false ? false : $raw, $mime];
+        }
+        $maxSide = max(256, $maxSide);
 
         $raw = @file_get_contents($localPath);
         if ($raw === false) {
