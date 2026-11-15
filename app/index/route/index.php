@@ -7,6 +7,9 @@ use think\facade\Route;
 Route::get('/', 'UploadController/index');
 Route::post('upload/save', 'UploadController/save');
 
+// ---- 图片外链输出：/i/年/月/日/文件名（代理中转 / 302 直链，按存储实例配置）----
+Route::get('i/<>', 'Image/serve');
+
 // ---- 认证 ----
 // 邮箱验证 / 找回密码（具体路由在前）
 Route::post('verify-code', 'Auth/verifyCode');

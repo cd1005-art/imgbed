@@ -186,6 +186,19 @@ class UploadService
             throw new UploadException('存储写入失败，请检查存储配置');
         }
 
+        // 外链副本：写一份到 public/i/（nginx 静态直出，比走 TP 代理快 10 倍）
+        try {
+            $linkAbs = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+            $linkDir = dirname($linkAbs);
+            if (!is_dir($linkDir)) {
+                @mkdir($linkDir, 0755, true);
+            }
+            if (is_dir($linkDir)) {
+                @copy($upPath, $linkAbs);
+            }
+        } catch (\Throwable $e) {
+        }
+
         // 缩略图：按「缩略图存储」设置（0=本地 public/thumbs/，>0=指定存储实例）
         $thumbPath = '';
         if (!empty($processed['thumb'])) {
