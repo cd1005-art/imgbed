@@ -89,6 +89,20 @@
     var lastOk = null;
 
     function enqueue(files) {
+      // 前端预检：超过策略单图上限的直接拦下，不浪费流量
+      var maxBytes = parseInt(window.UPLOAD_MAX_BYTES || 0, 10);
+      if (maxBytes > 0) {
+        var passed = [];
+        files.forEach(function (f) {
+          if (f.size > maxBytes) {
+            toast(f.name + ' 超过单图上限 ' + (maxBytes / 1048576).toFixed(1) + 'MB');
+          } else {
+            passed.push(f);
+          }
+        });
+        files = passed;
+        if (!files.length) { return; }
+      }
       files.forEach(function (f) {
         seq += 1;
         queue.push({ id: seq, file: f, status: 'wait', pct: 0, result: null, err: '' });
@@ -147,7 +161,12 @@
           lastOk = { data: data.data, file: job.file };
         } else {
           job.status = 'fail';
-          job.err = (data && data.message) || '上传失败';
+          if (!data) {
+            job.err = xhr.status === 0 ? '网络中断或超时'
+              : ('服务端错误 ' + xhr.status + (xhr.status >= 500 ? '（图片可能过大或处理超时，已自动回退）' : ''));
+          } else {
+            job.err = data.message || '上传失败';
+          }
           // 失败必须显式提示（队列可能在页面下方看不见）
           toast(job.err);
           if (qbox) { qbox.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
