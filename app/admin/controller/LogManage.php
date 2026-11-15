@@ -9,108 +9,10 @@ use app\common\model\UploadLog;
 use think\facade\Db;
 
 /**
- * API Token 管理 + 上传日志
+ * API Token 管理（上传日志已并入图片管理页的标签）
  */
 class LogManage extends Base
 {
-    /** 上传日志（筛选：用户/IP/结果/日期） */
-    public function index()
-    {
-        $page   = max(1, (int)$this->request->param('page', 1));
-        $result = (int)$this->request->param('result', -1);
-        $ufilter = trim((string)$this->request->param('ufilter', ''));
-        $ip     = trim((string)$this->request->param('ip', ''));
-        $dfrom  = (string)$this->request->param('dfrom', '');
-        $dto    = (string)$this->request->param('dto', '');
-
-        $build = function () use ($result, $ufilter, $ip, $dfrom, $dto) {
-            $q = UploadLog::order('id', 'desc');
-            if ($result >= 0)   { $q->where('result', $result); }
-            if ($ip !== '')     { $q->where('ip', 'like', '%' . $ip . '%'); }
-            if ($ufilter !== '') {
-                if ($ufilter === '游客' || $ufilter === '0') {
-                    $q->where('user_id', 0);
-                } elseif (ctype_digit($ufilter)) {
-                    $q->where('user_id', (int)$ufilter);
-                } else {
-                    $uids = Db::name('users')
-                        ->where('email', 'like', '%' . $ufilter . '%')
-                        ->whereOr('nickname', 'like', '%' . $ufilter . '%')
-                        ->column('id');
-                    $q->whereIn('user_id', $uids ?: [0]);
-                }
-            }
-            if ($dfrom !== '')  { $q->where('create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
-            if ($dto !== '')    { $q->where('create_time', '<=', strtotime($dto . ' 23:59:59')); }
-            return $q;
-        };
-
-        $list  = $build()->page($page, ((int)$this->request->param('per_page', 30) ?: 30))->select()->toArray();   // 数组化，便于注入昵称
-        $total = $build()->count();
-
-        // 用户昵称映射（含已删除用户，标注）
-        $uids = [];
-        foreach ($list as $row) {
-            $uid = (int)$row['user_id'];
-            if ($uid > 0) {
-                $uids[$uid] = $uid;
-            }
-        }
-        $uMap = [];
-        if ($uids) {
-            foreach (Db::name('users')->whereIn('id', array_values($uids))->field('id,nickname,email,status')->select()->toArray() as $u) {
-                $label = $u['nickname'] !== '' ? $u['nickname'] : $u['email'];
-                if ((int)$u['status'] === 3 || strpos((string)$u['email'], '#del') !== false) {
-                    $label .= '（已删除）';
-                }
-                $uMap[(int)$u['id']] = $label;
-            }
-        }
-        foreach ($list as &$row) {
-            $uid = (int)$row['user_id'];
-            $row['user_label'] = $uid > 0 ? ($uMap[$uid] ?? ('#' . $uid)) : '游客';
-        }
-        unset($row);
-
-        return $this->adminView('admin/log', [
-            'page'    => 'log',
-            'list'    => $list,
-            'result'  => $result,
-            'ufilter' => $ufilter,
-            'ip'      => $ip,
-            'dfrom'   => $dfrom,
-            'dto'     => $dto,
-            'page_no' => $page,
-            'total'   => $total,
-            'pages'   => (int)ceil($total / 30) ?: 1,
-        ]);
-    }
-
-    /** 删除单条日志 */
-    public function delete(int $id)
-    {
-        Db::name('upload_logs')->where('id', $id)->delete();
-        return json(['status' => true, 'message' => '已删除']);
-    }
-
-    /** 批量删除日志 / 按天数清理 */
-    public function batch()
-    {
-        $action = (string)$this->request->post('action', '');
-        if ($action === 'clean') {
-            $days = max(1, (int)$this->request->post('days', 30));
-            $before = time() - $days * 86400;
-            $n = Db::name('upload_logs')->where('create_time', '<', $before)->delete();
-            return json(['status' => true, 'message' => "已清理 {$days} 天前的 {\$n} 条日志"]);
-        }
-        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
-        if (!$ids) {
-            return json(['status' => false, 'message' => '未选择日志']);
-        }
-        Db::name('upload_logs')->whereIn('id', $ids)->delete();
-        return json(['status' => true, 'message' => '已删除 ' . count($ids) . ' 条日志']);
-    }
-
     /** Token 列表（筛选：关键词/状态） */
     public function tokens()
     {

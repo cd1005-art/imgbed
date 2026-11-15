@@ -38,11 +38,20 @@
   </table>
 
   <div class="list-foot">
+    <div class="per-page-bar">
+      <span>每页显示</span>
+      <select name="wl_size" onchange="(function(s){var u=new URL(location.href);u.searchParams.set('wl_size',s.value);u.searchParams.delete('wl_page');location.href=u.toString()+'#whitelist';})(this)">
+        <option value="20" {if condition="$wl_size eq 20"}selected{/if}>20 条</option>
+        <option value="50" {if condition="$wl_size eq 50"}selected{/if}>50 条</option>
+        <option value="100" {if condition="$wl_size eq 100"}selected{/if}>100 条</option>
+        <option value="200" {if condition="$wl_size eq 200"}selected{/if}>200 条</option>
+      </select>
+    </div>
     {if condition="$wl_pages gt 1"}
     <nav class="pager">
-      {if condition="$wl_page gt 1"}<a class="btn-ghost-sm" href="/admin/model?wl_page={$wl_page-1}&wl_kw={$wl_kw}#whitelist">上一页</a>{/if}
+      {if condition="$wl_page gt 1"}<a class="btn-ghost-sm" href="/admin/model?wl_page={$wl_page-1}&wl_kw={$wl_kw}&wl_size={$wl_size}#whitelist">上一页</a>{/if}
       <span class="pager-info">{$wl_page} / {$wl_pages}</span>
-      {if condition="$wl_page lt $wl_pages"}<a class="btn-ghost-sm" href="/admin/model?wl_page={$wl_page+1}&wl_kw={$wl_kw}#whitelist">下一页</a>{/if}
+      {if condition="$wl_page lt $wl_pages"}<a class="btn-ghost-sm" href="/admin/model?wl_page={$wl_page+1}&wl_kw={$wl_kw}&wl_size={$wl_size}#whitelist">下一页</a>{/if}
     </nav>
     {/if}
   </div>

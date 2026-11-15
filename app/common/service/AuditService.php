@@ -78,6 +78,13 @@ class AuditService
     protected static function cleanTitle(string $detail, string $fallback): string
     {
         $t = preg_replace('/^\s*\[[^\]]{0,40}\]\s*/u', '', $detail);
+        // review 类判断语：从"需/建议/待/疑似…复核(确认/判断/人工)"处整段截断
+        $parts = preg_split('/[,，。;；]?\s*(需|建议|待|疑似)[^,，。;；]{0,30}(复核|确认|判断|人工|审核|关注)/u', (string)$t);
+        if (!empty($parts[0])) {
+            $t = $parts[0];
+        }
+        // 「可能被联想为…」「可能涉及…」等主观推测从句
+        $t = preg_replace('/[,，]\s*[^,，。;；]{0,8}(可能|或许|疑似)[^,，。;；]{0,30}(联想|涉及|关联|引起|造成)[^,，。;；]{0,30}/u', '', (string)$t);
         // 去掉审核模型爱加的结论尾巴（措辞不固定，组合规则 + 多轮剥离）
         // 例：，内容正常无害 / ，无任何有害内容 / ，属正常工业机械摄影，无色情暴恐…有害内容
         for ($pass = 0; $pass < 3; $pass++) {

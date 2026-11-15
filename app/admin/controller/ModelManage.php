@@ -23,7 +23,8 @@ class ModelManage extends Base
 
         // 审核日志（tab 内完整列表，独立分页与筛选）
         $alPage   = max(1, (int)$this->request->param('al_page', 1));
-        $alSize   = 20;
+        $alSize = (int)$this->request->param('al_size', 20);
+        if (!in_array($alSize, [20, 50, 100, 200], true)) { $alSize = 20; }
         $alResult = (string)$this->request->param('al_result', '');
         $alDriver = (string)$this->request->param('al_driver', '');
         $alKw     = trim((string)$this->request->param('al_kw', ''));
@@ -43,7 +44,8 @@ class ModelManage extends Base
 
         // 白名单（tab 内完整列表）
         $wlPage = max(1, (int)$this->request->param('wl_page', 1));
-        $wlSize = 20;
+        $wlSize = (int)$this->request->param('wl_size', 20);
+        if (!in_array($wlSize, [20, 50, 100, 200], true)) { $wlSize = 20; }
         $wlKw   = trim((string)$this->request->param('wl_kw', ''));
         $wlQ = Db::name('approved_fingerprints');
         if ($wlKw !== '') {
@@ -61,7 +63,7 @@ class ModelManage extends Base
             'al_result'   => $alResult, 'al_driver' => $alDriver, 'al_kw' => $alKw, 'al_drivers' => $alDrivers,
             'whitelist'   => $whitelist,
             'wl_total'    => $wlTotal, 'wl_page' => $wlPage, 'wl_pages' => (int)ceil($wlTotal / $wlSize) ?: 1,
-            'wl_kw'       => $wlKw,
+            'wl_kw'       => $wlKw, 'al_size' => $alSize, 'wl_size' => $wlSize,
             'models'      => $auditModels,
             'gen_models'  => $genModels, 'prompt_models' => $promptModels,
             'settings'    => Setting::allSettings(),
@@ -226,5 +228,41 @@ class ModelManage extends Base
         Setting::saveKey('audit_mode', in_array($mode, ['failover', 'parallel'], true) ? $mode : 'failover');
 
         return json(['status' => true, 'message' => $enabled ? '已开启审核（模型卡片链）' : '已关闭审核']);
+    }
+
+    /* ---------- 审核日志 ---------- */
+    public function auditLogDelete(int $id)
+    {
+        Db::name('audit_logs')->where('id', $id)->delete();
+        return json(['status' => true, 'message' => '已删除该条日志']);
+    }
+
+    public function auditLogBatch()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择记录']);
+        }
+        $n = Db::name('audit_logs')->whereIn('id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 条"]);
+    }
+
+    public function auditLogClear()
+    {
+        $n = Db::name('audit_logs')->where('id', '>', 0)->delete();
+        return json(['status' => true, 'message' => "已清空审核日志（{$n} 条）"]);
+    }
+
+    /* ---------- 审核白名单 ---------- */
+    public function whitelistDelete(int $id)
+    {
+        \app\common\service\ApprovedFingerprintService::remove($id);
+        return json(['status' => true, 'message' => '已移出白名单']);
+    }
+
+    public function whitelistClear()
+    {
+        $n = \app\common\service\ApprovedFingerprintService::clear();
+        return json(['status' => true, 'message' => "已清空白名单（{$n} 条）"]);
     }
 }

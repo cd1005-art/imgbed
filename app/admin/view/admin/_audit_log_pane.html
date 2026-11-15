@@ -50,11 +50,20 @@
   </table>
 
   <div class="list-foot">
+    <div class="per-page-bar">
+      <span>每页显示</span>
+      <select name="al_size" onchange="(function(s){var u=new URL(location.href);u.searchParams.set('al_size',s.value);u.searchParams.delete('al_page');location.href=u.toString()+'#auditlog';})(this)">
+        <option value="20" {if condition="$al_size eq 20"}selected{/if}>20 条</option>
+        <option value="50" {if condition="$al_size eq 50"}selected{/if}>50 条</option>
+        <option value="100" {if condition="$al_size eq 100"}selected{/if}>100 条</option>
+        <option value="200" {if condition="$al_size eq 200"}selected{/if}>200 条</option>
+      </select>
+    </div>
     {if condition="$al_pages gt 1"}
     <nav class="pager">
-      {if condition="$al_page gt 1"}<a class="btn-ghost-sm" href="/admin/model?al_page={$al_page-1}&al_kw={$al_kw}&al_result={$al_result}&al_driver={$al_driver}#auditlog">上一页</a>{/if}
+      {if condition="$al_page gt 1"}<a class="btn-ghost-sm" href="/admin/model?al_page={$al_page-1}&al_kw={$al_kw}&al_result={$al_result}&al_driver={$al_driver}&al_size={$al_size}#auditlog">上一页</a>{/if}
       <span class="pager-info">{$al_page} / {$al_pages}</span>
-      {if condition="$al_page lt $al_pages"}<a class="btn-ghost-sm" href="/admin/model?al_page={$al_page+1}&al_kw={$al_kw}&al_result={$al_result}&al_driver={$al_driver}#auditlog">下一页</a>{/if}
+      {if condition="$al_page lt $al_pages"}<a class="btn-ghost-sm" href="/admin/model?al_page={$al_page+1}&al_kw={$al_kw}&al_result={$al_result}&al_driver={$al_driver}&al_size={$al_size}#auditlog">下一页</a>{/if}
     </nav>
     {/if}
   </div>

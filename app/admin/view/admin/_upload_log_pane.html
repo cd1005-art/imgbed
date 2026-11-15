@@ -11,32 +11,103 @@
       </select>
       <button class="btn btn-sm" type="submit">筛选</button>
     </form>
+    <div class="toolbar-actions">
+      <button class="btn-ghost-sm btn-danger-sm" type="button" id="ulClear">清空日志</button>
+    </div>
+  </div>
+
+  <div class="batch-bar" id="ulBar" hidden>
+    <span id="ulCount">已选 0 条</span>
+    <button class="btn-ghost-sm btn-danger-sm" type="button" id="ulBatchDel">批量删除</button>
+    <button class="btn-ghost-sm" type="button" id="ulClearSel">取消选择</button>
   </div>
 
   <table class="table">
-    <thead><tr><th>ID</th><th>图片</th><th>结果</th><th>原因</th><th>IP</th><th>时间</th></tr></thead>
+    <thead><tr><th style="width:28px"><input type="checkbox" id="ulCheckAll"></th><th>ID</th><th>图片</th><th>结果</th><th>原因</th><th>IP</th><th>时间</th><th>操作</th></tr></thead>
     <tbody>
       {volist name="upload_logs" id="vo"}
       <tr>
+        <td><input type="checkbox" class="ul-check" value="{$vo.id}"></td>
         <td>{$vo.id}</td>
         <td>{if condition="$vo.image_id gt 0"}<span class="count">#{$vo.image_id}</span>{else /}-{/if}</td>
         <td>{if condition="$vo.result eq 1"}<span class="ok">成功</span>{else /}<span class="danger">失败</span>{/if}</td>
         <td style="max-width:340px;font-size:12px">{$vo.reason|default='-'}</td>
         <td><code style="font-size:11px">{$vo.ip|default='-'}</code></td>
         <td>{:date('m-d H:i', $vo.create_time)}</td>
+        <td><button class="btn-ghost-sm btn-danger-sm" type="button" data-ul-del="{$vo.id}">删除</button></td>
       </tr>
       {/volist}
-      {empty name="upload_logs"}<tr><td colspan="6" class="count" style="text-align:center;padding:20px">暂无上传日志</td></tr>{/empty}
+      {empty name="upload_logs"}<tr><td colspan="8" class="count" style="text-align:center;padding:20px">暂无上传日志</td></tr>{/empty}
     </tbody>
   </table>
 
   <div class="list-foot">
+    <div class="per-page-bar">
+      <span>每页显示</span>
+      <select name="ul_size" onchange="(function(s){var u=new URL(location.href);u.searchParams.set('ul_size',s.value);u.searchParams.delete('ul_page');location.href=u.toString()+'#uploadlog';})(this)">
+        <option value="20" {if condition="$ul_size eq 20"}selected{/if}>20 条</option>
+        <option value="50" {if condition="$ul_size eq 50"}selected{/if}>50 条</option>
+        <option value="100" {if condition="$ul_size eq 100"}selected{/if}>100 条</option>
+        <option value="200" {if condition="$ul_size eq 200"}selected{/if}>200 条</option>
+      </select>
+    </div>
     {if condition="$ul_pages gt 1"}
     <nav class="pager">
-      {if condition="$ul_page gt 1"}<a class="btn-ghost-sm" href="/admin/image?ul_page={$ul_page-1}&ul_kw={$ul_kw}&ul_result={$ul_result}#uploadlog">上一页</a>{/if}
+      {if condition="$ul_page gt 1"}<a class="btn-ghost-sm" href="/admin/image?ul_page={$ul_page-1}&ul_kw={$ul_kw}&ul_result={$ul_result}&ul_size={$ul_size}#uploadlog">上一页</a>{/if}
       <span class="pager-info">{$ul_page} / {$ul_pages}</span>
-      {if condition="$ul_page lt $ul_pages"}<a class="btn-ghost-sm" href="/admin/image?ul_page={$ul_page+1}&ul_kw={$ul_kw}&ul_result={$ul_result}#uploadlog">下一页</a>{/if}
+      {if condition="$ul_page lt $ul_pages"}<a class="btn-ghost-sm" href="/admin/image?ul_page={$ul_page+1}&ul_kw={$ul_kw}&ul_result={$ul_result}&ul_size={$ul_size}#uploadlog">下一页</a>{/if}
     </nav>
     {/if}
   </div>
 </section>
+
+<script>
+(function () {
+  var box = document.getElementById('ulBar');
+  var cnt = document.getElementById('ulCount');
+  var all = document.getElementById('ulCheckAll');
+  function refresh() {
+    var n = document.querySelectorAll('.ul-check:checked').length;
+    if (box) { box.hidden = n === 0; }
+    if (cnt) { cnt.textContent = '已选 ' + n + ' 条'; }
+  }
+  if (all) all.addEventListener('change', function () {
+    document.querySelectorAll('.ul-check').forEach(function (c) { c.checked = all.checked; });
+    refresh();
+  });
+  document.querySelectorAll('.ul-check').forEach(function (c) { c.addEventListener('change', refresh); });
+  document.querySelectorAll('[data-ul-del]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      fetch('/admin/image/upload-log/delete/' + b.getAttribute('data-ul-del'), { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 400); });
+    });
+  });
+  var bd = document.getElementById('ulBatchDel');
+  if (bd) bd.addEventListener('click', function () {
+    var ids = Array.prototype.map.call(document.querySelectorAll('.ul-check:checked'), function (c) { return c.value; });
+    if (!ids.length) { toast('先勾选日志'); return; }
+    if (!confirm('删除选中的 ' + ids.length + ' 条日志？')) { return; }
+    fetch('/admin/image/upload-log/batch', {
+      method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'ids=' + ids.join(',')
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 400);
+    });
+  });
+  var cs = document.getElementById('ulClearSel');
+  if (cs) cs.addEventListener('click', function () {
+    document.querySelectorAll('.ul-check').forEach(function (c) { c.checked = false; });
+    if (all) all.checked = false;
+    refresh();
+  });
+  var cl = document.getElementById('ulClear');
+  if (cl) cl.addEventListener('click', function () {
+    if (!confirm('清空全部上传日志？此操作不可恢复')) { return; }
+    fetch('/admin/image/upload-log/clear', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { toast(d.message); if (d.status) setTimeout(function () { location.reload(); }, 400); });
+  });
+  refresh();
+})();
+</script>

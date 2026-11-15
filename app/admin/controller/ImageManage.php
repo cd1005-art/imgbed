@@ -90,8 +90,10 @@ class ImageManage extends Base
         $ulQ = Db::name('upload_logs');
         if ($ulResult !== '') { $ulQ->where('result', (int)$ulResult); }
         if ($ulKw !== '') { $ulQ->whereLike('reason', '%' . $ulKw . '%'); }
+        $ulSize = (int)$this->request->param('ul_size', 20);
+        if (!in_array($ulSize, [20, 50, 100, 200], true)) { $ulSize = 20; }
         $ulTotal = (clone $ulQ)->count();
-        $uploadLogs = $ulQ->order('id', 'desc')->page($ulPage, 20)->select()->toArray();
+        $uploadLogs = $ulQ->order('id', 'desc')->page($ulPage, $ulSize)->select()->toArray();
 
 
         return $this->adminView('admin/image', [
@@ -110,7 +112,8 @@ class ImageManage extends Base
             'per_page' => $size,
             'upload_logs' => $uploadLogs,
             'ul_total'    => $ulTotal, 'ul_page' => $ulPage,
-            'ul_pages'    => (int)ceil($ulTotal / 20) ?: 1,
+            'ul_pages'    => (int)ceil($ulTotal / $ulSize) ?: 1,
+            'ul_size'     => $ulSize,
             'ul_result'   => $ulResult, 'ul_kw' => $ulKw,
             'qs'       => http_build_query([
                 'kw' => $kw, 'ufilter' => $ufilter, 'tag' => $tag, 'sid' => $sid,
@@ -546,5 +549,30 @@ class ImageManage extends Base
         // 同步删除存储文件 + 本地缩略图
         $ok = $this->purgeFiles($image);
         return json(['status' => true, 'message' => $ok ? '已删除（含原图与缩略图）' : '记录已删除，但存储文件删除失败（存储实例可能不可用）']);
+    }
+
+    /** 上传日志：删除单条 */
+    public function uploadLogDelete(int $id)
+    {
+        Db::name('upload_logs')->where('id', $id)->delete();
+        return json(['status' => true, 'message' => '已删除该条日志']);
+    }
+
+    /** 上传日志：批量删除 */
+    public function uploadLogBatch()
+    {
+        $ids = array_filter(array_map('intval', explode(',', (string)$this->request->post('ids', ''))));
+        if (!$ids) {
+            return json(['status' => false, 'message' => '未选择记录']);
+        }
+        $n = Db::name('upload_logs')->whereIn('id', $ids)->delete();
+        return json(['status' => true, 'message' => "已删除 {$n} 条"]);
+    }
+
+    /** 上传日志：清空 */
+    public function uploadLogClear()
+    {
+        $n = Db::name('upload_logs')->where('id', '>', 0)->delete();
+        return json(['status' => true, 'message' => "已清空上传日志（{$n} 条）"]);
     }
 }

@@ -16,13 +16,16 @@ Route::group(function () {
     Route::post('image/orphan/scan', 'ImageManage/orphanScan');
     Route::post('image/orphan/purge', 'ImageManage/orphanPurge');
     Route::get('image/export', 'ImageManage/export');
-    Route::get('audit-log', 'AuditLogManage/index');
-    Route::post('audit-log/delete/:id', 'AuditLogManage/delete');
-    Route::post('audit-log/clear', 'AuditLogManage/clear');
-    Route::post('audit-log/batch', 'AuditLogManage/batch');
-    Route::get('whitelist', 'WhitelistManage/index');
-    Route::post('whitelist/delete/:id', 'WhitelistManage/delete');
-    Route::post('whitelist/clear', 'WhitelistManage/clear');
+    // 模型设置页：审核日志 / 白名单
+    Route::post('model/audit-log/delete/:id', 'ModelManage/auditLogDelete');
+    Route::post('model/audit-log/batch', 'ModelManage/auditLogBatch');
+    Route::post('model/audit-log/clear', 'ModelManage/auditLogClear');
+    Route::post('model/whitelist/delete/:id', 'ModelManage/whitelistDelete');
+    Route::post('model/whitelist/clear', 'ModelManage/whitelistClear');
+    // 图片管理页：上传日志
+    Route::post('image/upload-log/delete/:id', 'ImageManage/uploadLogDelete');
+    Route::post('image/upload-log/batch', 'ImageManage/uploadLogBatch');
+    Route::post('image/upload-log/clear', 'ImageManage/uploadLogClear');
     Route::post('tag/delete', 'TagManage/delete');
     Route::post('tag/batch-status', 'TagManage/batchStatus');
     Route::post('tag/toggle/:id', 'TagManage/toggle');
@@ -130,9 +133,6 @@ Route::group(function () {
     Route::post('model/driver', 'ModelManage/driverSave');
     Route::get('model', 'ModelManage/index');
 
-    Route::post('log/delete/:id', 'LogManage/delete');
-    Route::post('log/batch', 'LogManage/batch');
-    Route::get('log', 'LogManage/index');
     Route::get('token', 'LogManage/tokens');
     Route::post('token/save/:id', 'LogManage/saveToken');
     Route::post('token/batch', 'LogManage/batchToken');
