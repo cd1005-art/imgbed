@@ -261,32 +261,41 @@ body.admin-body { flex-direction: row; min-height: 100vh; }
 .form-grid .field .field-hint { font-size: 11px; line-height: 1.5; margin-top: 3px; }
 
 /* 基础配置：纵向单列（Discuz 风格）—— 标签一行，控件 + 说明一行，虚线分隔 */
-#siteForm { display: block; max-width: 980px; }
+#siteForm { display: block; max-width: 980px; text-align: left; }
 #siteForm .field {
-  display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
-  column-gap: 16px;
+  justify-content: flex-start;
+  width: 100%;
+  gap: 6px 14px;
   padding: 11px 0;
   border-bottom: 1px dashed #E4E1DB;
+  text-align: left;
 }
 #siteForm .field .field-label {
-  grid-column: 1 / -1;
-  margin-bottom: 5px;
+  flex: 0 0 100%;
+  margin-bottom: 1px;
   font-size: 12px;
   color: #5C5850;
 }
 #siteForm .field input,
 #siteForm .field select {
-  grid-column: 1;
-  max-width: 250px;
+  flex: 0 0 auto;
+  width: 250px;
+  max-width: 100%;
   margin: 0;
 }
+#siteForm .field input[type="number"] { width: 120px; }
 #siteForm .field .field-hint {
-  grid-column: 2;
+  flex: 1 1 200px;
   margin: 0;
   font-size: 11px;
   color: #8A867E;
   line-height: 1.5;
 }
 #siteForm > div[style*="grid-column"] { padding-top: 14px; }
+
+/* 最后一项不画分隔线（收尾干净） */
+#siteForm .field:last-of-type { border-bottom: none; }
