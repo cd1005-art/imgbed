@@ -9,7 +9,7 @@
       adminImage: function () { adminImage(); adminImageExtras(); }, adminUser: adminUser, adminGroup: adminGroup,
       adminStorage: adminStorage, adminPayment: adminPayment,
       adminAd: adminAd, adminToken: adminToken, adminSite: adminSite, adminAudit: adminAudit,
-      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminCredit: adminCredit, adminFinance: adminFinance, adminWhitelist: adminWhitelist, adminNone: function () {}
+      adminModel: adminModel, adminLog: adminLog, adminMail: adminMail, adminTag: adminTag, adminReport: adminReport, adminWithdraw: adminWithdraw, adminGen: adminGen, adminCron: adminCron, adminNav: adminNav, adminCredit: adminCredit, adminFinance: adminFinance, adminWhitelist: adminWhitelist, adminAuditLog: adminAuditLog, adminNone: function () {}
     };
     if (map[page]) map[page]();
   };
@@ -620,6 +620,11 @@
 
   /* ---------- 站点设置 / 审核设置 ---------- */
   function adminSite() {
+    var pr = document.getElementById('auditPromptReset');
+    if (pr) pr.addEventListener('click', function () {
+      var ta = document.getElementById('auditPrompt');
+      if (ta) { ta.value = pr.getAttribute('data-default') || ''; toast('已填入内置提示词，记得点击保存'); }
+    });
     var ipf = document.getElementById('imgProcForm');
     if (ipf) {
       ipf.addEventListener('submit', function (e) {
@@ -1837,6 +1842,23 @@
         .then(function (r) { return r.json(); })
         .then(function (d) { toast(d.message); if (d.status) { setTimeout(function () { location.reload(); }, 400); } })
         .catch(function () { toast('网络错误'); });
+    });
+  }
+
+  function adminAuditLog() {
+    document.querySelectorAll('[data-al-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        fetch('/admin/audit-log/delete/' + b.getAttribute('data-al-del'), { method: 'POST' })
+          .then(function (r) { return r.json(); })
+          .then(function (d) { toast(d.message); if (d.status) { setTimeout(function () { location.reload(); }, 400); } });
+      });
+    });
+    var cl = document.getElementById('alClear');
+    if (cl) cl.addEventListener('click', function () {
+      if (!confirm('清空全部审核日志？此操作不可恢复')) { return; }
+      fetch('/admin/audit-log/clear', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { toast(d.message); if (d.status) { setTimeout(function () { location.reload(); }, 400); } });
     });
   }
 

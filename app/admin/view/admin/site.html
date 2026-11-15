@@ -248,7 +248,8 @@
       <span class="field-hint">太小会导致模型只输出思考不输出结论（建议 1024）</span>
     </label>
     <label class="field"><span class="field-label">自定义审核提示词（预填为内置默认，可参考格式改写）</span>
-      <textarea name="audit_prompt" rows="7" style="width:100%;font-family:var(--font-mono);font-size:12px">{:htmlspecialchars(($settings['audit_prompt'] ?? '') !== '' ? $settings['audit_prompt'] : $default_audit_prompt)}</textarea>
+      <textarea name="audit_prompt" id="auditPrompt" rows="7" style="width:100%;font-family:var(--font-mono);font-size:12px">{:htmlspecialchars(($settings['audit_prompt'] ?? '') !== '' ? $settings['audit_prompt'] : $default_audit_prompt)}</textarea>
+      <button class="btn-ghost-sm" type="button" id="auditPromptReset" data-default="{:htmlspecialchars($default_audit_prompt)}">恢复内置默认</button>
       <span class="field-hint">支持占位符 <code>{{N}}</code>=标签数量上限；<b>清空保存即恢复内置规则</b>。内置：色情低俗/暴恐血腥/赌博诈骗/涉政 → reject；拿不准 → review；正常 → pass</span>
     </label>
     <label class="field"><span class="field-label">多模型协同模式</span>
@@ -301,8 +302,7 @@
         <span class="field-hint">相似度阈值 ≤</span>
         <input type="number" name="whitelist_distance" value="{$settings.whitelist_distance|default='4'}" min="0" max="32" style="width:80px">
       </div>
-        <span class="field-hint" style="white-space:nowrap">（0~32，越小越严格 / 越大越宽松，4 较稳）</span>
-      <span class="field-hint">人工批量通过会写入白名单，同图/相似图再次上传直接放行，不调用模型</span>
+        <span class="field-hint">（0~32，越小越严格 / 越大越宽松，4 较稳）；人工批量通过会写入白名单，同图/相似图再次上传直接放行，不调用模型</span>
     </label>
     <label class="field"><span class="field-label">造图去重</span>
       <div style="display:flex;gap:8px;align-items:center">

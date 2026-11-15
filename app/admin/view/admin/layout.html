@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$page_title|default='后台'} · {$site_name}</title>
 <link rel="stylesheet" href="/static/imgbed.css?v=51">
-<link rel="stylesheet" href="/static/admin.css?v=124">
+<link rel="stylesheet" href="/static/admin.css?v=125">
 </head>
 <body class="admin-body">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -44,6 +44,7 @@
     <a href="/admin/nav" class="{if condition="$page eq 'nav'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 导航管理</a>
     <a href="/admin/token" class="{if condition="$page eq 'token'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> API Token</a>
     <a href="/admin/log" class="{if condition="$page eq 'log'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 上传日志</a>
+    <a href="/admin/audit-log" class="{if condition="$page eq 'audit_log'"}active{/if}"><svg class="ic"><use href="#i-check"/></svg> 审核日志</a>
   </nav>
   <div class="side-foot">
     <a href="/" target="_blank">← 前台</a>
@@ -58,7 +59,7 @@
 <div id="toast" class="toast" hidden></div>
 <script>window.PAGER_SIZE = {$pager_size|default='5'};</script>
 <script src="/static/imgbed.js?v=51"></script>
-<script src="/static/admin.js?v=124"></script>
+<script src="/static/admin.js?v=125"></script>
 {block name="script"}{/block}
 </body>
 </html>

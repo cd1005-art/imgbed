@@ -16,6 +16,9 @@ Route::group(function () {
     Route::post('image/orphan/scan', 'ImageManage/orphanScan');
     Route::post('image/orphan/purge', 'ImageManage/orphanPurge');
     Route::get('image/export', 'ImageManage/export');
+    Route::get('audit-log', 'AuditLogManage/index');
+    Route::post('audit-log/delete/:id', 'AuditLogManage/delete');
+    Route::post('audit-log/clear', 'AuditLogManage/clear');
     Route::get('whitelist', 'WhitelistManage/index');
     Route::post('whitelist/delete/:id', 'WhitelistManage/delete');
     Route::post('whitelist/clear', 'WhitelistManage/clear');
