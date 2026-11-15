@@ -13,8 +13,54 @@ use think\facade\Db;
  */
 class StorageManage extends Base
 {
+    /** 本地目录占用（字节, 文件数），$skip 为要排除的子目录名 */
+    private function dirUsage(string $dir, array $skip = []): array
+    {
+        if (!is_dir($dir)) {
+            return [0, 0];
+        }
+        $size = 0;
+        $files = 0;
+        try {
+            $it = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+            foreach ($it as $f) {
+                if (!$f->isFile()) {
+                    continue;
+                }
+                $path = str_replace('\\', '/', $f->getPathname());
+                $hit = false;
+                foreach ($skip as $s) {
+                    if (str_contains($path, '/' . $s . '/')) {
+                        $hit = true;
+                        break;
+                    }
+                }
+                if ($hit) {
+                    continue;
+                }
+                $size += (int)$f->getSize();
+                $files++;
+            }
+        } catch (\Throwable $e) {
+        }
+        return [$size, $files];
+    }
+
     public function index()
     {
+        // 本地占用：外链副本 / 缩略图 / 本地存储原图
+        [$copyBytes, $copyFiles] = $this->dirUsage(public_path() . 'i', ['thumbs']);
+        [$thumbBytes, $thumbFiles] = $this->dirUsage(public_path() . 'i' . DIRECTORY_SEPARATOR . 'thumbs');
+        [$localBytes, $localFiles] = $this->dirUsage(public_path() . 'storage' . DIRECTORY_SEPARATOR . 'images');
+        $localUsage = [
+            'copy'  => ['bytes' => $copyBytes, 'files' => $copyFiles],
+            'thumb' => ['bytes' => $thumbBytes, 'files' => $thumbFiles],
+            'local' => ['bytes' => $localBytes, 'files' => $localFiles],
+            'total' => ['bytes' => $copyBytes + $thumbBytes + $localBytes, 'files' => $copyFiles + $thumbFiles + $localFiles],
+        ];
         $usage = Db::name('images')->where('status', 1)
             ->field('storage_id, count(*) as c, sum(size) as s')
             ->group('storage_id')
@@ -70,6 +116,7 @@ class StorageManage extends Base
         }
 
         return $this->adminView('admin/storage', [
+            'local_usage' => $localUsage,
             'page'  => 'storage',
             'list'  => $list,
             'usage' => $usageMap,
