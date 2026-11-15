@@ -16,7 +16,9 @@ class ImageManage extends Base
     public function index()
     {
         $page   = max(1, (int)$this->request->param('page', 1));
-        $size   = 20;
+        // 每页条数：20/50/100/200，默认 20
+        $size = (int)$this->request->param('per_page', 20);
+        if (!in_array($size, [20, 50, 100, 200], true)) { $size = 20; }
         $kw      = trim((string)$this->request->param('kw', ''));
         $ufilter = trim((string)$this->request->param('ufilter', ''));
         $tag     = trim((string)$this->request->param('tag', ''));
@@ -95,6 +97,13 @@ class ImageManage extends Base
             'dto' => $dto, 'smin' => $smin, 'smax' => $smax, 'public' => $public,
             'storages' => $storages,
             'page_no'  => $page,
+            'per_page' => $size,
+            'qs'       => http_build_query([
+                'kw' => $kw, 'ufilter' => $ufilter, 'tag' => $tag, 'sid' => $sid,
+                'audit' => $audit, 'status' => $status, 'public' => $public,
+                'dfrom' => $dfrom, 'dto' => $dto, 'smin' => $smin, 'smax' => $smax,
+                'per_page' => $size,
+            ]),
             'total'    => $total,
             'pages'    => (int)ceil($total / $size) ?: 1,
         ]);

@@ -31,7 +31,7 @@ class TagManage extends Base
             return $q;
         };
         $orderBy = $order === 'name' ? 'name asc' : ($order === 'use_asc' ? 'use_count asc' : 'use_count desc');
-        $list  = $build()->order($orderBy)->page($page, 40)->select()->toArray();
+        $list  = $build()->order($orderBy)->page($page, ((int)$this->request->param('per_page', 40) ?: 40))->select()->toArray();
         $total = $build()->count();
 
         return $this->adminView('admin/tag', [

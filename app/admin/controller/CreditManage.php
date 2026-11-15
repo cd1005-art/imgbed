@@ -111,7 +111,7 @@ class CreditManage extends Base
             return $q;
         };
 
-        $list  = $build()->order('id', 'desc')->page($page, 40)->select()->toArray();
+        $list  = $build()->order('id', 'desc')->page($page, ((int)$this->request->param('per_page', 40) ?: 40))->select()->toArray();
         $total = $build()->count();
 
         // 用户昵称

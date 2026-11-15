@@ -1810,3 +1810,48 @@
     initPagerJump();
   }
 })();
+
+/* 通用「每页条数」：所有带分页的后台列表自动加下拉，并让翻页链接带上该参数 */
+(function initPerPage() {
+  function ready(fn) {
+    if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', fn); } else { fn(); }
+  }
+  ready(function () {
+    // 有列表（筛选栏 + 表格）就提供每页条数，数据少时虽无分页也保留入口
+    if (!document.querySelector('form.search-bar') && !document.querySelector('table')) { return; }
+    if (!document.querySelector('.pager') && !document.querySelector('form.search-bar')) { return; }
+    var url = new URL(location.href);
+    var cur = parseInt(url.searchParams.get('per_page') || '20', 10);
+    if ([20, 50, 100, 200].indexOf(cur) === -1) { cur = 20; }
+
+    if (!document.querySelector('select[name="per_page"]')) {
+      var bar = document.querySelector('form.search-bar') || document.querySelector('.page-toolbar');
+      if (bar) {
+        var sel = document.createElement('select');
+        sel.className = 'filter-select';
+        sel.name = 'per_page';
+        sel.title = '每页显示条数';
+        [20, 50, 100, 200].forEach(function (n) {
+          var o = document.createElement('option');
+          o.value = n;
+          o.textContent = '每页 ' + n + ' 条';
+          if (n === cur) { o.selected = true; }
+          sel.appendChild(o);
+        });
+        sel.addEventListener('change', function () {
+          url.searchParams.set('per_page', sel.value);
+          url.searchParams.delete('page');
+          location.href = url.toString();
+        });
+        bar.appendChild(sel);
+      }
+    }
+
+    if (cur !== 20) {
+      document.querySelectorAll('.pager a[href]').forEach(function (a) {
+        var h = a.getAttribute('href');
+        if (h && !/per_page=/.test(h)) { a.setAttribute('href', h + '&per_page=' + cur); }
+      });
+    }
+  });
+})();

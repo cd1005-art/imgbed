@@ -45,7 +45,7 @@ class LogManage extends Base
             return $q;
         };
 
-        $list  = $build()->page($page, 30)->select()->toArray();   // 数组化，便于注入昵称
+        $list  = $build()->page($page, ((int)$this->request->param('per_page', 30) ?: 30))->select()->toArray();   // 数组化，便于注入昵称
         $total = $build()->count();
 
         // 用户昵称映射（含已删除用户，标注）

@@ -36,7 +36,7 @@ class WithdrawManage extends Base
         }
         if ($dfrom !== '') { $q->where('w.create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
         if ($dto !== '')   { $q->where('w.create_time', '<=', strtotime($dto . ' 23:59:59')); }
-        $list  = $q->order('w.id', 'desc')->page($page, 30)->select()->toArray();
+        $list  = $q->order('w.id', 'desc')->page($page, ((int)$this->request->param('per_page', 30) ?: 30))->select()->toArray();
         $total = (int)Db::name('withdrawals')->when($status !== '', function ($qq) use ($status) { $qq->where('status', $status); })->count();
 
         return $this->adminView('admin/withdraw', [

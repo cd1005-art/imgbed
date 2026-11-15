@@ -49,7 +49,7 @@ class UserManage extends Base
             $groupMap[(int)$g['id']] = ['max_tokens' => (int)$g['max_tokens'], 'quota_total' => (int)$g['quota_total']];
         }
 
-        $list  = $build()->page($page, 20)->select()->each(function ($item) use ($groupMap) {
+        $list  = $build()->page($page, ((int)$this->request->param('per_page', 20) ?: 20))->select()->each(function ($item) use ($groupMap) {
             $count = (int)Db::name('api_tokens')->where('user_id', $item['id'])->count();
             $g = $groupMap[(int)$item['group_id']] ?? ['max_tokens' => 0, 'quota_total' => 0];
             $item['token_display'] = $count . '/' . ($g['max_tokens'] > 0 ? $g['max_tokens'] : '不限');

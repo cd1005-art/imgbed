@@ -91,7 +91,7 @@ class FinanceManage extends Base
             if ($cto !== '')   { $q->where('create_time', '<=', strtotime($cto . ' 23:59:59')); }
             return $q;
         };
-        $credits = $cbuild()->order('id', 'desc')->page($page, 40)->select()->toArray();
+        $credits = $cbuild()->order('id', 'desc')->page($page, ((int)$this->request->param('per_page', 40) ?: 40))->select()->toArray();
         $creditsTotal = $cbuild()->count();
         $creditIn  = (int)$cbuild()->where('amount', '>', 0)->sum('amount');
         $creditOut = (int)$cbuild()->where('amount', '<', 0)->sum('amount');

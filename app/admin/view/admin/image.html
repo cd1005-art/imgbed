@@ -36,6 +36,12 @@
     <input type="number" name="smin" value="{if condition="$smin gt 0"}{$smin}{/if}" placeholder="最小 KB" style="width:92px">
     <span class="count">~</span>
     <input type="number" name="smax" value="{if condition="$smax gt 0"}{$smax}{/if}" placeholder="最大 KB" style="width:92px">
+    <select name="per_page" class="filter-select" onchange="this.form.submit()">
+      <option value="20" {if condition="$per_page eq 20"}selected{/if}>每页 20 张</option>
+      <option value="50" {if condition="$per_page eq 50"}selected{/if}>每页 50 张</option>
+      <option value="100" {if condition="$per_page eq 100"}selected{/if}>每页 100 张</option>
+      <option value="200" {if condition="$per_page eq 200"}selected{/if}>每页 200 张</option>
+    </select>
     <button class="btn btn-sm" type="submit">筛选</button>
   </form>
 </div>
@@ -127,9 +133,9 @@
 
 {if condition="$pages gt 1"}
 <nav class="pager">
-  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&kw={$kw}&ufilter={$ufilter}&sid={$sid}&audit={$audit}&status={$status}">上一页</a>{/if}
+  {if condition="$page_no gt 1"}<a class="btn-ghost-sm" href="?page={$page_no-1}&{$qs}">上一页</a>{/if}
   <span class="pager-info">{$page_no} / {$pages}</span>
-  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&kw={$kw}&ufilter={$ufilter}&sid={$sid}&audit={$audit}&status={$status}">下一页</a>{/if}
+  {if condition="$page_no lt $pages"}<a class="btn-ghost-sm" href="?page={$page_no+1}&{$qs}">下一页</a>{/if}
 </nav>
 {/if}
 {/block}

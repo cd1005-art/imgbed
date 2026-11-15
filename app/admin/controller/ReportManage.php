@@ -35,7 +35,7 @@ class ReportManage extends Base
         }
         if ($dfrom !== '') { $q->where('r.create_time', '>=', strtotime($dfrom . ' 00:00:00')); }
         if ($dto !== '')   { $q->where('r.create_time', '<=', strtotime($dto . ' 23:59:59')); }
-        $list  = $q->order('r.id', 'desc')->page($page, 30)->select()->toArray();
+        $list  = $q->order('r.id', 'desc')->page($page, ((int)$this->request->param('per_page', 30) ?: 30))->select()->toArray();
         $total = (int)Db::name('reports')->when($status !== '', function ($qq) use ($status) { $qq->where('status', $status); })->count();
 
         return $this->adminView('admin/report', [
