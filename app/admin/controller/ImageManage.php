@@ -539,7 +539,8 @@ class ImageManage extends Base
         }
         $thumb = trim((string)($image->thumb_path ?? ''));
         if ($thumb !== '') {
-            $abs = public_path() . str_replace('/', DIRECTORY_SEPARATOR, ltrim($thumb, '/'));
+            // thumb_path 形如 thumbs/2026/11/16/xxx.webp，实际在 public/i/ 下面
+            $abs = public_path() . 'i' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, ltrim($thumb, '/'));
             if (is_file($abs)) {
                 $freed += (int)@filesize($abs);
                 @unlink($abs);
