@@ -23,25 +23,28 @@ class AuditService
     /** 审核一张图：返回 ['result' => ..., 'score' => ..., 'detail' => ...] */
     public static function audit(Image $image, string $localPath, string $mime): array
     {
-        // 白名单前置：人工复审通过过的图（SHA1/ahash 命中）直接放行，不再调用模型
+        // 白名单前置：人工复审通过过的图（SHA1/ahash 命中）直接放行，不再调用模型。
+        // 仅当白名单里存了标题时才走这条捷径——没有标题的图仍交给模型，
+        // 否则新图会顶着 xxxx.jpg 这种文件名当标题（用户明确不接受）。
         $approved = ApprovedFingerprintService::match($localPath);
         if ($approved !== null) {
-            $wlTags = [];
-            try {
-                $wlTags = json_decode((string)($approved['tags'] ?? '[]'), true) ?: [];
-            } catch (\Throwable $e) {
-            }
             $wlNote = trim((string)($approved['note'] ?? ''));
-            $result = [
-                'result' => 'pass',
-                'score'  => 100,
-                'detail' => $wlNote !== '' ? $wlNote : '白名单命中（人工已复审通过）',
-                // note 为空（原图本来就没标题）时不写 title，让新图保留自己的文件名
-                'title'  => $wlNote,
-                'tags'   => $wlTags,
-            ];
-            self::applyResult($image, 'whitelist', $result);
-            return $result;
+            if ($wlNote !== '') {
+                $wlTags = [];
+                try {
+                    $wlTags = json_decode((string)($approved['tags'] ?? '[]'), true) ?: [];
+                } catch (\Throwable $e) {
+                }
+                $result = [
+                    'result' => 'pass',
+                    'score'  => 100,
+                    'detail' => $wlNote,
+                    'title'  => $wlNote,
+                    'tags'   => $wlTags,
+                ];
+                self::applyResult($image, 'whitelist', $result);
+                return $result;
+            }
         }
 
         $driverKey = self::driverKey($image);
