@@ -164,12 +164,19 @@ button:hover{filter:brightness(1.1)}
     <h2>✅ 系统已安装</h2>
     <p class="sub">检测到 install.lock，安装向导已锁定。</p>
     <p class="sub">如需重装：删除站点根目录的 <code>install.lock</code> 与 <code>.env</code> 后刷新本页（会清空现有数据，慎用）。</p>
+    <div class="warn" style="text-align:left;margin:14px 0">若你从未改过管理员密码，默认是 <code>admin / admin123</code>，请登录后立即修改。</div>
     <p><a href="/admin/login" style="color:var(--accent)">前往后台登录 →</a></p>
   </div>
 <?php elseif ($done): ?>
   <div class="card done">
     <h2>🎉 安装完成</h2>
     <p class="sub">数据库已初始化，管理员账号已创建，.env 已生成。</p>
+    <div class="warn" style="text-align:left;margin:18px 0">
+      <b>管理员账号</b><br>
+      用户名：<code>admin</code>　密码：<b>你在上一步设置的那个</b><br>
+      <span style="color:#8a6d3b">如果跳过了密码设置（直接导入过 install.sql），默认是 <code>admin / admin123</code>。</span><br>
+      <b style="color:#b3261e">无论哪种情况，请登录后立即到「侧边栏 → 修改密码」改掉默认密码。</b>
+    </div>
     <div class="warn" style="text-align:left;margin:18px 0">安全提示：请立即删除站点根目录下的 <b>install.php</b>（若已自动重命名可忽略）。</div>
     <p><a href="/admin/login" style="color:var(--accent);font-size:16px">前往后台登录 →</a></p>
   </div>
