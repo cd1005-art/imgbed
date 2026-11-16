@@ -103,11 +103,20 @@ class ApprovedFingerprintService
         } catch (\Throwable $e) {
         }
 
+        // 标题规范化：清掉审核尾巴；纯文件名（hash）不算标题，存空让命中时不覆盖新图标题
+        $noteText = trim($note !== '' ? $note : (string)$image->name);
+        if (preg_match('/^[0-9a-f]{16,}\.[a-z0-9]{2,5}$/i', $noteText)) {
+            $noteText = '';
+        }
+        if ($noteText !== '') {
+            $noteText = \app\common\service\AuditService::cleanTitlePublic($noteText);
+        }
+
         Db::name('approved_fingerprints')->insert([
             'image_id'    => (int)$image->id,
             'sha1'        => $sha1,
             'ahash'       => $ahash,
-            'note'        => mb_substr($note !== '' ? $note : (string)$image->name, 0, 60),
+            'note'        => mb_substr($noteText, 0, 60),
             'tags'        => mb_substr(json_encode(array_values(array_filter((array)$tags)), JSON_UNESCAPED_UNICODE), 0, 240),
             'create_time' => time(),
         ]);

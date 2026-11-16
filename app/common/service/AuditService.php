@@ -31,10 +31,13 @@ class AuditService
                 $wlTags = json_decode((string)($approved['tags'] ?? '[]'), true) ?: [];
             } catch (\Throwable $e) {
             }
+            $wlNote = trim((string)($approved['note'] ?? ''));
             $result = [
                 'result' => 'pass',
                 'score'  => 100,
-                'detail' => (string)($approved['note'] ?? '') !== '' ? (string)$approved['note'] : '白名单命中（人工已复审通过）',
+                'detail' => $wlNote !== '' ? $wlNote : '白名单命中（人工已复审通过）',
+                // note 为空（原图本来就没标题）时不写 title，让新图保留自己的文件名
+                'title'  => $wlNote,
                 'tags'   => $wlTags,
             ];
             self::applyResult($image, 'whitelist', $result);
@@ -81,6 +84,12 @@ class AuditService
 
     /** 落库：audit_logs + images 审核态，拒绝自动冻结 */
     /** 审核描述 → 图片标题：去模型前缀、去首尾标点、限 60 字，太短则保留原名 */
+    /** 对外暴露的标题清洗（白名单等地方复用同一套规则） */
+    public static function cleanTitlePublic(string $text, string $fallback = ''): string
+    {
+        return self::cleanTitle($text, $fallback);
+    }
+
     protected static function cleanTitle(string $detail, string $fallback): string
     {
         $t = preg_replace('/^\s*\[[^\]]{0,40}\]\s*/u', '', $detail);
@@ -108,11 +117,18 @@ class AuditService
         }
         // 删掉夹在中间的「无违规内容」「无有害信息」等判定短语（不在尾部也算）
         $t = preg_replace('/[,，]?\s*无[^,，。;；]{0,6}(违规|有害|不良|敏感|风险)[^,，。;；]{0,6}/u', '', (string)$t);
-        // 「，但…」「，不过…」「，只是…」之后基本都是审核判断，整段截断
-        $parts = preg_split('/[,，]\s*(但|不过|然而|只是)[^,，。;；]{0,40}/u', (string)$t);
+        // 转折词之后基本都是审核判断（不管前面有没有逗号），整段截断
+        $parts = preg_split('/[,，]?\s*(但|不过|然而|只是)[^,，。;；]{0,60}/u', (string)$t);
         if (!empty($parts[0])) {
             $t = $parts[0];
         }
+        // 「，疑似…」「，存在…风险」「，整体偏…」「，带…暗示」等主观判断尾巴
+        $parts = preg_split('/[,，]?\s*(疑似|存在[^,，。;；]{0,14}风险|整体偏|带有[^,，。;；]{0,20}|带[^,，。;；]{0,10}(暗示|擦边|争议))/u', (string)$t);
+        if (!empty($parts[0])) {
+            $t = $parts[0];
+        }
+        // 截断后残留的孤立虚词（"略""且""但"）一并去掉
+        $t = preg_replace('/[,，\s]*(略|且|但|和|与|的)$/u', '', (string)$t);
         $t = preg_replace('/^[\s\p{P}\p{S}]+/u', '', (string)$t);
         $t = preg_replace('/[\s\p{P}\p{S}]+$/u', '', (string)$t);
         $t = trim((string)$t);
@@ -154,7 +170,9 @@ class AuditService
             if ($title !== '') {
                 // 双保险：万一模型仍在 title 里写了判定语，再过一次清洗
                 $title = self::cleanTitle($title, $title);
-            } else {
+            } elseif ($driver !== 'whitelist') {
+                // 白名单没有存标题时，不要凑出"白名单命中（人工已复审通过）"这种泛标题，
+                // 让新图保留自己的文件名
                 $title = self::cleanTitle((string)($result['detail'] ?? ''), '');
             }
             if ($title !== '' && $title !== (string)$image->name) {
