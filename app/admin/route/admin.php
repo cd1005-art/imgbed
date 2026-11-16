@@ -17,6 +17,8 @@ Route::group(function () {
     Route::post('image/orphan/purge', 'ImageManage/orphanPurge');
     Route::get('image/export', 'ImageManage/export');
     // 模型设置页：审核日志 / 白名单
+    Route::get('password', 'AdManage/password');
+    Route::post('password', 'AdManage/password');
     Route::post('model/audit-log/delete/:id', 'ModelManage/auditLogDelete');
     Route::post('model/audit-log/batch', 'ModelManage/auditLogBatch');
     Route::post('model/audit-log/clear', 'ModelManage/auditLogClear');

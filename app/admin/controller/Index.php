@@ -69,7 +69,8 @@ class Index extends Base
 
         $stats = [
             'image_total'  => Image::where('status', Image::ST_NORMAL)->count(),
-            'user_total'   => User::count(),
+            // 与用户管理列表口径一致：不含已删除用户（status=3）
+            'user_total'   => User::where('status', '<>', 3)->count(),
             'today_upload' => UploadLog::where('result', 1)->where('create_time', '>=', $dayStart)->count(),
             'today_fail'   => UploadLog::where('result', 0)->where('create_time', '>=', $dayStart)->count(),
             'storage_used' => (int)Image::where('status', Image::ST_NORMAL)->sum('size'),

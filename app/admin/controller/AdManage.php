@@ -274,4 +274,35 @@ return $this->adminView('admin/site', [
         return json(['status' => true, 'message' => '已保存']);
     }
 
+
+    /** 管理员修改密码 */
+    public function password()
+    {
+        $admin = $this->request->loginAdmin ?? null;
+        if (!$admin) {
+            return redirect('/admin/login');
+        }
+        if ($this->request->isPost()) {
+            $old = (string)$this->request->post('old_password', '');
+            $new = (string)$this->request->post('new_password', '');
+            $cfm = (string)$this->request->post('confirm_password', '');
+            $row = Db::name('admins')->where('id', (int)$admin['id'])->find();
+            if (!$row || !password_verify($old, (string)$row['password'])) {
+                return json(['status' => false, 'message' => '当前密码不正确']);
+            }
+            if (mb_strlen($new) < 8) {
+                return json(['status' => false, 'message' => '新密码至少 8 位']);
+            }
+            if ($new !== $cfm) {
+                return json(['status' => false, 'message' => '两次输入的新密码不一致']);
+            }
+            Db::name('admins')->where('id', (int)$admin['id'])->update([
+                'password'    => password_hash($new, PASSWORD_DEFAULT),
+                'update_time' => time(),
+            ]);
+            $this->app->session->delete('admin_id');
+            return json(['status' => true, 'message' => '密码已修改，请重新登录']);
+        }
+        return $this->adminView('admin/password', ['page' => 'password']);
+    }
 }
