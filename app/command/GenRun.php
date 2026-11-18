@@ -104,6 +104,11 @@ class GenRun extends Command
                     $detail[] = "OK #{$img->id} {$prompt}｜审核:{$auditTxt}{$pubTxt}";
                     \app\common\service\CronService::applyAutoTags($task, (int)$img->id);
                     \app\common\service\CronService::applyAuditTitle((int)$img->id);
+                    // 百度主动推送：内部按「累积阈值 + 间隔 + 日上限」节流，未达条件直接返回
+                    try {
+                        \app\common\service\BaiduPushService::maybeAutoPush();
+                    } catch (\Throwable $e) {
+                    }
                 } catch (\Throwable $e) {
                     $fail++;
                     $detail[] = '上传失败：' . mb_substr($e->getMessage(), 0, 60);

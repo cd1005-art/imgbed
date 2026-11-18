@@ -86,6 +86,30 @@ class BaiduPushService
      * 按「累积条数 + 最小间隔 + 每日上限」节流自动推送
      * 由计划任务（每 5 分钟）驱动，避免打满每日配额
      */
+    /**
+     * 生成推送 URL 用的站点根地址
+     * 优先级：site_domain → baidu_push_site → 当前请求域名；缺协议自动补 https://
+     */
+    public static function baseUrl(): string
+    {
+        $domain = trim((string)Setting::get('site_domain', ''));
+        if ($domain === '') {
+            $domain = trim((string)Setting::get('baidu_push_site', ''));
+        }
+        if ($domain === '') {
+            try {
+                $domain = (string)request()->domain();
+            } catch (\Throwable $e) {
+                $domain = '';
+            }
+        }
+        $domain = rtrim($domain, '/');
+        if ($domain !== '' && !preg_match('#^https?://#i', $domain)) {
+            $domain = 'https://' . $domain;
+        }
+        return $domain;
+    }
+
     public static function maybeAutoPush(): void
     {
         if (!self::enabled() || (int)Setting::get('baidu_push_auto', 0) !== 1) {
@@ -125,8 +149,8 @@ class BaiduPushService
         if ($dailyMax > 0) {
             $limit = min($limit, $dailyMax - $pushedNum);
         }
-        $rows = $q()->order('update_time', 'asc')->limit($limit)->field('id')->select();
-        $domain = rtrim((string)Setting::get('site_domain', ''), '/');
+        $rows = $q()->order('update_time', 'asc')->limit($limit)->field('id,update_time')->select();
+        $domain = self::baseUrl();
         if ($domain === '') {
             return;
         }
@@ -140,7 +164,17 @@ class BaiduPushService
 
         $res = self::push($urls);
         if ($res['ok']) {
-            Setting::saveKey('baidu_push_since', (string)time());
+            // 关键：since 推进到本批最后一条的 update_time，而不是 time()
+            // 否则受日配额限制时，本批之外的历史图片会被永久跳过
+            $lastTs = 0;
+            foreach ($rows as $r) {
+                // 模型对 update_time 有读取器（返回 Y-m-d H:i:s），必须用 getData 取原始时间戳
+                $t = (int)(method_exists($r, 'getData') ? $r->getData('update_time') : $r['update_time']);
+                if ($t > $lastTs) {
+                    $lastTs = $t;
+                }
+            }
+            Setting::saveKey('baidu_push_since', (string)($lastTs > 0 ? $lastTs : time()));
             Setting::saveKey('baidu_push_daily_date', $today);
             Setting::saveKey('baidu_push_daily_count', (string)($pushedNum + max(0, $res['success'])));
         }

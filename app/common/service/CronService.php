@@ -16,6 +16,7 @@ class CronService
         'storage' => ['name' => '存储告警', 'cmd' => 'monitor:storage', 'interval' => 3600, 'desc' => '每小时', 'why' => '磁盘/配额/网盘阈值检查'],
         'vip' => ['name' => 'VIP 到期提醒', 'cmd' => 'monitor:vip', 'interval' => 86400, 'desc' => '每天', 'why' => '到期前 3 天提醒邮件'],
         'site' => ['name' => '站点健康巡检', 'cmd' => 'monitor:site', 'interval' => 600, 'desc' => '每 10 分钟', 'why' => '首页可用性 + HTTPS 证书到期检查'],
+        'push' => ['name' => '百度主动推送', 'cmd' => 'push:auto', 'interval' => 600, 'desc' => '每 10 分钟', 'why' => '按累积阈值/间隔/日上限提交新图 URL'],
     ];
 
     /**
@@ -173,6 +174,9 @@ class CronService
                     break;
                 case 'site':
                     $msg = self::taskSite();
+                    break;
+                case 'push':
+                    $msg = self::taskPush();
                     break;
                 default:
                     return ['ok' => false, 'msg' => 'unknown task'];
@@ -779,5 +783,27 @@ class CronService
         $code = 1;
         @exec(escapeshellarg($bin) . ' -r "echo 1;" 2>/dev/null', $out, $code);
         return $code === 0 && in_array('1', $out, true);
+    }
+
+    /** 百度主动推送（与 push:auto 命令同逻辑） */
+    public static function taskPush(): string
+    {
+        if (!\app\common\service\BaiduPushService::enabled()) {
+            return '未启用推送或未配置 token';
+        }
+        $before = (int)\app\common\model\Setting::get('baidu_push_last_time', 0);
+        \app\common\service\BaiduPushService::maybeAutoPush();
+        $after  = (int)\app\common\model\Setting::get('baidu_push_last_time', 0);
+        if ($after > $before) {
+            return (string)\app\common\model\Setting::get('baidu_push_last_result', '已推送');
+        }
+        $count = (int)\app\common\model\Image::where('is_public', 1)
+            ->where('audit_status', 1)
+            ->where('status', 1)
+            ->where('update_time', '>=', (int)\app\common\model\Setting::get('baidu_push_since', 0))
+            ->count();
+        return '未触发（待推 ' . $count . ' 条，阈值 '
+            . (int)\app\common\model\Setting::get('baidu_push_auto_count', 5) . '，间隔 '
+            . (int)\app\common\model\Setting::get('baidu_push_auto_hours', 6) . ' 小时）';
     }
 }

@@ -8,5 +8,6 @@ return [
         'monitor:storage' => \app\command\StorageAlert::class,
         'monitor:vip'     => \app\command\VipNotice::class,
         'gen:run'         => \app\command\GenRun::class,
+        'push:auto'       => \app\command\PushAuto::class,
     ],
 ];

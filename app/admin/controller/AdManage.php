@@ -112,16 +112,13 @@ return $this->adminView('admin/site', [
             return json(['status' => false, 'message' => '请先开启百度推送并填写 token']);
         }
         $since  = (int)Setting::get('baidu_push_since', 0);
-        $domain = rtrim((string)Setting::get('site_domain', ''), '/');
-        if ($domain === '') {
-            $domain = rtrim((string)request()->domain(), '/');
-        }
+        $domain = \app\common\service\BaiduPushService::baseUrl();
 
         $rows = \app\common\model\Image::where('is_public', 1)
             ->where('audit_status', \app\common\model\Image::AUDIT_PASS)
             ->where('status', \app\common\model\Image::ST_NORMAL)
             ->where('update_time', '>=', $since)
-            ->order('update_time', 'asc')->limit(\app\common\service\BaiduPushService::BATCH)->field('id')->select();
+            ->order('update_time', 'asc')->limit(\app\common\service\BaiduPushService::BATCH)->field('id,update_time')->select();
 
         $urls = [];
         foreach ($rows as $r) {
@@ -132,7 +129,18 @@ return $this->adminView('admin/site', [
         }
 
         $res = \app\common\service\BaiduPushService::push($urls);
-        if ($res['ok']) {
+        if ($res['ok'] && $rows) {
+            // 同上：推进到最后一条的 update_time，剩余图片下次还能推
+            $lastTs = 0;
+            foreach ($rows as $r) {
+                // 同上：模型读取器会返回格式化字符串，取原始时间戳
+                $t = (int)(method_exists($r, 'getData') ? $r->getData('update_time') : $r->update_time);
+                if ($t > $lastTs) {
+                    $lastTs = $t;
+                }
+            }
+            Setting::saveKey('baidu_push_since', (string)($lastTs > 0 ? $lastTs : time()));
+        } elseif ($res['ok']) {
             Setting::saveKey('baidu_push_since', (string)time());
         }
         return json([
@@ -175,6 +183,7 @@ return $this->adminView('admin/site', [
             // 百度主动推送
             'baidu_push_enable', 'baidu_push_token', 'baidu_push_site', 'baidu_push_auto',
             'baidu_push_auto_count', 'baidu_push_auto_hours', 'baidu_push_daily_max',
+            'site_domain',
             // 站币：充值 / 提现 / 分成
             'pager_size', 'explore_per_page',
             'img_compress', 'img_webp', 'img_thumb_size', 'img_watermark', 'img_watermark_pos', 'img_watermark_opacity', 'img_exif_clean',

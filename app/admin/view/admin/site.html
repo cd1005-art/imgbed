@@ -145,10 +145,15 @@
     </div>
 
     <!-- 第二行：站点地址 / Token / 保存（右侧 168px 列与上一行对齐） -->
-    <div style="grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 168px;gap:14px;align-items:end;margin-top:12px">
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 168px;gap:14px;align-items:end;margin-top:12px">
       <div>
         <div class="field-label" style="display:block;margin-bottom:6px">站点地址（site 参数）</div>
         <input type="text" name="baidu_push_site" value="{$settings.baidu_push_site|default=''}" placeholder="https://你的域名"
+               style="width:100%;height:36px;padding:0 10px;border:1px solid #E4E1DB;border-radius:8px;background:#fff;color:#1C1B18;font-size:13px">
+      </div>
+      <div>
+        <div class="field-label" style="display:block;margin-bottom:6px">推送用站点域名（拼 URL）</div>
+        <input type="text" name="site_domain" value="{$settings.site_domain|default=''}" placeholder="https://img.oddpp.com"
                style="width:100%;height:36px;padding:0 10px;border:1px solid #E4E1DB;border-radius:8px;background:#fff;color:#1C1B18;font-size:13px">
       </div>
       <div>
@@ -163,9 +168,11 @@
   </form>
   <p class="field-hint" style="margin-top:8px">
     最近推送：{$settings.baidu_push_last_result|default='尚未推送'}{if condition="($settings['baidu_push_last_time'] ?? '') neq ''"}（{:date('m-d H:i', ts($settings['baidu_push_last_time']))}）{/if}<br>
-    自动推送规则：<b>累积条数达标 + 间隔达标 + 当日未超上限</b> 三个条件同时满足才推送，由计划任务每 5 分钟检查一次
-    （因此无需新增定时任务）；<br>
-    接口单次最多 1000 条（百度规定）；<b>实际能推多少取决于当日配额</b>——返回体里的「剩余配额」才是瓶颈（新站通常每天 10 条左右）。
+    自动推送规则：<b>累积条数达标 + 间隔达标 + 当日未超上限</b> 三个条件同时满足才推送。<br>
+    <b>「累积多少条后推一次」是触发阈值，不是推送条数</b>——一旦触发，会提交当前所有待推 URL（单次上限 1000，仍受当日配额约束）。<br>
+    触发点：造图任务生成后检查一次；另建议在宝塔加一条计划任务
+    <code>cd 站点目录 && php think push:auto</code>（每 10 分钟），与造图解耦兜底（内部自带节流，不会重复推送）。<br>
+    <b>实际能推多少取决于当日配额</b>——返回体里的「剩余配额」才是瓶颈（新站通常每天 10 条左右）。
     推送范围仅限公开且审核通过的图片详情页，按更新时间增量、已推过的不会重复消耗配额。
   </p>
 </section>
