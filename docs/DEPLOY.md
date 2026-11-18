@@ -264,14 +264,64 @@ cd public && mv i i.bak && ln -s /mnt/alist i
 
 ## 运行环境要求（自建部署必读）
 
-| 项目 | 最低要求 | 推荐 | 说明 |
-|---|---|---|---|
-| PHP | 8.0 | 8.3 | 需要扩展：`gd`、`curl`、`mbstring`、`pdo_mysql`、`fileinfo`、`zip`、`openssl` |
-| **memory_limit** | **512M** | **1024M** | **处理 4000 万像素以上的大图时必须**。程序会在图片处理前自动 `ini_set('memory_limit','1024M')`；若主机通过 `disable_functions` 禁用了 `ini_set`，则退回 php.ini 的值，此时请手动把 `memory_limit` 设为 1024M |
-| post_max_size | ≥ 策略组单图上限 | 32M | 小于单图上限会导致上传直接被 PHP 丢弃 |
-| upload_max_filesize | ≥ 策略组单图上限 | 32M | 同上 |
-| max_execution_time | 120 | 300 | 大图压缩/水印耗时较长 |
-| GD 扩展 | 支持 jpeg/png/webp/gif | 含 `imagick` 更佳 | 缺少 webp 支持时无法输出 WebP |
+### 必须的 PHP 扩展
+
+| 扩展 | 用途 | 缺失后果 |
+|---|---|---|
+| **gd** | 图片解码/缩放/缩略图/水印 | 上传后无法处理，缩略图与水印全失效 |
+| **mbstring** | 中文标题、标签、审核描述的截断与长度计算 | 中文乱码或被截断为空 |
+| **curl** | WebDAV 网盘读写、模型审核 API、百度推送 | 上传网盘失败、审核无法调用模型 |
+| **pdo_mysql** | ThinkPHP ORM 连接 MySQL | 整站 500，无法连库 |
+| **fileinfo** | `league/mime-type-detection` 依赖、上传类型兜底 | 组件安装/升级报错，部分 MIME 判断失效 |
+| **openssl** | HTTPS 请求、PHPMailer 的 SMTPS | 网盘 https 接口失败、邮件发不出 |
+
+其余 `json`、`session`、`ctype`、`filter`、`hash`、`iconv`、`zlib` 为 PHP 常规内建或发行版默认开启项，一般无需额外处理。
+
+### GD 能力必须验证（最容易踩的坑）
+
+**装了 gd 不等于能用**。必须确认以下三个编译开关，缺任何一个对应功能就会坏：
+
+| 函数 | 需要的编译开关 | 缺失后果 |
+|---|---|---|
+| `imagecreatefromjpeg` | `--with-jpeg` | **JPG 上传全部失败** |
+| `imagewebp` | `--with-webp` | 无法生成 WebP 缩略图 |
+| `imagettftext` | `--with-freetype` | **中文水印不显示**（项目用 `storage/fonts/*.ttf` 渲染）|
+
+验证命令：
+
+```bash
+php -r "var_dump(
+  function_exists('imagecreatefromjpeg'),
+  function_exists('imagewebp'),
+  function_exists('imagettftext')
+);"
+```
+
+三项都返回 `true` 才算合格。宝塔面板的 PHP 默认编译参数通常包含这三项，但迁移换服务器后**必须实测一次**。
+
+### 建议的 php.ini 参数
+
+| 配置项 | 建议值 | 原因 |
+|---|---|---|
+| **memory_limit** | **1024M** | 处理 4000 万像素以上的大图时必须（解码一张 12000×9000 就要 432MB）。程序会在图片处理前自动 `ini_set('memory_limit','1024M')`，若主机通过 `disable_functions` 禁用了 `ini_set`，则必须手动设置 |
+| post_max_size | **32M** 起 | 必须 ≥ 策略组单图上限，否则上传被 PHP 直接丢弃 |
+| upload_max_filesize | **32M** 起 | 同上 |
+| max_execution_time | **300** | 大图压缩 + 网盘上传耗时较长 |
+| session.gc_maxlifetime | **604800** | 与 `config/session.php` 的 `expire` 对齐，否则登录按 24 分钟掉线 |
+| session.cookie_lifetime | 0 或 604800 | 0 = 关浏览器即失效；604800 = 关浏览器仍保持 7 天 |
+
+### 不需要装的扩展
+
+| 扩展 | 说明 |
+|---|---|
+| **imagick** | 项目全程使用 GD，代码里没有任何 Imagick 调用。装了不会更快，反而可能拖慢图片处理 |
+| **exif** | EXIF 清理是通过重新编码图片实现的（`imagejpeg` 重存天然丢弃元数据），不读取 EXIF |
+| **zip** | 导出功能是 CSV 流式输出，没有 `ZipArchive` 调用；缺少时仅在安装向导里显示"未启用（不阻断）" |
+| **bcmath** | 财务计算使用浮点数，没有 `bcadd`/`bcmul` 调用 |
+| **redis** | `config/cache.php` 与 session 均为 `file` 驱动。需要更高并发时再启用 |
+| **simplexml** | 项目未直接依赖；PHP 发行版默认开启，无需额外处理 |
+
+> **关于 bcmath / simplexml 要不要卸载**：不建议卸载。它们是 PHP 发行版默认编译项，卸载需要重新编译 PHP（耗时且可能影响其他站点），且静态编译进来的扩展不产生运行时开销。保留更安全。
 
 ### 为什么必须 ≥512M 内存
 
@@ -292,12 +342,18 @@ cd public && mv i i.bak && ln -s /mnt/alist i
    - `reject`：拒绝上传并给出中文提示
 3. 处理过程中出现任何异常，**回退为原图上传**，不会把用户的上传打回 500
 
-### 快速自检
+### 快速自检（切换 PHP 版本或迁移服务器后必跑）
 
 ```bash
-php -r "echo ini_get('memory_limit'), PHP_EOL;"
-php -r "var_dump(extension_loaded('gd'), extension_loaded('curl'), extension_loaded('fileinfo'));"
+php -r "
+foreach (['gd','mbstring','curl','pdo_mysql','fileinfo','openssl'] as \$e) printf("%-10s %s\n", \$e, extension_loaded(\$e)?'OK':'MISSING');
+foreach (['imagecreatefromjpeg','imagewebp','imagettftext'] as \$f) printf("%-20s %s\n", \$f, function_exists(\$f)?'OK':'MISSING');
+foreach (['memory_limit','post_max_size','upload_max_filesize','max_execution_time','session.gc_maxlifetime'] as \$k) printf("%-24s %s\n", \$k, ini_get(\$k));
+echo 'PHP: '.PHP_VERSION.PHP_EOL;
+"
 ```
+
+全部 `OK` 才算环境合格；GD 那三行有任何一行 `MISSING`，对应功能就会出问题。
 
 输出建议：
 
