@@ -42,6 +42,7 @@ return $this->adminView('admin/site', [
             'settings' => Setting::allSettings(),
             'groups'   => StrategyGroup::where('status', 1)->select(),
             'domain'   => rtrim((string)request()->domain(), '/'),
+            'env' => \app\common\service\EnvCheckService::report(),
             'credit_plans' => Db::name('credit_plans')->order('sort', 'asc')->order('id', 'asc')->select()->toArray(),
             'recharge_bonus_list' => Db::name('recharge_bonus')->order('amount', 'asc')->order('sort', 'asc')->select()->toArray(),
         ]);

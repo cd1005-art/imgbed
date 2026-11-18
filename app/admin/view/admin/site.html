@@ -8,6 +8,7 @@
     <button class="tab-btn" type="button" data-tab="basic">基础配置</button>
     <button class="tab-btn" type="button" data-tab="seo">SEO 设置</button>
     <button class="tab-btn" type="button" data-tab="processing">图片处理</button>
+    <button class="tab-btn" type="button" data-tab="env">环境自检</button>
   </nav>
 
   <div class="tab-pane" data-pane="basic">
@@ -329,6 +330,10 @@ minimal geometric pattern'}</textarea>
   </form>
   <p class="field-hint">处理仅对 JPG/PNG/WebP/BMP 生效，GIF 原样保留；处理失败自动回退原图，不影响上传。</p>
 </section>
+  </div>
+
+  <div class="tab-pane" data-pane="env" id="envPane">
+    {include file="admin/_env_check_pane" /}
   </div>
 </div>
 {/block}
