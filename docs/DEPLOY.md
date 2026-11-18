@@ -243,6 +243,83 @@ cd public && mv i i.bak && ln -s /mnt/alist i
 
 **⚠ 实测警告**：如果 WebDAV 后端本身慢（如 Alist 再套一层云盘），首次读取一个文件可能要 30 秒以上，nginx 会挂住连接。**仅在网盘读写延迟 < 100ms 时使用**。否则请使用默认的副本模式。
 
+## 迁移 / 换机检查清单
+
+宝塔的站点备份**不包含**下面这些内容，换服务器后必须逐项补齐，否则会出现「首页能开、其他全 404」或「功能正常但定时任务不跑」的问题。
+
+### 1. 伪静态规则（最容易漏，直接导致 404）
+
+```
+/www/server/panel/vhost/rewrite/<域名>.conf
+```
+
+这是**独立目录**，不在站点备份包内。迁移后通常是 0 字节，导致所有非物理路径（`/admin/login`、`/tag`、`/i/xxx`）返回 **nginx 原生 404**。
+
+判断方法：响应体是 `<center>404 Not Found</center>` = nginx 返回的，请求没进 PHP；对照 `/index.php?s=/admin/login` 返回 200 即可确认路由本身没问题。
+
+修复：面板 → 网站 → 设置 → 伪静态 → 选 `thinkphp`，或直接写入：
+
+```nginx
+location / {
+    if (!-f $request_filename) {
+        rewrite ^(.*)$ /index.php?s=/$1 last;
+    }
+}
+```
+
+### 2. 计划任务（宝塔备份同样不带）
+
+图床需要 4 个定时任务，全部通过 HTTP 端点触发（密钥为 `secret_key`）：
+
+| 频率 | 类型 | 地址 | 作用 |
+|---|---|---|---|
+| 每 30 分钟 | 访问 URL | `https://<域名>/cron/storage?key=<secret_key>` | 存储告警巡检 |
+| 每天 08:30 | 访问 URL | `https://<域名>/cron/vip?key=<secret_key>` | VIP 到期提醒 |
+| 每 10 分钟 | 访问 URL | `https://<域名>/cron/site?key=<secret_key>` | 站点巡检（首页 301、证书）|
+| 每 5 分钟 | Shell 脚本 | `cd /www/wwwroot/<站点目录> && /www/server/php/83/bin/php think gen:run` | 造图机器人执行队列 |
+
+新建后验证：
+
+```bash
+# 三个 HTTP 端点（cron 用的是严格证书校验，不能用 -k 掩盖问题）
+curl -sS -m 20 'https://<域名>/cron/storage?key=<secret_key>'
+curl -sS -m 20 'https://<域名>/cron/vip?key=<secret_key>'
+curl -sS -m 20 'https://<域名>/cron/site?key=<secret_key>'
+
+# 造图命令
+cd /www/wwwroot/<站点目录> && /www/server/php/<版本>/bin/php think gen:run
+```
+
+正常返回示例：`{"status":true,"message":"存储正常，无告警"}`、`{"status":true,"message":"检查 0 个到期用户，发送 0 封提醒"}`、`无到期任务`。
+
+> 三个 HTTP 端点若报 `SSL peer has no certificate for the requested DNS name`，说明域名解析还没指向新机，或 443 端口映射到了别的机器 —— 此时 cron 会静默失败，务必修好。
+
+### 3. PHP 版本绑定
+
+`vhost/nginx/<域名>.conf` 里的 `include enable-php-<版本>.conf;` 需要与新装的 PHP 一致。切换后确认：
+
+```bash
+grep enable-php /www/server/panel/vhost/nginx/<域名>.conf
+ls -la /tmp/php-cgi-<版本>.sock
+```
+
+### 4. 目录属主与可写性
+
+```bash
+chown -R www:www /www/wwwroot/<站点目录>
+chmod -R u+w /www/wwwroot/<站点目录>/runtime
+```
+
+`public/.user.ini` 若为 `root:root` 且权限 644，**不影响运行**（www 可读、宝塔以 root 写），无需强改。
+
+### 5. 迁移后自检顺序
+
+1. 打开 `/admin` 能登录
+2. 后台「站点设置 → 环境自检」全部通过
+3. 上传一张 JPG，确认缩略图生成（说明 GD 正常）
+4. 手动跑一次 `cron/storage` 确认计划任务链路通
+5. 确认 `https://<域名>/i/<path>` 图片能直接访问（外链副本/直链配置）
+
 ## 首次登录必做
 
 安装完成后后台地址 `/admin`，**默认管理员账号**：
