@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{$page_title|default='后台'} · {$site_name}</title>
 <link rel="stylesheet" href="/static/imgbed.css?v=51">
-<link rel="stylesheet" href="/static/admin.css?v=129">
+<link rel="stylesheet" href="/static/admin.css?v=130">
 </head>
 <body class="admin-body">
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -30,6 +30,7 @@
     <a href="/admin/site" class="{if condition="$page eq 'site'"}active{/if}"><svg class="ic"><use href="#i-group"/></svg> 站点设置</a>
     <a href="/admin/mail" class="{if condition="$page eq 'mail'"}active{/if}"><svg class="ic"><use href="#i-key"/></svg> 邮件设置</a>
     <a href="/admin/cron" class="{if condition="$page eq 'cron'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 计划任务</a>
+    <a href="/admin/env-check" class="{if condition="$page eq 'env_check'"}active{/if}"><svg class="ic"><use href="#i-log"/></svg> 环境自检</a>
     <a href="/admin/image" class="{if condition="$page eq 'image'"}active{/if}"><svg class="ic"><use href="#i-image"/></svg> 图片管理</a>
     <a href="/admin/user" class="{if condition="$page eq 'user'"}active{/if}"><svg class="ic"><use href="#i-user"/></svg> 用户管理</a>
     <a href="/admin/group" class="{if condition="$page eq 'group'"}active{/if}"><svg class="ic"><use href="#i-group"/></svg> 策略组</a>
@@ -57,7 +58,7 @@
 <div id="toast" class="toast" hidden></div>
 <script>window.PAGER_SIZE = {$pager_size|default='5'};</script>
 <script src="/static/imgbed.js?v=51"></script>
-<script src="/static/admin.js?v=129"></script>
+<script src="/static/admin.js?v=130"></script>
 {block name="script"}{/block}
 </body>
 </html>

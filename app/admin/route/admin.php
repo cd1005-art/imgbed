@@ -135,6 +135,8 @@ Route::group(function () {
     Route::post('model/driver', 'ModelManage/driverSave');
     Route::get('model', 'ModelManage/index');
 
+    Route::get('env-check', 'EnvCheck/index');
+
     Route::get('token', 'LogManage/tokens');
     Route::post('token/save/:id', 'LogManage/saveToken');
     Route::post('token/batch', 'LogManage/batchToken');

@@ -1970,6 +1970,8 @@ window.setPerPage = function (v, key, resetKey) {
 
     Array.prototype.forEach.call(document.querySelectorAll('table'), function (tbl) {
       if (tbl.dataset.ppDone) { return; }
+      // 只读诊断类表格不注入每页条数
+      if (tbl.closest('[data-no-pp]')) { return; }
       // 同容器已有 footer（模板自带的）→ 直接复用，不再新建
       var container = tbl.parentNode;
       var existing = container ? container.querySelector('.list-foot') : null;

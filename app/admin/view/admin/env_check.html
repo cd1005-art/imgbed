@@ -1,0 +1,187 @@
+{extend name="admin/layout"}
+
+{block name="content"}
+<div class="page-toolbar">
+  <h1 class="page-title">环境自检
+    {if condition="$verdict eq 'ok'"}<span class="ok">· 全部通过</span>
+    {elseif condition="$verdict eq 'warn'"/}<span style="color:#8a6d3b">· 有建议项</span>
+    {else /}<span class="danger">· 存在必须修复项</span>{/if}
+  </h1>
+  <div class="toolbar-actions">
+    <button class="btn-ghost-sm" type="button" id="envCopy">复制报告</button>
+    <button class="btn-ghost-sm" type="button" id="envReload">重新检测</button>
+  </div>
+</div>
+
+<div class="batch-bar" style="background:#FAF9F7;color:#1C1B18;display:flex;margin-bottom:14px">
+  <span>通过 <b class="ok">{$counts.ok}</b></span>
+  <span>建议 <b style="color:#8a6d3b">{$counts.warn}</b></span>
+  <span>缺失 <b class="danger">{$counts.fail}</b></span>
+  <span class="count">只读检测，不会修改任何配置</span>
+</div>
+
+<section class="panel" style="margin-bottom:14px" data-no-pp>
+  <h2 class="panel-title">运行环境</h2>
+  <table class="table" style="margin-top:8px">
+    <tbody>
+      {volist name="base" id="vo"}
+      <tr>
+        <td style="width:180px">{$vo.0}</td>
+        <td style="width:280px"><code>{$vo.1}</code></td>
+        <td style="width:110px">
+          {if condition="$vo.2 eq 'ok'"}<span class="ok">正常</span>
+          {elseif condition="$vo.2 eq 'warn'"/}<span style="color:#8a6d3b">注意</span>
+          {else /}<span class="danger">异常</span>{/if}
+        </td>
+        <td class="count">{$vo.3}</td>
+      </tr>
+      {/volist}
+      <tr>
+        <td>数据库</td>
+        <td><code>MySQL {$db.version}</code> · {$db.tables} 张表</td>
+        <td>{if condition="$db.state eq 'ok'"}<span class="ok">正常</span>{else /}<span class="danger">异常</span>{/if}</td>
+        <td class="count">{$db.text}</td>
+      </tr>
+      <tr>
+        <td>磁盘剩余</td>
+        <td><code>{$disk.free} / {$disk.total}</code></td>
+        <td>{if condition="$disk.state eq 'ok'"}<span class="ok">正常</span>{else /}<span style="color:#8a6d3b">偏低</span>{/if}</td>
+        <td class="count">已用 {$disk.pct}%</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel" style="margin-bottom:14px" data-no-pp>
+  <h2 class="panel-title">PHP 扩展</h2>
+  <table class="table" style="margin-top:8px">
+    <thead><tr><th style="width:180px">扩展</th><th style="width:180px">用途</th><th style="width:90px">要求</th><th style="width:110px">状态</th></tr></thead>
+    <tbody>
+      {volist name="exts" id="vo"}
+      <tr>
+        <td><code>{$vo.name}</code></td>
+        <td class="count">{$vo.use}</td>
+        <td class="count">{$vo.level}</td>
+        <td>
+          {if condition="$vo.state eq 'ok'"}<span class="ok">{$vo.text}</span>
+          {elseif condition="$vo.state eq 'warn'"/}<span style="color:#8a6d3b">{$vo.text}</span>
+          {else /}<span class="danger">{$vo.text}</span>{/if}
+        </td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel" style="margin-bottom:14px" data-no-pp>
+  <h2 class="panel-title">GD 图片能力</h2>
+  <p class="field-hint" style="margin:4px 0 8px">装好 gd 不等于能用，下面任意一项缺失，对应功能就会失效。</p>
+  <table class="table">
+    <thead><tr><th style="width:180px">能力</th><th style="width:220px">函数</th><th style="width:170px">编译开关</th><th style="width:110px">状态</th></tr></thead>
+    <tbody>
+      {volist name="gd" id="vo"}
+      <tr>
+        <td>{$vo.label}</td>
+        <td><code>{$vo.fn}</code></td>
+        <td class="count">{$vo.switch}</td>
+        <td>
+          {if condition="$vo.state eq 'ok'"}<span class="ok">{$vo.text}</span>
+          {elseif condition="$vo.state eq 'warn'"/}<span style="color:#8a6d3b">{$vo.text}</span>
+          {else /}<span class="danger">{$vo.text}</span>{/if}
+        </td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+  {if condition="$gd_info"}
+  <p class="field-hint" style="margin:10px 0 0">
+    GD {$gd_info['GD Version']} ·
+    FreeType {if condition="$gd_info['FreeType Support']"}支持{else /}不支持{/if} ·
+    JPEG {if condition="$gd_info['JPEG Support']"}支持{else /}不支持{/if} ·
+    WebP {if condition="$gd_info['WebP Support']"}支持{else /}不支持{/if} ·
+    GIF {if condition="$gd_info['GIF Read Support']"}支持{else /}不支持{/if}
+  </p>
+  {/if}
+</section>
+
+<section class="panel" style="margin-bottom:14px" data-no-pp>
+  <h2 class="panel-title">运行参数</h2>
+  <table class="table" style="margin-top:8px">
+    <thead><tr><th style="width:260px">配置项</th><th style="width:220px">当前值</th><th style="width:110px">状态</th><th>说明</th></tr></thead>
+    <tbody>
+      {volist name="params" id="vo"}
+      <tr>
+        <td><code>{$vo.name}</code></td>
+        <td>{$vo.val}</td>
+        <td>
+          {if condition="$vo.state eq 'ok'"}<span class="ok">正常</span>
+          {elseif condition="$vo.state eq 'warn'"/}<span style="color:#8a6d3b">建议调整</span>
+          {else /}<span class="danger">不合格</span>{/if}
+        </td>
+        <td class="count">{$vo.desc}</td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel" data-no-pp>
+  <h2 class="panel-title">目录与字体</h2>
+  <table class="table" style="margin-top:8px">
+    <thead><tr><th style="width:260px">路径</th><th style="width:200px">状态</th></tr></thead>
+    <tbody>
+      {volist name="dirs" id="vo"}
+      <tr>
+        <td><code>{$vo.name}</code></td>
+        <td>
+          {if condition="$vo.state eq 'ok'"}<span class="ok">{$vo.text}</span>
+          {elseif condition="$vo.state eq 'warn'"/}<span style="color:#8a6d3b">{$vo.text}</span>
+          {else /}<span class="danger">{$vo.text}</span>{/if}
+        </td>
+      </tr>
+      {/volist}
+      {volist name="fonts" id="vo"}
+      <tr>
+        <td><code>storage/fonts/{$vo.name}</code></td>
+        <td>
+          {if condition="$vo.state eq 'ok'"}<span class="ok">{$vo.text}</span>
+          {else /}<span style="color:#8a6d3b">{$vo.text}</span>{/if}
+        </td>
+      </tr>
+      {/volist}
+    </tbody>
+  </table>
+</section>
+{/block}
+
+{block name="script"}
+<script>
+(function () {
+  var btn = document.getElementById('envCopy');
+  if (btn) btn.addEventListener('click', function () {
+    var lines = [];
+    document.querySelectorAll('.panel').forEach(function (p) {
+      var title = p.querySelector('.panel-title');
+      lines.push('## ' + (title ? title.textContent.trim() : ''));
+      p.querySelectorAll('tbody tr').forEach(function (tr) {
+        var cells = [].map.call(tr.querySelectorAll('td'), function (td) {
+          return td.textContent.replace(/\s+/g, ' ').trim();
+        }).filter(Boolean);
+        if (cells.length) lines.push(cells.join(' | '));
+      });
+      lines.push('');
+    });
+    var text = lines.join('\n');
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function () { toast('报告已复制'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta); toast('报告已复制');
+    }
+  });
+  var rl = document.getElementById('envReload');
+  if (rl) rl.addEventListener('click', function () { location.reload(); });
+})();
+</script>
+{/block}
